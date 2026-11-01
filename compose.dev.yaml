@@ -1,0 +1,69 @@
+services:
+  postgres:
+    ports: ['127.0.0.1:15432:5432']
+    volumes:
+      - ./infra/postgres/init-test.sh:/docker-entrypoint-initdb.d/20-test.sh:ro
+  redis:
+    ports: ['127.0.0.1:16379:6379']
+  api:
+    environment:
+      NODE_ENV: development
+      PUBLIC_ORIGIN: http://127.0.0.1:8080
+      AUTH_REGISTRATION_ENABLED: 'true'
+      SMTP_HOST: mailpit
+      SMTP_PORT: '1025'
+      SMTP_SECURE: 'false'
+      SMTP_FROM: no-reply@personamarket.test
+      SMTP_USER: ''
+      SMTP_PASSWORD: ''
+  worker:
+    environment:
+      NODE_ENV: development
+      PUBLIC_ORIGIN: http://127.0.0.1:8080
+      AUTH_REGISTRATION_ENABLED: 'true'
+      SMTP_HOST: mailpit
+      SMTP_PORT: '1025'
+      SMTP_SECURE: 'false'
+      SMTP_FROM: no-reply@personamarket.test
+      SMTP_USER: ''
+      SMTP_PASSWORD: ''
+  web:
+    environment:
+      PUBLIC_ORIGIN: http://127.0.0.1:8080
+  caddy:
+    environment:
+      CADDY_DOMAIN: ':8080'
+    ports: !override ['127.0.0.1:8080:8080']
+
+  data-init:
+    command:
+      !override [
+        'chown redis:redis /data; chown 1000:1000 /storage; chown -R 1000:1000 /caddy-data /caddy-config; chown 1000:1000 /mailpit; chmod 0700 /data /storage /caddy-data /caddy-config /mailpit',
+      ]
+    volumes:
+      - ./data/mailpit:/mailpit
+  mailpit:
+    image: axllent/mailpit:v1.32.0@sha256:0790692be935ea4420d085694f7985b1f692ca6a8771ab0e0bd8ba75ac180498
+    user: '1000:1000'
+    environment:
+      MP_DATABASE: /data/mailpit.db
+      MP_MAX_MESSAGES: '1000'
+      MP_DISABLE_VERSION_CHECK: 'true'
+      MP_SMTP_DISABLE_RDNS: 'true'
+      MP_IGNORE_DUPLICATE_IDS: 'true'
+    volumes: ['./data/mailpit:/data']
+    ports: ['127.0.0.1:11025:1025', '127.0.0.1:18025:8025']
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: ['no-new-privileges:true']
+    healthcheck:
+      test: [CMD, /mailpit, readyz]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    depends_on:
+      data-init: { condition: service_completed_successfully }
+    logging:
+      driver: json-file
+      options: { max-size: 10m, max-file: '3' }

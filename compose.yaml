@@ -1,0 +1,256 @@
+name: personamarket
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: '3'
+
+x-server-environment: &server-environment
+  NODE_ENV: production
+  PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:?请配置 PUBLIC_ORIGIN}
+  API_INTERNAL_ORIGIN: http://api:3001
+  API_PORT: '3001'
+  DATABASE_URL: postgresql://personamarket_app:${POSTGRES_APP_PASSWORD:?请配置应用数据库密码}@postgres:5432/personamarket
+  REDIS_URL: redis://:${REDIS_PASSWORD:?请配置 Redis 密码}@redis:6379/0
+  APP_ENCRYPTION_KEY: ${APP_ENCRYPTION_KEY:?请配置加密主密钥}
+  STATS_HMAC_KEY: ${STATS_HMAC_KEY:?请配置统计密钥}
+  STORAGE_ROOT: /data/storage
+  CADDY_DOMAIN: ${CADDY_DOMAIN:?请配置域名}
+  LOG_LEVEL: ${LOG_LEVEL:-info}
+  TRUST_PROXY_HOPS: '1'
+  QUEUE_NAME: personamarket-system
+  WORKER_POLL_INTERVAL_MS: '1000'
+  AUTH_REGISTRATION_ENABLED: ${AUTH_REGISTRATION_ENABLED:-false}
+  AUTH_SESSION_TTL_SECONDS: ${AUTH_SESSION_TTL_SECONDS:-86400}
+  SMTP_HOST: ${SMTP_HOST:-}
+  SMTP_PORT: ${SMTP_PORT:-587}
+  SMTP_SECURE: ${SMTP_SECURE:-false}
+  SMTP_FROM: ${SMTP_FROM:-no-reply@example.invalid}
+  SMTP_USER: ${SMTP_USER:-}
+  SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+
+services:
+  data-init:
+    image: personamarket-redis:8.2.7-pm.1
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.redis
+    user: '0'
+    entrypoint: [sh, -ec]
+    command:
+      [
+        'chown redis:redis /data; chown 1000:1000 /storage; chown -R 1000:1000 /caddy-data /caddy-config; chmod 0700 /data /storage /caddy-data /caddy-config',
+      ]
+    volumes:
+      - ./data/redis:/data
+      - ./data/storage:/storage
+      - ./data/caddy/data:/caddy-data
+      - ./data/caddy/config:/caddy-config
+    network_mode: none
+    read_only: true
+    cap_drop: [ALL]
+    cap_add: [CHOWN, FOWNER, DAC_OVERRIDE]
+    security_opt: ['no-new-privileges:true']
+    logging: *logging
+
+  postgres:
+    image: personamarket-postgres:18.6-pm.2
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.postgres
+    environment:
+      POSTGRES_USER: personamarket_owner
+      POSTGRES_DB: personamarket
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?请配置数据库所有者密码}
+      POSTGRES_APP_PASSWORD: ${POSTGRES_APP_PASSWORD:?请配置应用数据库密码}
+    volumes:
+      - ./data/postgres:/var/lib/postgresql
+      - ./infra/postgres/init-app.sh:/docker-entrypoint-initdb.d/10-app.sh:ro
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -h 127.0.0.1 -U personamarket_owner -d personamarket']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+    logging: *logging
+
+  redis:
+    image: personamarket-redis:8.2.7-pm.1
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.redis
+    user: redis
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?请配置 Redis 密码}
+    command:
+      - sh
+      - -ec
+      - 'umask 077; printf "requirepass %s\n" "$$REDIS_PASSWORD" > /tmp/redis-auth.conf; exec redis-server /usr/local/etc/redis/redis.conf --include /tmp/redis-auth.conf'
+    volumes:
+      - ./data/redis:/data
+      - ./infra/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    tmpfs: [/tmp]
+    read_only: true
+    healthcheck:
+      test: [CMD-SHELL, 'REDISCLI_AUTH="$$REDIS_PASSWORD" redis-cli ping | grep -q PONG']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+    logging: *logging
+
+    depends_on:
+      data-init: { condition: service_completed_successfully }
+
+  migrate:
+    image: personamarket-migrate:0.0.0
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.backend
+      args:
+        PACKAGE: '@personamarket/database'
+        PM_API_BUILD_SOURCE: ${PM_API_BUILD_SOURCE:-}
+    command: [node, dist/cli.js]
+    environment:
+      MIGRATION_DATABASE_URL: postgresql://personamarket_owner:${POSTGRES_PASSWORD:?请配置数据库所有者密码}@postgres:5432/personamarket
+    depends_on:
+      postgres: { condition: service_healthy }
+    read_only: true
+    tmpfs: [/tmp]
+    logging: *logging
+    cap_drop: [ALL]
+    security_opt: ['no-new-privileges:true']
+
+  admin:
+    image: personamarket-api:0.0.0
+    profiles: [maintenance]
+    command: [node, scripts/create-admin.mjs]
+    environment:
+      MIGRATION_DATABASE_URL: postgresql://personamarket_owner:${POSTGRES_PASSWORD:?请配置数据库所有者密码}@postgres:5432/personamarket
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    read_only: true
+    tmpfs: [/tmp]
+    logging: *logging
+    cap_drop: [ALL]
+    security_opt: ['no-new-privileges:true']
+
+  api:
+    image: personamarket-api:0.0.0
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.backend
+      args:
+        PACKAGE: '@personamarket/api'
+        PM_API_BUILD_SOURCE: ${PM_API_BUILD_SOURCE:-}
+    environment: *server-environment
+    volumes: ['./data/storage:/data/storage']
+    depends_on:
+      data-init: { condition: service_completed_successfully }
+      migrate: { condition: service_completed_successfully }
+      redis: { condition: service_healthy }
+    healthcheck:
+      test:
+        [
+          CMD,
+          node,
+          -e,
+          "fetch('http://127.0.0.1:3001/health/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    init: true
+    read_only: true
+    tmpfs: [/tmp]
+    stop_grace_period: 30s
+    restart: unless-stopped
+    logging: *logging
+    cap_drop: [ALL]
+    security_opt: ['no-new-privileges:true']
+
+  worker:
+    image: personamarket-worker:0.0.0
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.backend
+      args:
+        PACKAGE: '@personamarket/worker'
+        PM_API_BUILD_SOURCE: ${PM_API_BUILD_SOURCE:-}
+    environment: *server-environment
+    volumes: ['./data/storage:/data/storage']
+    depends_on:
+      data-init: { condition: service_completed_successfully }
+      migrate: { condition: service_completed_successfully }
+      redis: { condition: service_healthy }
+    healthcheck:
+      test: [CMD, node, dist/healthcheck.js]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    init: true
+    read_only: true
+    tmpfs: [/tmp]
+    stop_grace_period: 30s
+    restart: unless-stopped
+    logging: *logging
+    cap_drop: [ALL]
+    security_opt: ['no-new-privileges:true']
+
+  web:
+    image: personamarket-web:0.0.0
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.web
+    environment:
+      NODE_ENV: production
+      HOSTNAME: 0.0.0.0
+      PORT: '3000'
+      API_INTERNAL_ORIGIN: http://api:3001
+      TRUST_PROXY_HOPS: '1'
+      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:?请配置 PUBLIC_ORIGIN}
+      NEXT_TELEMETRY_DISABLED: '1'
+    depends_on:
+      api: { condition: service_healthy }
+    healthcheck:
+      test:
+        [
+          CMD,
+          node,
+          -e,
+          "fetch('http://127.0.0.1:3000').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    init: true
+    read_only: true
+    tmpfs: [/tmp, /app/apps/web/.next/cache]
+    restart: unless-stopped
+    logging: *logging
+    cap_drop: [ALL]
+    security_opt: ['no-new-privileges:true']
+
+  caddy:
+    image: personamarket-caddy:2.11.7-pm.2
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.caddy
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE]
+    security_opt: ['no-new-privileges:true']
+    environment:
+      CADDY_DOMAIN: ${CADDY_DOMAIN:?请配置域名}
+    ports: ['80:80', '443:443', '443:443/udp']
+    volumes:
+      - ./infra/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./data/caddy/data:/data
+      - ./data/caddy/config:/config
+    depends_on:
+      data-init: { condition: service_completed_successfully }
+      web: { condition: service_healthy }
+    restart: unless-stopped
+    logging: *logging

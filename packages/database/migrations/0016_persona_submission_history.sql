@@ -1,0 +1,1 @@
+CREATE INDEX "submission_persona_created_idx" ON "release_submissions" USING btree ("persona_id","created_at","id");

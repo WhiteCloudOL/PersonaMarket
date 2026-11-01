@@ -1,0 +1,28 @@
+{
+  "packagesWithoutStandaloneLicenseFile": [
+    "@drizzle-team/brocli@0.10.2",
+    "@epic-web/invariant@1.0.0",
+    "@esbuild/win32-x64@0.18.20, 0.25.12, 0.28.2",
+    "@humanfs/types@0.15.0",
+    "@msgpackr-extract/msgpackr-extract-win32-x64@3.0.4",
+    "@next/env@16.4.3",
+    "@next/eslint-plugin-next@16.4.3",
+    "@next/swc-win32-x64-msvc@16.4.3",
+    "@redis/bloom@6.3.0",
+    "@redis/client@6.3.0",
+    "@redis/json@6.3.0",
+    "@redis/search@6.3.0",
+    "@redis/time-series@6.3.0",
+    "@rolldown/binding-win32-x64-msvc@1.2.15",
+    "@tokenizer/token@0.3.0",
+    "client-only@0.0.1",
+    "drizzle-kit@0.31.11",
+    "drizzle-orm@0.45.4",
+    "esrecurse@4.3.0",
+    "imurmurhash@0.1.4",
+    "natural-compare@1.4.0",
+    "pg-types@2.2.0",
+    "pgpass@1.0.5",
+    "redis@6.3.0"
+  ]
+}

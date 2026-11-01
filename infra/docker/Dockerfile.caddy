@@ -1,0 +1,33 @@
+FROM golang:1.27.3-alpine3.24@sha256:b8c9b82affbbb82a020bbcf998dad2ba9516944ac7e883524642a481a9505e9c AS build
+ENV GOTOOLCHAIN=local
+ENV CGO_ENABLED=0
+ENV GOMAXPROCS=2
+WORKDIR /source
+RUN apk add --no-cache patch=2.8-r0
+COPY infra/caddy-build/go.mod infra/caddy-build/go.sum ./
+RUN go mod download
+COPY infra/caddy-build/ ./
+COPY infra/docker/collect-go-licenses.sh /collect-go-licenses.sh
+RUN cp -R /go/pkg/mod/github.com/go-jose/go-jose/v3@v3.0.5 /patched-go-jose-v3 \
+    && chmod -R u+w /patched-go-jose-v3 \
+    && cd /patched-go-jose-v3 \
+    && sha256sum -c /source/security/go-jose-v3.before.sha256 \
+    && patch --batch --forward --fuzz=0 -p1 < /source/security/go-jose-v3-CVE-2026-116587.patch \
+    && sha256sum -c /source/security/go-jose-v3.after.sha256 \
+    && cd /source \
+    && go mod edit -replace github.com/go-jose/go-jose/v3=/patched-go-jose-v3 \
+    && go test -count=1 -timeout=30s ./security \
+    && go build -mod=readonly -trimpath -buildvcs=false -ldflags='-s -w' -o /out/caddy . \
+    && sh /collect-go-licenses.sh /out/go-LICENSES.txt
+
+FROM alpine:3.24.3@sha256:be2656061b536c1883c4034790e21d0a09c5aaaf51968b89368a3c0371ea2c9a
+COPY --from=build /out/caddy /usr/bin/caddy
+COPY --from=build /out/go-LICENSES.txt /usr/share/doc/caddy/go-LICENSES.txt
+COPY --from=build /source/security/ /usr/share/doc/caddy/security/
+COPY LICENSE /usr/share/doc/personamarket/LICENSE
+ENV XDG_CONFIG_HOME=/config
+ENV XDG_DATA_HOME=/data
+USER 1000:1000
+EXPOSE 80 443
+ENTRYPOINT ["/usr/bin/caddy"]
+CMD ["run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]

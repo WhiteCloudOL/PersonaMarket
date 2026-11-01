@@ -1,0 +1,393 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "format": { "type": "string", "const": "qingzheng-persona" },
+        "schemaVersion": { "type": "number", "const": 1 },
+        "metadata": {
+          "type": "object",
+          "properties": {
+            "title": { "type": "string", "minLength": 0, "maxLength": 80 },
+            "summary": { "type": "string", "minLength": 0, "maxLength": 200 },
+            "categoryName": { "type": "string", "minLength": 1, "maxLength": 80 },
+            "tagNames": {
+              "maxItems": 8,
+              "type": "array",
+              "items": { "type": "string", "minLength": 1, "maxLength": 80 }
+            },
+            "readmeMarkdown": { "type": "string", "minLength": 0, "maxLength": 30000 },
+            "recommendedModels": {
+              "maxItems": 5,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "modelId": { "type": "string", "minLength": 0, "maxLength": 200 },
+                  "note": { "type": "string", "minLength": 0, "maxLength": 500 }
+                },
+                "required": ["modelId"],
+                "additionalProperties": false
+              }
+            },
+            "origin": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": { "type": "string", "const": "original" },
+                    "redistribution": {
+                      "type": "string",
+                      "enum": ["not_allowed", "attribution_required", "contact_required", "custom"]
+                    },
+                    "policyText": { "type": "string", "minLength": 0, "maxLength": 5000 }
+                  },
+                  "required": ["type", "redistribution"],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": { "type": "string", "const": "repost" },
+                    "redistribution": {
+                      "type": "string",
+                      "enum": ["not_allowed", "attribution_required", "contact_required", "custom"]
+                    },
+                    "policyText": { "type": "string", "minLength": 0, "maxLength": 5000 },
+                    "originalAuthor": { "type": "string", "minLength": 0, "maxLength": 100 },
+                    "sourceUrl": { "type": "string", "maxLength": 2048, "format": "uri" },
+                    "sourceDescription": { "type": "string", "minLength": 0, "maxLength": 2000 },
+                    "authorizationStatement": {
+                      "type": "string",
+                      "minLength": 0,
+                      "maxLength": 5000
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "redistribution",
+                    "originalAuthor",
+                    "authorizationStatement"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            },
+            "authorNotes": { "type": "string", "minLength": 0, "maxLength": 2000 },
+            "avatarKey": {
+              "type": "string",
+              "allOf": [
+                {
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                { "pattern": "^[a-f0-9-]{36}$" }
+              ]
+            },
+            "coverKey": {
+              "type": "string",
+              "allOf": [
+                {
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                { "pattern": "^[a-f0-9-]{36}$" }
+              ]
+            }
+          },
+          "required": [
+            "title",
+            "summary",
+            "tagNames",
+            "readmeMarkdown",
+            "recommendedModels",
+            "origin",
+            "authorNotes"
+          ],
+          "additionalProperties": false
+        },
+        "assets": {
+          "maxItems": 22,
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "key": {
+                    "type": "string",
+                    "allOf": [
+                      {
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      { "pattern": "^[a-f0-9-]{36}$" }
+                    ]
+                  },
+                  "mimeType": {
+                    "type": "string",
+                    "enum": ["image/png", "image/jpeg", "image/webp"]
+                  },
+                  "bytes": { "type": "integer", "minimum": 1, "maximum": 5242880 },
+                  "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+                  "path": {
+                    "type": "string",
+                    "pattern": "^assets\\/[a-f0-9-]{36}\\.(png|jpe?g|webp)$"
+                  }
+                },
+                "required": ["key", "mimeType", "bytes", "sha256", "path"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "key": {
+                    "type": "string",
+                    "allOf": [
+                      {
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      { "pattern": "^[a-f0-9-]{36}$" }
+                    ]
+                  },
+                  "mimeType": {
+                    "type": "string",
+                    "enum": ["image/png", "image/jpeg", "image/webp"]
+                  },
+                  "bytes": { "type": "integer", "minimum": 1, "maximum": 5242880 },
+                  "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+                  "url": { "type": "string", "maxLength": 2048, "format": "uri" }
+                },
+                "required": ["key", "mimeType", "bytes", "sha256", "url"],
+                "additionalProperties": false
+              }
+            ]
+          }
+        },
+        "source": {
+          "type": "object",
+          "properties": {
+            "siteUrl": { "type": "string", "maxLength": 2048, "format": "uri" },
+            "personaUrl": { "type": "string", "maxLength": 2048, "format": "uri" },
+            "publisherName": { "type": "string", "minLength": 0, "maxLength": 100 },
+            "version": { "type": "string", "minLength": 1, "maxLength": 80 },
+            "changelog": { "type": "string", "minLength": 0, "maxLength": 5000 }
+          },
+          "additionalProperties": false
+        },
+        "platform": { "type": "string", "const": "maibot" },
+        "content": {
+          "type": "object",
+          "properties": {
+            "personality": { "type": "string", "minLength": 0, "maxLength": 20000 },
+            "replyStyle": { "type": "string", "minLength": 0, "maxLength": 20000 },
+            "behaviorStyle": { "type": "string", "minLength": 0, "maxLength": 20000 }
+          },
+          "required": ["personality", "replyStyle", "behaviorStyle"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["format", "schemaVersion", "metadata", "assets", "platform", "content"],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "format": { "type": "string", "const": "qingzheng-persona" },
+        "schemaVersion": { "type": "number", "const": 1 },
+        "metadata": {
+          "type": "object",
+          "properties": {
+            "title": { "type": "string", "minLength": 0, "maxLength": 80 },
+            "summary": { "type": "string", "minLength": 0, "maxLength": 200 },
+            "categoryName": { "type": "string", "minLength": 1, "maxLength": 80 },
+            "tagNames": {
+              "maxItems": 8,
+              "type": "array",
+              "items": { "type": "string", "minLength": 1, "maxLength": 80 }
+            },
+            "readmeMarkdown": { "type": "string", "minLength": 0, "maxLength": 30000 },
+            "recommendedModels": {
+              "maxItems": 5,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "modelId": { "type": "string", "minLength": 0, "maxLength": 200 },
+                  "note": { "type": "string", "minLength": 0, "maxLength": 500 }
+                },
+                "required": ["modelId"],
+                "additionalProperties": false
+              }
+            },
+            "origin": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": { "type": "string", "const": "original" },
+                    "redistribution": {
+                      "type": "string",
+                      "enum": ["not_allowed", "attribution_required", "contact_required", "custom"]
+                    },
+                    "policyText": { "type": "string", "minLength": 0, "maxLength": 5000 }
+                  },
+                  "required": ["type", "redistribution"],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": { "type": "string", "const": "repost" },
+                    "redistribution": {
+                      "type": "string",
+                      "enum": ["not_allowed", "attribution_required", "contact_required", "custom"]
+                    },
+                    "policyText": { "type": "string", "minLength": 0, "maxLength": 5000 },
+                    "originalAuthor": { "type": "string", "minLength": 0, "maxLength": 100 },
+                    "sourceUrl": { "type": "string", "maxLength": 2048, "format": "uri" },
+                    "sourceDescription": { "type": "string", "minLength": 0, "maxLength": 2000 },
+                    "authorizationStatement": {
+                      "type": "string",
+                      "minLength": 0,
+                      "maxLength": 5000
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "redistribution",
+                    "originalAuthor",
+                    "authorizationStatement"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            },
+            "authorNotes": { "type": "string", "minLength": 0, "maxLength": 2000 },
+            "avatarKey": {
+              "type": "string",
+              "allOf": [
+                {
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                { "pattern": "^[a-f0-9-]{36}$" }
+              ]
+            },
+            "coverKey": {
+              "type": "string",
+              "allOf": [
+                {
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                { "pattern": "^[a-f0-9-]{36}$" }
+              ]
+            }
+          },
+          "required": [
+            "title",
+            "summary",
+            "tagNames",
+            "readmeMarkdown",
+            "recommendedModels",
+            "origin",
+            "authorNotes"
+          ],
+          "additionalProperties": false
+        },
+        "assets": {
+          "maxItems": 22,
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "key": {
+                    "type": "string",
+                    "allOf": [
+                      {
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      { "pattern": "^[a-f0-9-]{36}$" }
+                    ]
+                  },
+                  "mimeType": {
+                    "type": "string",
+                    "enum": ["image/png", "image/jpeg", "image/webp"]
+                  },
+                  "bytes": { "type": "integer", "minimum": 1, "maximum": 5242880 },
+                  "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+                  "path": {
+                    "type": "string",
+                    "pattern": "^assets\\/[a-f0-9-]{36}\\.(png|jpe?g|webp)$"
+                  }
+                },
+                "required": ["key", "mimeType", "bytes", "sha256", "path"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "key": {
+                    "type": "string",
+                    "allOf": [
+                      {
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      { "pattern": "^[a-f0-9-]{36}$" }
+                    ]
+                  },
+                  "mimeType": {
+                    "type": "string",
+                    "enum": ["image/png", "image/jpeg", "image/webp"]
+                  },
+                  "bytes": { "type": "integer", "minimum": 1, "maximum": 5242880 },
+                  "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+                  "url": { "type": "string", "maxLength": 2048, "format": "uri" }
+                },
+                "required": ["key", "mimeType", "bytes", "sha256", "url"],
+                "additionalProperties": false
+              }
+            ]
+          }
+        },
+        "source": {
+          "type": "object",
+          "properties": {
+            "siteUrl": { "type": "string", "maxLength": 2048, "format": "uri" },
+            "personaUrl": { "type": "string", "maxLength": 2048, "format": "uri" },
+            "publisherName": { "type": "string", "minLength": 0, "maxLength": 100 },
+            "version": { "type": "string", "minLength": 1, "maxLength": 80 },
+            "changelog": { "type": "string", "minLength": 0, "maxLength": 5000 }
+          },
+          "additionalProperties": false
+        },
+        "platform": { "type": "string", "const": "astrbot" },
+        "content": {
+          "type": "object",
+          "properties": {
+            "systemPrompt": { "type": "string", "minLength": 0, "maxLength": 100000 },
+            "dialoguePairs": {
+              "maxItems": 100,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "user": { "type": "string", "minLength": 0, "maxLength": 20000 },
+                  "assistant": { "type": "string", "minLength": 0, "maxLength": 20000 }
+                },
+                "required": ["user", "assistant"],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": ["systemPrompt", "dialoguePairs"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["format", "schemaVersion", "metadata", "assets", "platform", "content"],
+      "additionalProperties": false
+    }
+  ],
+  "$id": "urn:uuid:4a2d4267-a0fa-4016-b9ef-90e4f4dfb7c8",
+  "title": "清蒸云鸭人设通用格式 v1",
+  "description": "结构校验之外仍须验证图片清单、实际字节、哈希、Markdown引用和资源权限"
+}

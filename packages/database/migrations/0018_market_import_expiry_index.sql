@@ -1,0 +1,1 @@
+CREATE INDEX "market_import_expiry_idx" ON "market_imports" USING btree ("expires_at","id");

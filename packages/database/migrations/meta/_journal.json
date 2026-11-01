@@ -1,0 +1,370 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1792916295285,
+      "tag": "0000_daffy_colossus",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792916325371,
+      "tag": "0001_bootstrap",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792922465566,
+      "tag": "0002_system_copy_punctuation",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792927493329,
+      "tag": "0003_auth_foundation",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792931725752,
+      "tag": "0004_flowery_grey_gargoyle",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792940061338,
+      "tag": "0005_mail_and_account_settings",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792941345931,
+      "tag": "0006_dazzling_bastion",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792973375605,
+      "tag": "0007_demonic_war_machine",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792973390583,
+      "tag": "0008_persona_guards",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1792974111324,
+      "tag": "0009_wealthy_warstar",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792974772802,
+      "tag": "0010_bright_abomination",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1792975080406,
+      "tag": "0011_kind_the_twelve",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1792975081364,
+      "tag": "0012_release_integrity",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1792976944575,
+      "tag": "0013_submission_policy_defaults",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1792981521656,
+      "tag": "0014_discovery_taxonomy",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1792982618905,
+      "tag": "0015_native_import_previews",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1792983280546,
+      "tag": "0016_persona_submission_history",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1793052023120,
+      "tag": "0017_market_import_staging",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1793052728442,
+      "tag": "0018_market_import_expiry_index",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1793064180275,
+      "tag": "0019_public_search_projection",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1793073448161,
+      "tag": "0020_export_metrics",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1793087036695,
+      "tag": "0021_import_preview_budget",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1793091603502,
+      "tag": "0022_ranking_snapshots",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1793127331644,
+      "tag": "0023_persona_interactions",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1793142718544,
+      "tag": "0024_comments",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1793173087807,
+      "tag": "0025_user_management",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1793178097664,
+      "tag": "0026_deactivation_decisions",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1793206165004,
+      "tag": "0027_persona_curations",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1793214500903,
+      "tag": "0028_taxonomy_management",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1793220548658,
+      "tag": "0029_announcements",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1793226058618,
+      "tag": "0030_home_settings",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1793231277169,
+      "tag": "0031_model_suggestions",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1793234410137,
+      "tag": "0032_guides",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1793243901927,
+      "tag": "0033_reports",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1793249611576,
+      "tag": "0034_notifications",
+      "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1793364980788,
+      "tag": "0035_report_resolutions",
+      "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1793372854611,
+      "tag": "0036_notification_preferences",
+      "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1793379820719,
+      "tag": "0037_profiles",
+      "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1793382130641,
+      "tag": "0038_profile_notifications",
+      "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1793384723635,
+      "tag": "0039_profile_reports",
+      "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1793394430171,
+      "tag": "0040_interaction_rankings",
+      "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1793420127510,
+      "tag": "0041_mail_delivery_guard",
+      "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1793432072168,
+      "tag": "0042_admin_task_retries",
+      "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1793447755233,
+      "tag": "0043_transfer_settings",
+      "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1793455017781,
+      "tag": "0044_media_settings",
+      "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1793460457008,
+      "tag": "0045_ranking_settings",
+      "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "7",
+      "when": 1793466918882,
+      "tag": "0046_policy_publications",
+      "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1793475221000,
+      "tag": "0047_submission_pending_hint",
+      "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1793483221000,
+      "tag": "0048_account_policy",
+      "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1793486821000,
+      "tag": "0049_system_settings",
+      "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1793507821000,
+      "tag": "0050_ranking_generation_runs",
+      "breakpoints": true
+    },
+    {
+      "idx": 51,
+      "version": "7",
+      "when": 1793511421000,
+      "tag": "0051_operational_task_outcomes",
+      "breakpoints": true
+    }
+  ]
+}

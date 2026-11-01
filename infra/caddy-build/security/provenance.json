@@ -1,0 +1,36 @@
+{
+  "advisory": "https://github.com/go-jose/go-jose/security/advisories/GHSA-mgcc-cww5-fp2q",
+  "cve": "CVE-2026-116587",
+  "upstreamFixCommit": "a0111f82742fa92bceec9ede40845e73319e6230",
+  "upstreamFixModule": "github.com/go-jose/go-jose/v4@v4.1.6",
+  "upstreamFixSum": "h1:sNRkftxFJxwsILiQukqp5z83QBSmntVwmgRY7AqBDO4=",
+  "patchedModule": "github.com/go-jose/go-jose/v3@v3.0.5",
+  "originalModuleSum": "h1:BLLJWbC4nMZOfuPVxoZIxeYsn6Nl2r1fITaJ78UQlVQ=",
+  "license": "Apache-2.0",
+  "patchFile": "infra/caddy-build/security/go-jose-v3-CVE-2026-116587.patch",
+  "patchSha256": "049f7f7feba6832e3533c3b505e32398fc2e3ccce2736319301322841d7bf4bd",
+  "originalFileHashes": [
+    "79f510a4b97fa2e34ec37932cab57e64dfdc9fa6c314654d1ccc2dd93898a532  jwk.go",
+    "3802ca5b8f811f72d33eb662cbbdf53d3b7aa4bcbb6b6c6ddd7695a54e3a3d40  shared.go",
+    "6cc24876cea42cf11503f87ac68456d9169d5e6fec757efaf9e4fd46bc74fb0b  jws.go"
+  ],
+  "patchedFileHashes": [
+    "a96fa40872718c9f27d1472d6fe534a05babc7dbc57808e96d58465420cf18f8  jwk.go",
+    "27ad38088f79b716514aab8489c9fb38a53fcb6dcf16d7e49f3bd76ff2ea22a8  shared.go",
+    "14366d14c763a15ce8814b405c7f948bb8561019d0df20200ac53b2036563244  jws.go"
+  ],
+  "compression": {
+    "advisory": "https://github.com/klauspost/compress/security/advisories/GHSA-fpmh-frq8-7rj8",
+    "module": "github.com/klauspost/compress",
+    "version": "v1.20.2",
+    "release": "https://github.com/klauspost/compress/releases/tag/v1.20.2",
+    "license": "BSD-3-Clause",
+    "regressions": "zstd_test.go"
+  },
+  "scope": [
+    "Bound RSA modulus to 4096 bits before validation",
+    "Check RSA prime size and p*q before validation",
+    "Reject private JWK/EPK header parameters before key parsing",
+    "Populate unprotected JWS headers before sanitizing general serialization"
+  ]
+}

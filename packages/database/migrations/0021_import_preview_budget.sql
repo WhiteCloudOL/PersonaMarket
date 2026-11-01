@@ -1,0 +1,2 @@
+ALTER TABLE "persona_imports" DROP CONSTRAINT "import_payload_bounded";--> statement-breakpoint
+ALTER TABLE "persona_imports" ADD CONSTRAINT "import_payload_bounded" CHECK (octet_length("persona_imports"."payload"::text)<=4194304);

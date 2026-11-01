@@ -1,0 +1,1 @@
+ALTER TABLE "asset_references" ADD CONSTRAINT "asset_references_persona_id_personas_id_fk" FOREIGN KEY ("persona_id") REFERENCES "public"."personas"("id") ON DELETE no action ON UPDATE no action;

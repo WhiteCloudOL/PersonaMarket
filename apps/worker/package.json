@@ -1,0 +1,20 @@
+{
+  "name": "@personamarket/worker",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "license": "AGPL-3.0",
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/main.js",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@personamarket/contracts": "workspace:*",
+    "@personamarket/database": "workspace:*",
+    "@personamarket/server": "workspace:*",
+    "bullmq": "6.4.2",
+    "redis": "6.3.0"
+  }
+}

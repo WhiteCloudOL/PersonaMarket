@@ -1,0 +1,25 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "ui": "stream",
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**", ".next/**", "!.next/cache/**"],
+      "env": ["API_INTERNAL_ORIGIN", "PUBLIC_ORIGIN", "NEXT_TELEMETRY_DISABLED"]
+    },
+    "typecheck": { "dependsOn": ["^build"], "outputs": [] },
+    "@personamarket/api#build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"],
+      "env": ["PM_API_BUILD_SOURCE"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/scripts/build-api.mjs",
+        "$TURBO_ROOT$/scripts/build-provenance.mjs",
+        "$TURBO_ROOT$/scripts/runtime.mjs"
+      ]
+    },
+    "@personamarket/api#typecheck": { "dependsOn": ["build"], "outputs": [] },
+    "dev": { "dependsOn": ["^build"], "cache": false, "persistent": true }
+  }
+}

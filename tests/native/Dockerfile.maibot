@@ -1,0 +1,9 @@
+FROM python:3.12.15-slim@sha256:a0f57064cbdcd6285fa45f51237ab0b35ea8ebaed06a1f5973e89e19dfb86704
+COPY tests/native/maibot-requirements.txt /requirements.txt
+RUN pip install --no-cache-dir --require-hashes -r /requirements.txt
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONPATH=/upstream
+ENV MAIBOT_INSTANCE_DIR=/work
+WORKDIR /work
+USER 1000:1000
+ENTRYPOINT ["python", "/checks/consume-maibot.py"]

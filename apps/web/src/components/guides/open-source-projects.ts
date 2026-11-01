@@ -1,0 +1,21 @@
+export const openSourceProjects = [
+  { name: 'shadcn/ui', href: 'https://ui.shadcn.com/', purpose: '界面组件和设计基础' },
+  { name: 'Base UI', href: 'https://base-ui.com/', purpose: '弹窗、菜单等组件的交互和可访问性' },
+  { name: 'Lucide', href: 'https://lucide.dev/', purpose: '界面图标' },
+  { name: 'Next.js', href: 'https://nextjs.org/', purpose: '网页路由和服务端渲染' },
+  { name: 'React', href: 'https://react.dev/', purpose: '交互界面' },
+  { name: 'Tailwind CSS', href: 'https://tailwindcss.com/', purpose: '页面样式和主题' },
+  {
+    name: 'TanStack Query',
+    href: 'https://tanstack.com/query/latest',
+    purpose: '请求状态和缓存管理',
+  },
+  { name: 'React Hook Form', href: 'https://react-hook-form.com/', purpose: '表单交互' },
+  { name: 'Zod', href: 'https://zod.dev/', purpose: '数据校验' },
+  { name: 'CodeMirror', href: 'https://codemirror.net/', purpose: '文本编辑器' },
+  { name: 'NestJS', href: 'https://nestjs.com/', purpose: '后端服务' },
+  { name: 'Drizzle ORM', href: 'https://orm.drizzle.team/', purpose: '数据库查询和结构管理' },
+  { name: 'PostgreSQL', href: 'https://www.postgresql.org/', purpose: '业务数据存储' },
+  { name: 'Redis', href: 'https://redis.io/', purpose: '缓存和任务队列基础设施' },
+  { name: 'BullMQ', href: 'https://bullmq.io/', purpose: '异步任务处理' },
+] as const;

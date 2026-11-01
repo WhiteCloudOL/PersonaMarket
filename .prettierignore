@@ -1,0 +1,16 @@
+.agents/
+data/
+.data/
+.development/
+node_modules/
+dist/
+.next/
+**/next-env.d.ts
+.turbo/
+pnpm-lock.yaml
+packages/database/migrations/meta/
+test-results/
+playwright-report/
+coverage/
+# Preserve exact native exports as interoperability fixtures.
+tests/fixtures/native/

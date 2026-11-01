@@ -1,0 +1,30 @@
+{
+  "kind": "synthetic text consumed and exported by unmodified official native platform",
+  "upstream": {
+    "maibot": {
+      "version": "1.3.15",
+      "commit": "062d45cf8bd4272ac57d7ec03fcf405e5a458211",
+      "url": "https://codeload.github.com/Mai-with-u/MaiBot/tar.gz/062d45cf8bd4272ac57d7ec03fcf405e5a458211",
+      "sha256": "d961af2794125e5c1a59d1d603b05a3561658659324dc5fe887a37fb4b921dc5",
+      "directory": "MaiBot-062d45cf8bd4272ac57d7ec03fcf405e5a458211"
+    },
+    "astrbot": {
+      "version": "4.29.3",
+      "commit": "f61a7f42696da6df25dc7a249ec9b8d54ed9da18",
+      "url": "https://codeload.github.com/AstrBotDevs/AstrBot/tar.gz/f61a7f42696da6df25dc7a249ec9b8d54ed9da18",
+      "sha256": "273f9701274bdc9af49c75d6f096ad03b1aaf8abaff4d00c71a5908b87e8bd15",
+      "directory": "AstrBot-f61a7f42696da6df25dc7a249ec9b8d54ed9da18",
+      "image": "soulter/astrbot:v4.29.3@sha256:c93a6d19507ba45474c3dfb82aad9d36eb432a478112f13c7e6325b5ebffc5f2"
+    }
+  },
+  "files": [
+    {
+      "file": "maibot-v1.3.15.toml",
+      "sha256": "7b1e7409cbb0f58203588fc4664abeb037fe8b333e43d14d36c86741f0358262"
+    },
+    {
+      "file": "astrbot-v4.29.3.json",
+      "sha256": "3730bc3f1b36f7821a7a56f4342429873941f84d7918db9ac56872563a3bc7a0"
+    }
+  ]
+}

@@ -1,0 +1,290 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+@source "../components";
+
+/* 系统偏好由 CSS 在首屏和媒体变化时解析，令牌与组件变体不等待水合 */
+@custom-variant dark {
+  &:is(.dark, .dark *) {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    &:is(.system, .system *) {
+      @slot;
+    }
+  }
+}
+
+@theme inline {
+  --font-heading: var(--font-sans);
+  --font-sans:
+    'Microsoft YaHei UI', 'Microsoft YaHei', 'PingFang SC', 'Noto Sans CJK SC', ui-sans-serif,
+    system-ui, sans-serif;
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --color-highlight: var(--highlight);
+  --color-maibot: var(--maibot);
+  --color-maibot-soft: var(--maibot-soft);
+  --color-astrbot: var(--astrbot);
+  --color-astrbot-soft: var(--astrbot-soft);
+  --color-personality: var(--personality);
+  --color-personality-soft: var(--personality-soft);
+  --shadow-panel:
+    0 1px 2px color-mix(in oklch, var(--foreground) 3%, transparent),
+    0 8px 28px -20px color-mix(in oklch, var(--foreground) 16%, transparent);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  color-scheme: light;
+  --control-touch-target: 2.75rem;
+  --illustration-opacity: 0.95;
+  --background: oklch(0.988 0.004 140);
+  --foreground: oklch(0.2 0.02 255);
+  --page-glow: oklch(0.96 0.025 150);
+  --highlight: oklch(0.78 0.16 75);
+  --maibot: oklch(0.57 0.19 258);
+  --maibot-soft: oklch(0.97 0.016 250);
+  --astrbot: oklch(0.56 0.11 155);
+  --astrbot-soft: oklch(0.97 0.018 155);
+  --personality: oklch(0.5 0.16 0);
+  --personality-soft: oklch(0.98 0.01 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.51 0.085 148);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.94 0.022 148);
+  --secondary-foreground: oklch(0.35 0.065 153);
+  --muted: oklch(0.955 0.009 145);
+  --muted-foreground: oklch(0.51 0.025 255);
+  --accent: oklch(0.94 0.028 147);
+  --accent-foreground: oklch(0.35 0.065 153);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.925 0.008 145);
+  --input: oklch(0.87 0.016 145);
+  --ring: oklch(0.56 0.09 153);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --radius: 0.625rem;
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+}
+
+:root {
+  @variant dark {
+    --illustration-opacity: 0.7;
+    --page-glow: oklch(0.24 0.035 160);
+    --personality: oklch(0.8 0.1 0);
+    --personality-soft: oklch(0.26 0.025 0);
+    --highlight: oklch(0.8 0.14 75);
+    --maibot: oklch(0.76 0.1 258);
+    --maibot-soft: oklch(0.25 0.035 250);
+    --astrbot: oklch(0.77 0.1 155);
+    --astrbot-soft: oklch(0.25 0.035 155);
+    color-scheme: dark;
+    --background: oklch(0.17 0.014 155);
+    --foreground: oklch(0.985 0 0);
+    --card: oklch(0.22 0.016 155);
+    --card-foreground: oklch(0.985 0 0);
+    --popover: oklch(0.205 0 0);
+    --popover-foreground: oklch(0.985 0 0);
+    --primary: oklch(0.78 0.105 151);
+    --primary-foreground: oklch(0.2 0.03 155);
+    --secondary: oklch(0.269 0 0);
+    --secondary-foreground: oklch(0.985 0 0);
+    --muted: oklch(0.269 0 0);
+    --muted-foreground: oklch(0.73 0.018 155);
+    --accent: oklch(0.29 0.035 155);
+    --accent-foreground: oklch(0.985 0 0);
+    --destructive: oklch(0.704 0.191 22.216);
+    --border: oklch(1 0 0 / 10%);
+    --input: oklch(1 0 0 / 15%);
+    --ring: oklch(0.556 0 0);
+    --chart-1: oklch(0.87 0 0);
+    --chart-2: oklch(0.556 0 0);
+    --chart-3: oklch(0.439 0 0);
+    --chart-4: oklch(0.371 0 0);
+    --chart-5: oklch(0.269 0 0);
+    --sidebar: oklch(0.205 0 0);
+    --sidebar-foreground: oklch(0.985 0 0);
+    --sidebar-primary: oklch(0.488 0.243 264.376);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: oklch(0.269 0 0);
+    --sidebar-accent-foreground: oklch(0.985 0 0);
+    --sidebar-border: oklch(1 0 0 / 10%);
+    --sidebar-ring: oklch(0.556 0 0);
+  }
+}
+
+/* 顶栏根据可用空间维持单行 */
+[data-site-header] {
+  container: site-header / inline-size;
+}
+
+.site-desktop-navigation {
+  display: none;
+}
+
+.site-mobile-navigation {
+  display: block;
+}
+
+/* 字号放大时按实际文字空间折叠导航，避免仅靠视口断点把账号操作挤到屏外 */
+@media (min-width: 64rem) {
+  @container site-header (min-width: 56rem) {
+    .site-desktop-navigation {
+      display: flex;
+    }
+    .site-mobile-navigation {
+      display: none;
+    }
+  }
+}
+
+/* 插画与横幅融为同一画面；遮罩保留真实透明度，适应主题背景 */
+.home-hero-art {
+  opacity: var(--illustration-opacity);
+  mask-image:
+    linear-gradient(to right, transparent, #000 12%, #000 85%, transparent),
+    linear-gradient(to bottom, transparent, #000 24%, #000 76%, transparent);
+  mask-composite: intersect;
+}
+
+.explore-intro-art {
+  opacity: var(--illustration-opacity);
+  mask-image:
+    linear-gradient(to right, transparent, #000 44%, #000 90%, transparent),
+    linear-gradient(to bottom, transparent, #000 10%, #000 70%, transparent);
+  mask-composite: intersect;
+}
+
+.auth-companion-art {
+  opacity: var(--illustration-opacity);
+  mask-image:
+    linear-gradient(to bottom, transparent, #000 12%, #000 84%, transparent),
+    linear-gradient(to right, transparent, #000 8%, #000 90%, transparent);
+  mask-composite: intersect;
+}
+
+.creation-companion-art {
+  opacity: var(--illustration-opacity);
+  mask-image:
+    linear-gradient(to right, transparent, #000 8%, #000 92%, transparent),
+    linear-gradient(to bottom, transparent, #000 20%, #000 90%, transparent);
+  mask-composite: intersect;
+}
+
+@media (min-width: 48rem) {
+  .home-hero-art {
+    mask-image:
+      linear-gradient(to right, transparent 43%, #000 72%, #000 94%, transparent),
+      linear-gradient(to bottom, transparent, #000 16%, #000 74%, transparent);
+  }
+}
+
+@layer base {
+  button,
+  a {
+    touch-action: manipulation;
+  }
+  @media (pointer: coarse) {
+    [data-slot='button'],
+    [data-slot='sheet-close'],
+    [data-slot='select-trigger'],
+    [data-slot='select-item'],
+    [data-slot='dropdown-menu-trigger'],
+    [data-slot='dropdown-menu-item'],
+    [data-slot='toggle-group-item'],
+    [data-slot='tabs-trigger'] {
+      min-block-size: var(--control-touch-target);
+      min-inline-size: var(--control-touch-target);
+    }
+  }
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background font-sans text-base text-foreground antialiased;
+    background-image: radial-gradient(ellipse at 15% 0%, var(--page-glow), transparent 48rem);
+    min-block-size: 100dvh;
+  }
+  html {
+    @apply font-sans;
+    scroll-padding-top: 8rem;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      /* 不为原本无过渡的元素引入过渡，避免嵌套表单在切换主题时滞留旧前景色 */
+      transition-duration: 0s !important;
+      scroll-behavior: auto !important;
+    }
+  }
+  :target {
+    scroll-margin-top: 6rem;
+  }
+  input,
+  textarea,
+  select {
+    scroll-margin-block: 7rem;
+  }
+  @media (pointer: coarse) {
+    input:not([type='checkbox']):not([type='radio']),
+    textarea,
+    select {
+      font-size: 1rem;
+    }
+    [data-slot='dropdown-menu-item'] {
+      padding-block: 0.65rem;
+    }
+  }
+}

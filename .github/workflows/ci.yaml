@@ -1,0 +1,64 @@
+name: 工程门禁
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+      - name: 固定 pnpm
+        run: corepack enable && corepack prepare pnpm@10.34.8 --activate
+      - name: 安装锁定依赖
+        run: pnpm install --frozen-lockfile
+      - name: 生成隔离开发配置并启动依赖
+        run: pnpm env:init && pnpm infra:up
+      - name: 数据目录约束
+        run: pnpm data:check
+      - name: 安装浏览器
+        run: pnpm exec playwright install --with-deps chromium
+      - name: 完整源码、集成与浏览器门禁
+        run: pnpm verify
+      - name: 双端视觉与触控矩阵
+        run: pnpm test:visual
+      - name: 核验依赖与安全
+        run: pnpm deps:check && pnpm security:scan
+      - name: 构建容器并启动真实进程
+        run: |
+          pnpm build:images
+          docker compose -f compose.yaml -f compose.dev.yaml up -d --wait
+          curl --fail http://127.0.0.1:8080/api/v1/public/config
+      - name: 受控 HTTPS 在线素材与 SSRF
+        run: pnpm test:remote
+      - name: 本地隔离恢复与持久化
+        run: |
+          docker compose -f compose.yaml -f compose.dev.yaml stop
+          trap 'docker compose --parallel 1 -f compose.yaml -f compose.dev.yaml up -d --wait' EXIT
+          pnpm test:compose
+          docker compose --parallel 1 -f compose.yaml -f compose.dev.yaml up -d --wait
+          trap - EXIT
+          pnpm test:recovery
+          pnpm test:proxy
+      - name: 官方平台原生消费
+        run: pnpm test:native
+      - name: 镜像漏洞扫描
+        run: pnpm security:images
+      - name: 保留不含会话和测试正文的扫描摘要
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: verification-evidence
+          path: |
+            .development/evidence/security-scan.json
+            .development/evidence/npm-audit.json
+          include-hidden-files: true
+          if-no-files-found: ignore

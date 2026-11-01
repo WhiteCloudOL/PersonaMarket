@@ -1,0 +1,60 @@
+{$CADDY_DOMAIN} {
+	encode zstd gzip
+	header {
+		-Server
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		X-Frame-Options DENY
+	}
+	@market_import {
+		method POST
+		path /api/v1/me/market-imports/preview
+	}
+	@native_import_file {
+		method POST
+		path /api/v1/me/persona-imports/preview/file /api/v1/me/persona-imports/text/source/file
+	}
+	@image_upload {
+		method POST
+		path /api/v1/me/assets/upload/content /api/v1/me/assets/upload/evidence /api/v1/me/market-imports/*/images/*/upload
+	}
+	route {
+		# 仅上传入口预留multipart开销；API继续执行128MiB/4MiB文件与5MiB图片硬限
+		handle @native_import_file {
+			request_body {
+				max_size 5MiB
+			}
+			reverse_proxy api:3001
+		}
+		handle @market_import {
+			request_body {
+				max_size 129MiB
+			}
+			reverse_proxy api:3001
+		}
+		handle @image_upload {
+			request_body {
+				max_size 6MiB
+			}
+			reverse_proxy api:3001
+		}
+		handle /api/v1/* {
+			request_body {
+				max_size 4MiB
+			}
+			reverse_proxy api:3001
+		}
+		handle /health/* {
+			request_body {
+				max_size 4MiB
+			}
+			reverse_proxy api:3001
+		}
+		handle {
+			request_body {
+				max_size 4MiB
+			}
+			reverse_proxy web:3000
+		}
+	}
+}

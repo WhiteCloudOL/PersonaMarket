@@ -1,0 +1,1 @@
+INSERT INTO site_settings (key, value) VALUES ('media', '{"uploadsEnabled":true,"remoteImportsEnabled":true,"maxImageKiB":5120,"maxImagesPerAccount":100,"maxReadmeImages":20,"maxStorageMiBPerAccount":100,"maxConcurrentImports":3,"sourceDomains":[]}'::jsonb) ON CONFLICT (key) DO NOTHING;

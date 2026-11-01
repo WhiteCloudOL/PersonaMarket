@@ -1,0 +1,17 @@
+{
+  "maibot": {
+    "version": "1.3.15",
+    "commit": "062d45cf8bd4272ac57d7ec03fcf405e5a458211",
+    "url": "https://codeload.github.com/Mai-with-u/MaiBot/tar.gz/062d45cf8bd4272ac57d7ec03fcf405e5a458211",
+    "sha256": "d961af2794125e5c1a59d1d603b05a3561658659324dc5fe887a37fb4b921dc5",
+    "directory": "MaiBot-062d45cf8bd4272ac57d7ec03fcf405e5a458211"
+  },
+  "astrbot": {
+    "version": "4.29.3",
+    "commit": "f61a7f42696da6df25dc7a249ec9b8d54ed9da18",
+    "url": "https://codeload.github.com/AstrBotDevs/AstrBot/tar.gz/f61a7f42696da6df25dc7a249ec9b8d54ed9da18",
+    "sha256": "273f9701274bdc9af49c75d6f096ad03b1aaf8abaff4d00c71a5908b87e8bd15",
+    "directory": "AstrBot-f61a7f42696da6df25dc7a249ec9b8d54ed9da18",
+    "image": "soulter/astrbot:v4.29.3@sha256:c93a6d19507ba45474c3dfb82aad9d36eb432a478112f13c7e6325b5ebffc5f2"
+  }
+}

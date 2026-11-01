@@ -1,0 +1,16 @@
+# Keep project text consistent across Windows and Linux checkouts.
+* text=auto eol=lf
+
+# 上游 Skill 按原始字节核验，避免 Windows 换行转换导致 SHA-256 漂移。
+.agents/skills/** -text
+scripts/*.mjs text eol=lf
+scripts/*.json text eol=lf
+scripts/*.ps1 text eol=crlf
+scripts/*.sh text eol=lf
+infra/**/*.sh text eol=lf
+
+# Preserve upstream license text, including its original indentation and whitespace.
+docs/third-party/*LICENSE*.txt -text -whitespace
+
+# Unified diff 的上下文空格和 Go 原始制表符属于补丁格式，字节由构建哈希核验
+infra/caddy-build/security/*.patch -text whitespace=-blank-at-eol,-space-before-tab,-blank-at-eof

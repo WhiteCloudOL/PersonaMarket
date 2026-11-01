@@ -1,0 +1,4 @@
+[personality]
+personality = "  清蒸云鸭 🦆\n第二行 \"双引号\" 与 '单引号'、反斜杠 \\、制表\t、回车\r、控制字符\u0001、DEL\u007f  "
+reply_style = "表达自然\n保留换行与中文，避免冗长"
+behavior_style = "尊重隐私，遇到不确定的信息先核实"
