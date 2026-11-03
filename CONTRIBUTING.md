@@ -15,7 +15,7 @@ README 只介绍实际可用能力。设计稿、进度、测试证据与未验�
 
 ## 开发环境
 
-要求 Node.js **24.22.1**、pnpm **10.34.8** 和 Docker Compose（实测 **5.3.1 / 5.5.1**）。精确依赖以 package.json 和 pnpm-lock.yaml 为准，兼容性核验记录保存在本地 .development/DEPENDENCIES.md。
+要求 Node.js **26.13.0**、pnpm **10.34.8** 和 Docker Compose（实测 **5.3.1 / 5.5.1**）。Node.js 26 可用 `npm install --global pnpm@10.34.8` 安装固定的 pnpm。精确依赖以 package.json 和 pnpm-lock.yaml 为准，兼容性核验记录保存在本地 .development/DEPENDENCIES.md。
 
 ```sh
 node scripts/install-agent-skills.mjs

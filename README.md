@@ -94,7 +94,7 @@
 
 ## 本地运行
 
-准备 **Docker**、**Docker Compose 5.5.1** 和 **Node.js 24.22.1**，在项目根目录打开终端
+准备 **Docker**、**Docker Compose 5.5.1** 和 **Node.js 26.13.0**，在项目根目录打开终端
 
 Node.js 用于生成本机配置，站点运行环境由容器准备
 

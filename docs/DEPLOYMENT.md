@@ -2,7 +2,7 @@
 
 ## 本地运行
 
-要求 Docker、Docker Compose（已验证 5.3.1 / 5.5.1）与 Node.js 24.22.1。在根目录首次生成配置，再构建和启动：
+要求 Docker、Docker Compose（已验证 5.3.1 / 5.5.1）与 Node.js 26.13.0。在根目录首次生成配置，再构建和启动：
 
 ```sh
 node scripts/init-env.mjs

@@ -149,8 +149,8 @@ function git(directory, hooks, args) {
 }
 
 export function installAll() {
-  if (Number(process.versions.node.split('.')[0]) < 24) {
-    throw new Error('安装器要求 Node.js 24 或更高版本；本项目使用 Node.js 24 LTS。');
+  if (Number(process.versions.node.split('.')[0]) < 26) {
+    throw new Error('安装器要求 Node.js 26 或更高版本；本项目使用 Node.js 26 LTS。');
   }
   mkdirSync(agentsRoot, { recursive: true });
   plainDirectory(agentsRoot);

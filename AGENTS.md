@@ -17,7 +17,7 @@
 | 领域              | 必须采用                                                                       |
 | ----------------- | ------------------------------------------------------------------------------ |
 | 仓库              | pnpm workspace + Turborepo，单一 `pnpm-lock.yaml`                              |
-| 语言 / 运行时     | TypeScript strict；Node.js 24 LTS 的受支持补丁版本                             |
+| 语言 / 运行时     | TypeScript strict；Node.js 26 LTS 的受支持补丁版本                             |
 | Web               | Next.js 16 App Router + 兼容的稳定版 React                                     |
 | UI                | **shadcn/ui + Tailwind CSS 4**；默认统一使用官方 Base UI 组件体系；Lucide 图标 |
 | 表单 / 客户端请求 | React Hook Form + Zod；TanStack Query                                          |

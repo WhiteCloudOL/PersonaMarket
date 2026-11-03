@@ -37,7 +37,7 @@
 
 | 组件                     | 固定版本         | 上游许可 / 来源                                                                                                             |
 | ------------------------ | ---------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| Node.js                  | 24.22.1          | Node.js 主体 MIT，捆绑组件有各自许可；保留发行包声明                                                                        |
+| Node.js                  | 26.13.0          | Node.js 主体 MIT，捆绑组件有各自许可；保留发行包声明                                                                        |
 | PostgreSQL               | 18.6             | PostgreSQL License，见 [官方许可](https://www.postgresql.org/about/licence/)                                                |
 | Redis Server             | 8.2.7            | Redis 8 提供 RSALv2 / SSPLv1 / AGPLv3 选择，本项目采用其 AGPLv3 选项；见 [Redis 官方说明](https://redis.io/legal/licenses/) |
 | Caddy                    | 2.11.7           | Apache-2.0，见 [Caddy 上游](https://github.com/caddyserver/caddy)                                                           |
@@ -51,7 +51,7 @@ shadcn Skill 的 MIT 原文件保留在 `.agents/skills/shadcn/LICENSE.md`，副
 
 ## 补丁运行镜像与原生验证工具
 
-Node 24.22.1 的完整捆绑组件声明见 [Node 许可](third-party/node-LICENSE.txt)，同时置于应用镜像 `/usr/share/doc/node/LICENSE`。Distroless cc-debian13 来自 GoogleContainerTools/distroless 官方镜像，基础系统保留各自许可，精确摘要见 Dockerfile。
+Node 26.13.0 的完整捆绑组件声明见 [Node 许可](third-party/node-LICENSE.txt)，同时置于应用镜像 `/usr/share/doc/node/LICENSE`。Distroless cc-debian13 来自 GoogleContainerTools/distroless 官方镜像，基础系统保留各自许可，精确摘要见 Dockerfile。
 
 Caddy 2.11.7 与 gosu 1.19 使用 Go 1.27.3 重新构建，Caddy 的 x/net 固定 0.60.0，模块校验值保存在 `infra/caddy-build/go.sum`。上游及 Go 模块许可分别见 [Caddy 与 Go 模块](third-party/caddy-Go-LICENSES.txt)、[gosu](third-party/gosu-LICENSE.txt)、[gosu 的 Go 模块](third-party/gosu-Go-LICENSES.txt)，对应文件也随运行镜像分发。PostgreSQL、Redis 服务版本保持 18.6、8.2.7，系统补丁版本明确写入 Dockerfile。
 

@@ -128,7 +128,7 @@ try {
   for (const service of status) assert.equal(service.LocalVolumes, '0');
   assert.equal(
     compose(['exec', '-T', 'api', 'node', '-p', 'process.version+":"+process.getuid()']),
-    'v24.22.1:1000',
+    'v' + readFileSync(join(root, '.node-version'), 'utf8').trim() + ':1000',
   );
   assert.equal(compose(['exec', '-T', 'web', 'node', '-p', 'process.getuid()']), '1000');
   assert.equal(

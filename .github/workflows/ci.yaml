@@ -17,7 +17,7 @@ jobs:
         with:
           node-version-file: .node-version
       - name: 固定 pnpm
-        run: corepack enable && corepack prepare pnpm@10.34.8 --activate
+        run: npm install --global pnpm@10.34.8
       - name: 安装锁定依赖
         run: pnpm install --frozen-lockfile
       - name: 生成隔离开发配置并启动依赖
