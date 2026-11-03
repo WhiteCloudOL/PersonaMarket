@@ -2,6 +2,11 @@ import { createDatabase } from '@personamarket/database';
 import { parseServerEnvironment, probeRedis, webEnvironment } from '@personamarket/server';
 import { environment, pnpm, supervise } from './runtime.mjs';
 
+const options = process.argv.slice(2);
+if (options.length > 1 || options.some((option) => option !== '--without-worker')) {
+  throw new Error('开发启动只支持可选参数 --without-worker。');
+}
+
 try {
   const source = environment();
   const config = parseServerEnvironment(source);
@@ -20,7 +25,9 @@ try {
   };
   supervise([
     pnpm(['--filter', '@personamarket/api', 'dev'], backend),
-    pnpm(['--filter', '@personamarket/worker', 'dev'], backend),
+    ...(options.includes('--without-worker')
+      ? []
+      : [pnpm(['--filter', '@personamarket/worker', 'dev'], backend)]),
     pnpm(['--filter', '@personamarket/web', 'dev'], { ...system, PORT: '3000' }),
   ]);
 } catch (cause) {

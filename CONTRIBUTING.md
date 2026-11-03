@@ -31,6 +31,8 @@ Windows 也可执行 `./scripts/install-agent-skills.ps1`，macOS / Linux 使用
 
 env:init 只首次创建 .env；已有文件按样例补充，STORAGE_ROOT 指向项目 data/storage 的绝对路径。开发站点位于 http://127.0.0.1:3000，PUBLIC_ORIGIN 必须与浏览器访问地址完全一致，API 位于 http://127.0.0.1:3001。infra:up 同时启动真实 Mailpit（SMTP 11025、收件箱 18025，均只绑定回环地址）。Web 只接收允许的公开环境信息。
 
+仅检查页面与同步业务时，可用 `pnpm infra:up --base-only` 启动 PostgreSQL 和 Redis，执行 `pnpm db:migrate` 后用 `pnpm dev --without-worker` 在宿主机启动 Web 和 API。需要处理异步任务时运行默认的 `pnpm dev`。验证注册、邮箱验证或密码重置前，运行 `pnpm infra:up` 启动 Mailpit，并使用带 Worker 的默认开发模式。`pnpm infra:down --base-only` 只停止两个基础服务，默认 `pnpm infra:down` 也停止 Mailpit。
+
 Windows 首次生成配置后执行 `./scripts/secure-local-data.ps1`，移除 `.env` 与 `data/` 从父目录继承的权限，仅保留当前账号、SYSTEM 和本机管理员组；执行 `./scripts/secure-local-data.ps1 -Check` 可只读复核入口 ACL。已有子目录的显式 ACL 不会被重置，须单独核对；脚本发现入口链接或额外允许项会报错。Node 的 POSIX mode 参数不能代替 Windows NTFS ACL。
 
 所有长期运行数据、备份与维护缓存都放在 data/。Compose 使用目录绑定；测试数据库必须独立，禁止用业务库代替或删除数据目录解决失败。详见 [数据维护](docs/OPERATIONS.md)。
