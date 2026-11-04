@@ -1,21 +1,14 @@
 'use client';
 import { Controller, useFormContext } from 'react-hook-form';
-import { VerificationEmailTimingSchema, type AccountSettingsWrite } from '@personamarket/contracts';
+import type { AccountSettingsWrite } from '@personamarket/contracts';
 import { Button } from '@personamarket/ui/components/button';
 import { Switch } from '@personamarket/ui/components/switch';
-import { ToggleGroup, ToggleGroupItem } from '@personamarket/ui/components/toggle-group';
 import {
   Collapsible,
   CollapsibleTrigger,
   CollapsibleContent,
 } from '@personamarket/ui/components/collapsible';
-import {
-  Field,
-  FieldGroup,
-  FieldLabel,
-  FieldDescription,
-  FieldError,
-} from '@personamarket/ui/components/field';
+import { Field, FieldGroup, FieldLabel } from '@personamarket/ui/components/field';
 import { EditorSection } from '../personas/editor-section';
 import { AuthField } from '../auth/auth-fields';
 
@@ -32,7 +25,7 @@ export function AccountSettingsInputs({
     <>
       <EditorSection
         title="注册策略"
-        description="两种发送时机都需要可用的邮件服务，关闭注册不影响已有账号登录、找回或申请验证邮件"
+        description="新用户在注册页输入邮箱验证码后才能创建账号，关闭注册不影响已有账号登录和找回密码"
       >
         <FieldGroup>
           <Controller
@@ -48,48 +41,6 @@ export function AccountSettingsInputs({
                   checked={field.value}
                   onCheckedChange={field.onChange}
                 />
-              </Field>
-            )}
-          />
-          <Controller
-            name="data.verificationEmailTiming"
-            control={form.control}
-            render={({ field }) => (
-              <Field data-invalid={Boolean(errors.data?.verificationEmailTiming)}>
-                <FieldLabel id="verification-timing-label">验证邮件发送时机</FieldLabel>
-                <ToggleGroup
-                  aria-labelledby="verification-timing-label"
-                  aria-describedby="verification-timing-help verification-timing-error"
-                  aria-invalid={Boolean(errors.data?.verificationEmailTiming)}
-                  value={[field.value]}
-                  onValueChange={(values) => {
-                    const parsed = VerificationEmailTimingSchema.safeParse(values[0]);
-                    if (parsed.success) field.onChange(parsed.data);
-                  }}
-                  variant="outline"
-                  className="w-full flex-wrap items-stretch"
-                >
-                  <ToggleGroupItem
-                    value="on_registration"
-                    className="h-auto min-h-11 min-w-0 max-w-full whitespace-normal px-3 py-2 [overflow-wrap:anywhere]"
-                  >
-                    注册时自动发送
-                  </ToggleGroupItem>
-                  <ToggleGroupItem
-                    value="on_request"
-                    className="h-auto min-h-11 min-w-0 max-w-full whitespace-normal px-3 py-2 [overflow-wrap:anywhere]"
-                  >
-                    登录后主动申请
-                  </ToggleGroupItem>
-                </ToggleGroup>
-                <FieldDescription id="verification-timing-help">
-                  {field.value === 'on_registration'
-                    ? '注册时安排发送验证邮件；未验证也可以先登录和编辑私有草稿'
-                    : '注册时不自动发送，用户登录后在账号页主动申请；提交作品与公开互动等仍需验证邮箱'}
-                </FieldDescription>
-                <FieldError id="verification-timing-error">
-                  {errors.data?.verificationEmailTiming?.message}
-                </FieldError>
               </Field>
             )}
           />
@@ -136,7 +87,7 @@ export function AccountSettingsInputs({
                   查看注册计数口径
                 </summary>
                 <p className="leading-7">
-                  开放注册时，按通过格式校验的注册尝试计数，后续失败仍计入。关闭注册后不扣业务窗口次数，但固定每小时保护仍在。同一窗口收紧次数不会清空计数，切回尚未过期的相同窗口继续使用原计数。修改邮件时机或会话期限不会重置注册额度，验证邮件和找回仍有独立保护。
+                  开放注册时，按通过格式校验的注册尝试计数，后续失败仍计入。关闭注册后不扣业务窗口次数，但固定每小时保护仍在。同一窗口收紧次数不会清空计数，切回尚未过期的相同窗口继续使用原计数。修改会话期限不会重置注册额度，验证邮件和找回仍有独立保护。
                 </p>
               </details>
               <AuthField

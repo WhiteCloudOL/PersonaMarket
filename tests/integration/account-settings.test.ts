@@ -1,3 +1,4 @@
+import { seedLegacyUnverified } from '../fixtures/legacy-account.js';
 import { randomUUID } from 'node:crypto';
 import { afterEach, beforeEach, expect, it } from 'vitest';
 import { AuthRepository } from '@personamarket/api/testing';
@@ -16,7 +17,7 @@ import { createAdministrator, hashPassword } from '@personamarket/server';
 import { createAuthStack } from '../fixtures/auth-stack.js';
 import type { AuthHttp } from '../fixtures/auth-http.js';
 import { completePersona } from '../fixtures/creator.js';
-import { mailToken } from '../fixtures/mailpit.js';
+import { mailCode, mailToken } from '../fixtures/mailpit.js';
 
 // 每例只有一套真实API/PG/Redis/Worker，正常SMTP始终运行；不停止或故障注入基础设施。
 let stack: Awaited<ReturnType<typeof createAuthStack>>;
@@ -96,7 +97,7 @@ async function expectError(response: Response, status: number, code: string) {
   return result;
 }
 
-it('默认策略兼容自动邮件，公开上下文白名单与实际Mailpit验证闭环', async () => {
+it('注册必须先收取真实验证码，公开上下文保持白名单', async () => {
   const http = stack.browser(),
     input = person();
   const context = await http.context();
@@ -109,19 +110,15 @@ it('默认策略兼容自动邮件，公开上下文白名单与实际Mailpit验
     'settingsRevision',
     'verificationEmailTiming',
   ]);
-  const response = await http.write('/api/v1/auth/register', input);
-  expect(response.status).toBe(200);
-  expect(AuthNoticeResponseSchema.parse(await response.json()).data.message).toContain('验证邮件');
-  expect(await state(input.username)).toEqual({ verified: false, tokens: 1 });
+  const issued = await http.write('/api/v1/auth/register/code', { email: input.email });
+  expect(issued.status).toBe(200);
+  expect(AuthNoticeResponseSchema.parse(await issued.json()).data.message).toContain('验证码');
+  expect(await state(input.username)).toBeUndefined();
   expect(await outboxCount()).toBe(1);
   expect((await http.context()).data.account).toBeNull();
-  expect(
-    (
-      await http.write('/api/v1/auth/verify-email', {
-        token: await mailToken(input.email, 'verify-email', stack.tick),
-      })
-    ).status,
-  ).toBe(200);
+  const code = await mailCode(input.email, '注册', stack.tick);
+  expect((await http.write('/api/v1/auth/register', { ...input, code })).status).toBe(200);
+  expect(await state(input.username)).toEqual({ verified: true, tokens: 0 });
   expect(
     (
       await http.write('/api/v1/auth/login', {
@@ -133,7 +130,7 @@ it('默认策略兼容自动邮件，公开上下文白名单与实际Mailpit验
   expect((await http.context()).data.account?.emailVerified).toBe(true);
 });
 
-it('按需模式不排邮件/令牌且不扣收件人预算，未验证仍能登录编辑私稿但不能投稿', async () => {
+it('旧按需配置不能跳过新注册校验，历史未验证账号仍可保存私稿和申请验证', async () => {
   const admin = await stack.admin();
   const saved = await save(admin.http, { verificationEmailTiming: 'on_request' });
   const http = stack.browser(),
@@ -143,15 +140,11 @@ it('按需模式不排邮件/令牌且不扣收件人预算，未验证仍能登
     verificationEmailTiming: 'on_request',
     settingsRevision: saved.result.meta.revision,
   });
-  const messages: string[] = [];
-  // 同一已存在身份的重复申请也不给出存在性差异，且不耗按需模式不存在的邮件预算。
-  for (let attempt = 0; attempt < 4; attempt++) {
-    const response = await http.write('/api/v1/auth/register', input);
-    expect(response.status).toBe(200);
-    messages.push(AuthNoticeResponseSchema.parse(await response.json()).data.message);
-  }
-  expect(new Set(messages).size).toBe(1);
-  expect(messages[0]).toContain('申请验证邮件');
+  expect((await http.write('/api/v1/auth/register', { ...input, code: '000000' })).status).toBe(
+    400,
+  );
+  expect(await state(input.username)).toBeUndefined();
+  await seedLegacyUnverified(stack.owner, input);
   expect(await state(input.username)).toEqual({ verified: false, tokens: 0 });
   expect(await outboxCount()).toBe(initialMail);
   expect(
@@ -275,11 +268,11 @@ it('关闭注册只阻止新申请，已有账号可登录、显式验证和找�
   await save(admin.http, { verificationEmailTiming: 'on_request', sessionTtlSeconds: 600 });
   const http = stack.browser(),
     input = person();
-  expect((await http.write('/api/v1/auth/register', input)).status).toBe(200);
+  await seedLegacyUnverified(stack.owner, input);
   await save(admin.http, { registrationEnabled: false });
   expect((await http.context()).data.registrationAvailable).toBe(false);
   await expectError(
-    await http.write('/api/v1/auth/register', person()),
+    await http.write('/api/v1/auth/register/code', { email: person().email }),
     503,
     'SERVICE_UNAVAILABLE',
   );
@@ -330,7 +323,11 @@ it.each(['on_registration', 'on_request'] as const)(
       http = stack.browser(),
       input = person();
     expect((await http.context()).data.registrationAvailable).toBe(false);
-    await expectError(await http.write('/api/v1/auth/register', input), 503, 'SERVICE_UNAVAILABLE');
+    await expectError(
+      await http.write('/api/v1/auth/register/code', { email: input.email }),
+      503,
+      'SERVICE_UNAVAILABLE',
+    );
     expect(await state(input.username)).toBeUndefined();
     expect(await outboxCount()).toBe(beforeMail);
     const accounts = await settings(admin.http);
@@ -530,7 +527,7 @@ it('匿名与普通用户不能读取私有策略/历史或修改策略，分页
   const saved = await save(admin.http, { verificationEmailTiming: 'on_request' });
   const ordinary = stack.browser(),
     input = person();
-  expect((await ordinary.write('/api/v1/auth/register', input)).status).toBe(200);
+  expect((await ordinary.register(input, stack.tick)).status).toBe(200);
   expect(
     (
       await ordinary.write('/api/v1/auth/login', {
@@ -612,19 +609,21 @@ it('业务IP窗口沿用同窗口计数，修改无关字段/次数不重置，�
     registrationRateLimit: { maxAttempts: 3, windowSeconds: 60 },
   });
   for (let index = 0; index < 2; index++)
-    expect((await stack.browser().write('/api/v1/auth/register', person())).status).toBe(200);
+    expect((await stack.browser().register(person(), stack.tick)).status).toBe(200);
   await save(admin.http, {
     sessionTtlSeconds: 7200,
     registrationRateLimit: { maxAttempts: 2, windowSeconds: 60 },
   });
-  const blocked = await stack.browser().write('/api/v1/auth/register', person());
+  const blocked = await stack
+    .browser()
+    .write('/api/v1/auth/register', { ...person(), code: '000000' });
   await expectError(blocked, 429, 'RATE_LIMITED');
   expect(Number(blocked.headers.get('retry-after'))).toBeGreaterThan(0);
   await save(admin.http, { registrationRateLimit: { maxAttempts: 2, windowSeconds: 120 } });
-  expect((await stack.browser().write('/api/v1/auth/register', person())).status).toBe(200);
+  expect((await stack.browser().register(person(), stack.tick)).status).toBe(200);
   await save(admin.http, { registrationRateLimit: { maxAttempts: 2, windowSeconds: 60 } });
   await expectError(
-    await stack.browser().write('/api/v1/auth/register', person()),
+    await stack.browser().write('/api/v1/auth/register', { ...person(), code: '000000' }),
     429,
     'RATE_LIMITED',
   );
@@ -638,7 +637,7 @@ it('真实Redis并发限制只有一个正常申请获准，常见密码拒绝�
   });
   const inputs = [person(), person()];
   const responses = await Promise.all(
-    inputs.map((input) => stack.browser().write('/api/v1/auth/register', input)),
+    inputs.map((input) => stack.browser().register(input, stack.tick)),
   );
   expect(responses.map((response) => response.status).sort()).toEqual([200, 429]);
   expect(
@@ -652,14 +651,16 @@ it('真实Redis并发限制只有一个正常申请获准，常见密码拒绝�
   const weak = person(),
     beforeMail = await outboxCount();
   await expectError(
-    await stack.browser().write('/api/v1/auth/register', { ...weak, password: 'passwordpassword' }),
+    await stack
+      .browser()
+      .write('/api/v1/auth/register', { ...weak, password: 'passwordpassword', code: '000000' }),
     400,
     'INVALID_INPUT',
   );
   expect(await state(weak.username)).toBeUndefined();
   expect(await outboxCount()).toBe(beforeMail);
   await expectError(
-    await stack.browser().write('/api/v1/auth/register', person()),
+    await stack.browser().write('/api/v1/auth/register', { ...person(), code: '000000' }),
     429,
     'RATE_LIMITED',
   );
@@ -676,16 +677,18 @@ it('固定register-ip十次每小时上限保留，切换业务窗口不能重�
     if (index === 5)
       await save(admin.http, { registrationRateLimit: { maxAttempts: 10, windowSeconds: 120 } });
     await expectError(
-      await stack
-        .browser()
-        .write('/api/v1/auth/register', { ...person(), password: 'passwordpassword' }),
+      await stack.browser().write('/api/v1/auth/register', {
+        ...person(),
+        password: 'passwordpassword',
+        code: '000000',
+      }),
       400,
       'INVALID_INPUT',
     );
   }
   await save(admin.http, { registrationRateLimit: { maxAttempts: 10, windowSeconds: 180 } });
   await expectError(
-    await stack.browser().write('/api/v1/auth/register', person()),
+    await stack.browser().write('/api/v1/auth/register', { ...person(), code: '000000' }),
     429,
     'RATE_LIMITED',
   );
@@ -703,7 +706,7 @@ it('注册最终真实事务核对accounts及mail修订，不沿用SMTP/哈希�
     beforeMail = await outboxCount();
   await save(admin.http, { registrationRateLimit: { maxAttempts: 3, windowSeconds: 120 } });
   await expect(
-    repository.register({ username: first.username, email: first.email, passwordHash }, undefined, {
+    repository.register({ username: first.username, email: first.email, passwordHash }, '000000', {
       accountsRevision: initial.result.meta.revision,
       mailRevision: mail.meta.revision,
       requestId: randomUUID(),
@@ -723,7 +726,7 @@ it('注册最终真实事务核对accounts及mail修订，不沿用SMTP/哈希�
   await expect(
     repository.register(
       { username: second.username, email: second.email, passwordHash },
-      undefined,
+      '000000',
       {
         accountsRevision: current.meta.revision,
         mailRevision: mail.meta.revision,

@@ -37,6 +37,7 @@ import {
   MfaConfirmResponseSchema,
   MfaSetupResponseSchema,
   RegisterRequestSchema,
+  RequestRegistrationCodeSchema,
   ResetPasswordRequestSchema,
   SessionIdParamsSchema,
   VerifyEmailRequestSchema,
@@ -75,10 +76,25 @@ export class AuthController {
     return this.auth.context(request, response);
   }
 
+  @Post('register/code')
+  @HttpCode(200)
+  @CsrfHeader()
+  @ApiOperation({ operationId: 'requestRegistrationCode', summary: '申请注册邮箱验证码' })
+  @ApiOkResponse({ standardSchema: AuthNoticeResponseSchema })
+  @SerializeOptions({ schema: AuthNoticeResponseSchema })
+  registerCode(
+    @Body({ schema: RequestRegistrationCodeSchema })
+    input: z.infer<typeof RequestRegistrationCodeSchema>,
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    return this.auth.requestRegistrationCode(input.email, request, response);
+  }
+
   @Post('register')
   @HttpCode(200)
   @CsrfHeader()
-  @ApiOperation({ operationId: 'registerAccount', summary: '按当前注册策略申请账号与验证邮件' })
+  @ApiOperation({ operationId: 'registerAccount', summary: '校验邮箱验证码后创建账号' })
   @ApiOkResponse({ standardSchema: AuthNoticeResponseSchema })
   @SerializeOptions({ schema: AuthNoticeResponseSchema })
   register(

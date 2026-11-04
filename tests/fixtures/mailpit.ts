@@ -51,3 +51,18 @@ export function mailToken(
 export function mailText(email: string, contains: string, tick?: () => Promise<unknown>) {
   return waitForText(email, (text) => (text.includes(contains) ? text : undefined), tick);
 }
+export function mailCode(
+  email: string,
+  purpose: '注册' | '换绑邮箱',
+  tick?: () => Promise<unknown>,
+  exclude: string[] = [],
+) {
+  return waitForText(
+    email,
+    (text) => {
+      const code = new RegExp(purpose + '验证码是 ([0-9]{6})').exec(text)?.[1];
+      return code && !exclude.includes(code) ? code : undefined;
+    },
+    tick,
+  );
+}

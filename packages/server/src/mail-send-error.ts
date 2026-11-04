@@ -2,7 +2,11 @@ import { z } from 'zod';
 
 export class MailSendError extends Error {
   constructor(
-    readonly code: 'MAIL_SEND_FAILED' | 'MAIL_RESULT_UNCERTAIN' | 'MAIL_NOT_CONFIGURED',
+    readonly code:
+      | 'MAIL_SEND_FAILED'
+      | 'MAIL_RESULT_UNCERTAIN'
+      | 'MAIL_NOT_CONFIGURED'
+      | 'MAIL_RECIPIENT_REJECTED',
     readonly sideEffect: 'none' | 'unknown',
     options?: ErrorOptions,
   ) {
@@ -16,6 +20,16 @@ const smtpErrorSchema = z.object({
   responseCode: z.number().int().optional(),
   timeoutType: z.string().optional(),
 });
+export function smtpRecipientRejected(cause: unknown) {
+  const parsed = smtpErrorSchema.safeParse(cause);
+  return (
+    parsed.success &&
+    parsed.data.command === 'RCPT TO' &&
+    parsed.data.responseCode !== undefined &&
+    parsed.data.responseCode >= 500 &&
+    parsed.data.responseCode < 600
+  );
+}
 /** CONN也可能是DATA之后断线，不能仅凭command将不确定发送判为安全重试 */
 export function smtpDefinitelyNotAccepted(cause: unknown) {
   const parsed = smtpErrorSchema.safeParse(cause);

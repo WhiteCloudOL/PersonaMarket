@@ -9,6 +9,7 @@ import {
 import { createTotp, openSecret } from '@personamarket/server';
 import { createAuthStack } from '../fixtures/auth-stack.js';
 import { verifiedCreator } from '../fixtures/creator.js';
+import { seedLegacyUnverified } from '../fixtures/legacy-account.js';
 import { mailToken } from '../fixtures/mailpit.js';
 import type { AuthHttp } from '../fixtures/auth-http.js';
 
@@ -44,9 +45,7 @@ it('未验证邮箱可以保存私有资料，不能提交公开快照，验证�
     email = username + '@fixture.invalid',
     password = 'Unverified profile fixture passphrase 2026',
     http = stack.browser();
-  expect((await http.write('/api/v1/auth/register', { username, email, password })).status).toBe(
-    200,
-  );
+  await seedLegacyUnverified(stack.owner, { username, email, password });
   expect((await http.write('/api/v1/auth/login', { identifier: username, password })).status).toBe(
     200,
   );
@@ -67,6 +66,7 @@ it('未验证邮箱可以保存私有资料，不能提交公开快照，验证�
   expect(fallback.displayName).toBe(username);
   expect(fallback.bio).toBe('');
   expect(fallback.approvedRevisionId).toBeNull();
+  expect((await http.write('/api/v1/auth/resend-verification', { email })).status).toBe(200);
   expect(
     (
       await http.write('/api/v1/auth/verify-email', {

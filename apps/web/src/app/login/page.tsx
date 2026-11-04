@@ -16,6 +16,11 @@ export default async function LoginPage({
           <FormNotice message="密码已更新，请使用新密码重新登录" />
         </div>
       )}
+      {notice === 'email-changed' && (
+        <div className="mb-5">
+          <FormNotice message="新邮箱已确认，请使用新邮箱或用户名重新登录" />
+        </div>
+      )}
       <LoginForm returnTo={creationReturnTo(params.returnTo)} />
     </AuthShell>
   );

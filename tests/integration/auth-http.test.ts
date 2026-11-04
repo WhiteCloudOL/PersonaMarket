@@ -23,7 +23,7 @@ import {
 } from '@personamarket/server';
 import { z } from 'zod';
 import { AuthHttp } from '../fixtures/auth-http.js';
-import { mailToken } from '../fixtures/mailpit.js';
+import { mailCode, mailToken } from '../fixtures/mailpit.js';
 import { testEnvironment } from '../fixtures/environment.js';
 
 const source = process.env['TEST_DATABASE_URL'];
@@ -115,7 +115,9 @@ describe('真实邮件与认证 HTTP 闭环', () => {
       const browser = new AuthHttp(await production.getUrl(), env.PUBLIC_ORIGIN);
       expect((await browser.context()).data.registrationAvailable).toBe(false);
       const person = registration();
-      expect((await browser.write('/api/v1/auth/register', person)).status).toBe(503);
+      expect(
+        (await browser.write('/api/v1/auth/register/code', { email: person.email })).status,
+      ).toBe(503);
       expect(
         (await owner.pool.query('SELECT id FROM users WHERE username=$1', [person.username]))
           .rowCount,
@@ -141,7 +143,18 @@ describe('真实邮件与认证 HTTP 闭环', () => {
   it('Argon2id、注册邮件、验证、登录、会话旋转与退出', async () => {
     const person = registration();
     const browser = new AuthHttp(base);
-    expect((await browser.write('/api/v1/auth/register', person)).status).toBe(200);
+    const submit = (code: string) => browser.write('/api/v1/auth/register', { ...person, code });
+    expect((await browser.write('/api/v1/auth/register', person)).status).toBe(400);
+    expect(
+      (await browser.write('/api/v1/auth/register/code', { email: person.email })).status,
+    ).toBe(200);
+    expect(
+      (await owner.pool.query('SELECT id FROM users WHERE email=$1', [person.email])).rowCount,
+    ).toBe(0);
+    const code = await mailCode(person.email, '注册', tick);
+    expect((await submit(code === '000000' ? '000001' : '000000')).status).toBe(400);
+    const results = await Promise.all([submit(code), submit(code)]);
+    expect(results.map((result) => result.status).sort()).toEqual([200, 400]);
     const stored = await owner.pool.query<{ password_hash: string; role: string }>(
       'SELECT password_hash,role FROM users WHERE username=$1',
       [person.username],
@@ -154,13 +167,10 @@ describe('真实邮件与认证 HTTP 闭环', () => {
       Object.fromEntries((fields[3] ?? '').split(',').map((field) => field.split('='))),
     ).toEqual({ m: '65536', t: '3', p: '1' });
     expect(await verifyPassword(encoded, password)).toBe(true);
-    const token = await mailToken(person.email, 'verify-email', tick);
     const payload = await owner.pool.query<{ payload: unknown }>(
       "SELECT payload FROM outbox_events WHERE topic='auth.email'",
     );
-    expect(JSON.stringify(payload.rows).includes(token)).toBe(false);
-    expect((await browser.write('/api/v1/auth/verify-email', { token })).status).toBe(200);
-    expect((await browser.write('/api/v1/auth/verify-email', { token })).status).toBe(400);
+    expect(JSON.stringify(payload.rows).includes('验证码是 ' + code)).toBe(false);
     expect(
       (await browser.write('/api/v1/auth/login', { identifier: person.email, password })).status,
     ).toBe(200);
@@ -237,7 +247,7 @@ describe('真实邮件与认证 HTTP 闭环', () => {
   it('找回响应不暴露账号，邮件重置单次使用并撤销既有会话', async () => {
     const person = registration();
     const browser = new AuthHttp(base);
-    await browser.write('/api/v1/auth/register', person);
+    expect((await browser.register(person, tick)).status).toBe(200);
     await browser.write('/api/v1/auth/login', { identifier: person.username, password });
     const before = await browser.context();
     expect(before.data.account?.username).toBe(person.username);

@@ -7883,9 +7883,9 @@
         "tags": ["auth"]
       }
     },
-    "/api/v1/auth/register": {
+    "/api/v1/auth/register/code": {
       "post": {
-        "operationId": "registerAccount",
+        "operationId": "requestRegistrationCode",
         "parameters": [
           {
             "name": "X-CSRF-Token",
@@ -7904,18 +7904,11 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "username": {
-                    "type": "string",
-                    "pattern": "^[a-z][a-z0-9_]{2,31}$"
-                  },
                   "email": {
-                    "type": "string"
-                  },
-                  "password": {
                     "type": "string"
                   }
                 },
-                "required": ["username", "email", "password"],
+                "required": ["email"],
                 "additionalProperties": false
               }
             }
@@ -8337,7 +8330,469 @@
             }
           }
         },
-        "summary": "按当前注册策略申请账号与验证邮件",
+        "summary": "申请注册邮箱验证码",
+        "tags": ["auth"]
+      }
+    },
+    "/api/v1/auth/register": {
+      "post": {
+        "operationId": "registerAccount",
+        "parameters": [
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "description": "同源 CSRF 令牌，由认证上下文提供",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_]{2,31}$"
+                  },
+                  "email": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  },
+                  "code": {
+                    "type": "string",
+                    "pattern": "^[0-9]{6}$"
+                  }
+                },
+                "required": ["username", "email", "password", "code"],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": ["data"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "INVALID_INPUT",
+                            "VALIDATION_FAILED",
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "MFA_REQUIRED",
+                            "REAUTH_REQUIRED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "REVISION_CONFLICT",
+                            "RATE_LIMITED",
+                            "MAINTENANCE_MODE",
+                            "SERVICE_UNAVAILABLE",
+                            "INVALID_RESPONSE",
+                            "INTERNAL_ERROR",
+                            "UNSUPPORTED_FORMAT"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "fieldErrors": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "message"],
+                            "additionalProperties": false
+                          }
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        }
+                      },
+                      "required": ["code", "message", "fieldErrors", "requestId"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": ["error"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "INVALID_INPUT",
+                            "VALIDATION_FAILED",
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "MFA_REQUIRED",
+                            "REAUTH_REQUIRED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "REVISION_CONFLICT",
+                            "RATE_LIMITED",
+                            "MAINTENANCE_MODE",
+                            "SERVICE_UNAVAILABLE",
+                            "INVALID_RESPONSE",
+                            "INTERNAL_ERROR",
+                            "UNSUPPORTED_FORMAT"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "fieldErrors": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "message"],
+                            "additionalProperties": false
+                          }
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        }
+                      },
+                      "required": ["code", "message", "fieldErrors", "requestId"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": ["error"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "INVALID_INPUT",
+                            "VALIDATION_FAILED",
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "MFA_REQUIRED",
+                            "REAUTH_REQUIRED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "REVISION_CONFLICT",
+                            "RATE_LIMITED",
+                            "MAINTENANCE_MODE",
+                            "SERVICE_UNAVAILABLE",
+                            "INVALID_RESPONSE",
+                            "INTERNAL_ERROR",
+                            "UNSUPPORTED_FORMAT"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "fieldErrors": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "message"],
+                            "additionalProperties": false
+                          }
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        }
+                      },
+                      "required": ["code", "message", "fieldErrors", "requestId"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": ["error"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "INVALID_INPUT",
+                            "VALIDATION_FAILED",
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "MFA_REQUIRED",
+                            "REAUTH_REQUIRED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "REVISION_CONFLICT",
+                            "RATE_LIMITED",
+                            "MAINTENANCE_MODE",
+                            "SERVICE_UNAVAILABLE",
+                            "INVALID_RESPONSE",
+                            "INTERNAL_ERROR",
+                            "UNSUPPORTED_FORMAT"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "fieldErrors": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "message"],
+                            "additionalProperties": false
+                          }
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        }
+                      },
+                      "required": ["code", "message", "fieldErrors", "requestId"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": ["error"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "INVALID_INPUT",
+                            "VALIDATION_FAILED",
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "MFA_REQUIRED",
+                            "REAUTH_REQUIRED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "REVISION_CONFLICT",
+                            "RATE_LIMITED",
+                            "MAINTENANCE_MODE",
+                            "SERVICE_UNAVAILABLE",
+                            "INVALID_RESPONSE",
+                            "INTERNAL_ERROR",
+                            "UNSUPPORTED_FORMAT"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "fieldErrors": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "message"],
+                            "additionalProperties": false
+                          }
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        }
+                      },
+                      "required": ["code", "message", "fieldErrors", "requestId"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": ["error"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "INVALID_INPUT",
+                            "VALIDATION_FAILED",
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "MFA_REQUIRED",
+                            "REAUTH_REQUIRED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "REVISION_CONFLICT",
+                            "RATE_LIMITED",
+                            "MAINTENANCE_MODE",
+                            "SERVICE_UNAVAILABLE",
+                            "INVALID_RESPONSE",
+                            "INTERNAL_ERROR",
+                            "UNSUPPORTED_FORMAT"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "fieldErrors": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "message"],
+                            "additionalProperties": false
+                          }
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        }
+                      },
+                      "required": ["code", "message", "fieldErrors", "requestId"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": ["error"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "summary": "校验邮箱验证码后创建账号",
         "tags": ["auth"]
       }
     },
@@ -24053,7 +24508,464 @@
             }
           }
         },
-        "summary": "向新邮箱发送用途绑定的确认链接",
+        "summary": "向新邮箱发送换绑验证码",
+        "tags": ["account-security"]
+      }
+    },
+    "/api/v1/me/security/email/confirm": {
+      "post": {
+        "operationId": "confirmOwnEmailChangeCode",
+        "parameters": [
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "currentPassword": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  },
+                  "code": {
+                    "type": "string",
+                    "pattern": "^[0-9]{6}$"
+                  }
+                },
+                "required": ["currentPassword", "email", "code"],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["message"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": ["data"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "INVALID_INPUT",
+                            "VALIDATION_FAILED",
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "MFA_REQUIRED",
+                            "REAUTH_REQUIRED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "REVISION_CONFLICT",
+                            "RATE_LIMITED",
+                            "MAINTENANCE_MODE",
+                            "SERVICE_UNAVAILABLE",
+                            "INVALID_RESPONSE",
+                            "INTERNAL_ERROR",
+                            "UNSUPPORTED_FORMAT"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "fieldErrors": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "message"],
+                            "additionalProperties": false
+                          }
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        }
+                      },
+                      "required": ["code", "message", "fieldErrors", "requestId"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": ["error"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "INVALID_INPUT",
+                            "VALIDATION_FAILED",
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "MFA_REQUIRED",
+                            "REAUTH_REQUIRED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "REVISION_CONFLICT",
+                            "RATE_LIMITED",
+                            "MAINTENANCE_MODE",
+                            "SERVICE_UNAVAILABLE",
+                            "INVALID_RESPONSE",
+                            "INTERNAL_ERROR",
+                            "UNSUPPORTED_FORMAT"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "fieldErrors": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "message"],
+                            "additionalProperties": false
+                          }
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        }
+                      },
+                      "required": ["code", "message", "fieldErrors", "requestId"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": ["error"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "INVALID_INPUT",
+                            "VALIDATION_FAILED",
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "MFA_REQUIRED",
+                            "REAUTH_REQUIRED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "REVISION_CONFLICT",
+                            "RATE_LIMITED",
+                            "MAINTENANCE_MODE",
+                            "SERVICE_UNAVAILABLE",
+                            "INVALID_RESPONSE",
+                            "INTERNAL_ERROR",
+                            "UNSUPPORTED_FORMAT"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "fieldErrors": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "message"],
+                            "additionalProperties": false
+                          }
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        }
+                      },
+                      "required": ["code", "message", "fieldErrors", "requestId"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": ["error"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "INVALID_INPUT",
+                            "VALIDATION_FAILED",
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "MFA_REQUIRED",
+                            "REAUTH_REQUIRED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "REVISION_CONFLICT",
+                            "RATE_LIMITED",
+                            "MAINTENANCE_MODE",
+                            "SERVICE_UNAVAILABLE",
+                            "INVALID_RESPONSE",
+                            "INTERNAL_ERROR",
+                            "UNSUPPORTED_FORMAT"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "fieldErrors": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "message"],
+                            "additionalProperties": false
+                          }
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        }
+                      },
+                      "required": ["code", "message", "fieldErrors", "requestId"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": ["error"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "INVALID_INPUT",
+                            "VALIDATION_FAILED",
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "MFA_REQUIRED",
+                            "REAUTH_REQUIRED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "REVISION_CONFLICT",
+                            "RATE_LIMITED",
+                            "MAINTENANCE_MODE",
+                            "SERVICE_UNAVAILABLE",
+                            "INVALID_RESPONSE",
+                            "INTERNAL_ERROR",
+                            "UNSUPPORTED_FORMAT"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "fieldErrors": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "message"],
+                            "additionalProperties": false
+                          }
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        }
+                      },
+                      "required": ["code", "message", "fieldErrors", "requestId"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": ["error"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "INVALID_INPUT",
+                            "VALIDATION_FAILED",
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "MFA_REQUIRED",
+                            "REAUTH_REQUIRED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "REVISION_CONFLICT",
+                            "RATE_LIMITED",
+                            "MAINTENANCE_MODE",
+                            "SERVICE_UNAVAILABLE",
+                            "INVALID_RESPONSE",
+                            "INTERNAL_ERROR",
+                            "UNSUPPORTED_FORMAT"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "fieldErrors": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "message"],
+                            "additionalProperties": false
+                          }
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        }
+                      },
+                      "required": ["code", "message", "fieldErrors", "requestId"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": ["error"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "summary": "校验验证码并绑定新邮箱",
         "tags": ["account-security"]
       }
     },
@@ -151512,6 +152424,8 @@
                             "MAIL_SEND_FAILED",
                             "MAIL_NOT_CONFIGURED",
                             "MAIL_PAYLOAD_INVALID",
+                            "MAIL_RECIPIENT_REJECTED",
+                            "MAIL_VERIFICATION_EXPIRED",
                             "MAIL_RESULT_UNCERTAIN",
                             "MAIL_RECEIPT_UNCERTAIN",
                             "QUEUE_EXECUTION_FAILED"
@@ -153618,6 +154532,8 @@
                               "MAIL_SEND_FAILED",
                               "MAIL_NOT_CONFIGURED",
                               "MAIL_PAYLOAD_INVALID",
+                              "MAIL_RECIPIENT_REJECTED",
+                              "MAIL_VERIFICATION_EXPIRED",
                               "MAIL_RESULT_UNCERTAIN",
                               "MAIL_RECEIPT_UNCERTAIN",
                               "QUEUE_EXECUTION_FAILED"

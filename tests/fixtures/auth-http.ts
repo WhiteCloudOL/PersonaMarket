@@ -1,4 +1,5 @@
 import { AuthContextResponseSchema } from '@personamarket/contracts';
+import { mailCode } from './mailpit.js';
 
 export class AuthHttp {
   readonly cookies = new Map<string, string>();
@@ -25,6 +26,15 @@ export class AuthHttp {
   async context() {
     const response = await this.raw('/api/v1/auth/context');
     return AuthContextResponseSchema.parse(await response.json());
+  }
+  async register(
+    input: { username: string; email: string; password: string },
+    tick?: () => Promise<unknown>,
+  ) {
+    const requested = await this.write('/api/v1/auth/register/code', { email: input.email });
+    if (!requested.ok) return requested;
+    const code = await mailCode(input.email, '注册', tick);
+    return this.write('/api/v1/auth/register', { ...input, code });
   }
   async write(path: string, body?: unknown, method = 'POST', extra: Record<string, string> = {}) {
     const context = await this.context();

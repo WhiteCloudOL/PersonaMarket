@@ -13,6 +13,7 @@ import { DATABASE, ENVIRONMENT } from '../tokens.js';
 import type { Identity } from '../auth/auth.service.js';
 import { lockIdentity, type Transaction } from '../auth/locked-identity.js';
 import { recordSecurityEvent } from '../auth/security-notification.js';
+import { consumeEmailCode, issueEmailCode } from '../auth/email-verification-code.js';
 @Injectable()
 export class SecurityRepository {
   constructor(
@@ -73,12 +74,7 @@ export class SecurityRepository {
       );
     });
   }
-  async email(
-    identity: Identity,
-    email: string,
-    token: { hash: string; token: string },
-    requestId: string,
-  ) {
+  async email(identity: Identity, email: string, requestId: string) {
     await this.database.db.transaction(async (transaction) => {
       const { account } = await lockIdentity(transaction, identity);
       if (account.email === email) throw new BusinessError('INVALID_INPUT', '请填写不同的新邮箱');
@@ -97,31 +93,12 @@ export class SecurityRepository {
             isNull(authTokens.consumedAt),
           ),
         );
-      const [issued] = await transaction
-        .insert(authTokens)
-        .values({
-          userId: account.id,
-          purpose: 'email_change',
-          tokenHash: token.hash,
-          targetEmail: email,
-          expiresAt: new Date(Date.now() + 1800_000),
-        })
-        .returning({ id: authTokens.id });
-      if (!issued) throw Error('AUTH_TOKEN_INSERT_FAILED');
-      const link = new URL(this.env.PUBLIC_ORIGIN).origin + '/change-email#token=' + token.token;
-      await enqueueMail(
-        transaction,
-        this.env.APP_ENCRYPTION_KEY,
-        {
-          to: email,
-          subject: '确认你的清蒸云鸭新邮箱',
-          text:
-            '请打开以下链接确认新邮箱，链接将在 30 分钟后过期\n\n' +
-            link +
-            '\n\n确认前账号仍使用原邮箱',
-        },
-        { purpose: 'email_change', userId: account.id, tokenId: issued.id },
-      );
+      await issueEmailCode(transaction, this.env.APP_ENCRYPTION_KEY, {
+        purpose: 'email_change',
+        email,
+        userId: account.id,
+        securityVersion: account.securityVersion,
+      });
       const auditId = await this.audit(
         transaction,
         account.id,
@@ -137,6 +114,53 @@ export class SecurityRepository {
       );
     });
   }
+  private async applyEmailChange(
+    transaction: Transaction,
+    account: Identity['account'],
+    email: string,
+    requestId: string,
+  ) {
+    await transaction
+      .update(users)
+      .set({ email, emailVerifiedAt: sql`clock_timestamp()` })
+      .where(eq(users.id, account.id));
+    await this.revoke(transaction, account.id);
+    const auditId = await this.audit(transaction, account.id, requestId, 'auth.email_changed');
+    await this.notify(
+      transaction,
+      account,
+      '清蒸云鸭邮箱已变更',
+      '你的账号邮箱已完成变更，所有旧会话与安全链接均已失效，如有疑问，请联系站点管理员',
+      auditId,
+    );
+  }
+  async confirmEmailCode(identity: Identity, email: string, code: string, requestId: string) {
+    try {
+      await this.database.db.transaction(async (transaction) => {
+        const { account } = await lockIdentity(transaction, identity);
+        await consumeEmailCode(
+          transaction,
+          this.env.APP_ENCRYPTION_KEY,
+          {
+            purpose: 'email_change',
+            email,
+            userId: account.id,
+            securityVersion: account.securityVersion,
+          },
+          code,
+        );
+        await this.applyEmailChange(transaction, account, email, requestId);
+      });
+    } catch (cause) {
+      this.rethrowEmailChangeError(cause);
+    }
+  }
+  private rethrowEmailChangeError(cause: unknown): never {
+    const error = cause instanceof Error && 'cause' in cause ? cause.cause : cause;
+    if (typeof error === 'object' && error !== null && 'code' in error && error.code === '23505')
+      throw new BusinessError('CONFLICT', '邮箱地址暂不可用，请重新申请变更', { cause });
+    throw cause;
+  }
   async confirmEmail(hash: string, requestId: string) {
     try {
       const result = await consumeAuthToken(
@@ -151,32 +175,12 @@ export class SecurityRepository {
             .for('update');
           if (!account || account.status !== 'active' || !token.targetEmail)
             throw new BusinessError('INVALID_INPUT', '确认链接已失效，请重新申请');
-          await transaction
-            .update(users)
-            .set({ email: token.targetEmail, emailVerifiedAt: new Date() })
-            .where(eq(users.id, account.id));
-          await this.revoke(transaction, account.id);
-          const auditId = await this.audit(
-            transaction,
-            account.id,
-            requestId,
-            'auth.email_changed',
-          );
-          await this.notify(
-            transaction,
-            account,
-            '清蒸云鸭邮箱已变更',
-            '你的账号邮箱已完成变更，所有旧会话与安全链接均已失效，如有疑问，请联系站点管理员',
-            auditId,
-          );
+          await this.applyEmailChange(transaction, account, token.targetEmail, requestId);
         },
       );
       if (!result.consumed) throw new BusinessError('INVALID_INPUT', '确认链接已失效，请重新申请');
     } catch (cause) {
-      const error = cause instanceof Error && 'cause' in cause ? cause.cause : cause;
-      if (typeof error === 'object' && error !== null && 'code' in error && error.code === '23505')
-        throw new BusinessError('CONFLICT', '邮箱地址暂不可用，请重新申请变更', { cause });
-      throw cause;
+      this.rethrowEmailChangeError(cause);
     }
   }
   async deactivation(userId: string) {

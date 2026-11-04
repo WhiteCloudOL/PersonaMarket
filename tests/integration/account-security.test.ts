@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { afterEach, beforeEach, expect, it } from 'vitest';
 import { createAuthStack } from '../fixtures/auth-stack.js';
-import { mailToken } from '../fixtures/mailpit.js';
+import { mailCode, mailToken } from '../fixtures/mailpit.js';
 let stack: Awaited<ReturnType<typeof createAuthStack>>;
 beforeEach(async () => {
   stack = await createAuthStack();
@@ -13,9 +13,7 @@ async function account(password = 'A fixture account passphrase 2026') {
   const username = 'secure_' + randomUUID().replaceAll('-', '').slice(0, 12);
   const credentials = { username, email: username + '@fixture.invalid', password };
   const http = stack.browser();
-  expect((await http.write('/api/v1/auth/register', credentials)).status).toBe(200);
-  const token = await mailToken(credentials.email, 'verify-email', stack.tick);
-  expect((await http.write('/api/v1/auth/verify-email', { token })).status).toBe(200);
+  expect((await http.register(credentials, stack.tick)).status).toBe(200);
   expect((await http.write('/api/v1/auth/login', { identifier: username, password })).status).toBe(
     200,
   );
@@ -29,7 +27,11 @@ it('12–64 新密码边界、常见口令拒绝、当前密码校验与全部�
   };
   for (const password of ['shortpass11', 'x'.repeat(65), 'passwordpassword'])
     expect(
-      (await stack.browser().write('/api/v1/auth/register', { ...invalid, password })).status,
+      (
+        await stack
+          .browser()
+          .write('/api/v1/auth/register', { ...invalid, password, code: '000000' })
+      ).status,
     ).toBe(400);
   const other = stack.browser();
   expect(
@@ -107,7 +109,7 @@ it('新邮箱目标与用途绑定、重发失效、单次确认，确认前后�
       })
     ).status,
   ).toBe(200);
-  const old = await mailToken(first, 'change-email', stack.tick);
+  const old = await mailCode(first, '换绑邮箱', stack.tick);
   expect(
     (
       await http.write('/api/v1/me/security/email', {
@@ -116,19 +118,26 @@ it('新邮箱目标与用途绑定、重发失效、单次确认，确认前后�
       })
     ).status,
   ).toBe(200);
-  const token = await mailToken(second, 'change-email', stack.tick);
+  const token = await mailCode(second, '换绑邮箱', stack.tick);
   expect((await http.context()).data.account?.email).toBe(credentials.email);
-  const confirmation = stack.browser();
+  const confirm = (email: string, code: string) =>
+    http.write('/api/v1/me/security/email/confirm', {
+      email,
+      code,
+      currentPassword: credentials.password,
+    });
+  expect((await confirm(first, old)).status).toBe(400);
   expect(
-    (await confirmation.write('/api/v1/auth/confirm-email-change', { token: old })).status,
-  ).toBe(400);
-  expect((await confirmation.write('/api/v1/auth/verify-email', { token })).status).toBe(400);
-  expect((await confirmation.write('/api/v1/auth/confirm-email-change', { token })).status).toBe(
-    200,
-  );
-  expect((await confirmation.write('/api/v1/auth/confirm-email-change', { token })).status).toBe(
-    400,
-  );
+    (
+      await stack.browser().write('/api/v1/me/security/email/confirm', {
+        email: second,
+        code: token,
+        currentPassword: credentials.password,
+      })
+    ).status,
+  ).toBe(401);
+  expect((await confirm(second, token)).status).toBe(200);
+  expect((await confirm(second, token)).status).toBe(401);
   expect((await http.context()).data.assurance).toBe('anonymous');
   expect(
     (await http.write('/api/v1/auth/login', { identifier: second, password: credentials.password }))
@@ -145,17 +154,25 @@ it('两人并发确认同一邮箱仅一人成功，失败消费回滚且保留�
     currentPassword: a.credentials.password,
     email: target,
   });
-  const first = await mailToken(target, 'change-email', stack.tick);
+  const first = await mailCode(target, '换绑邮箱', stack.tick);
   await b.http.write('/api/v1/me/security/email', {
     currentPassword: b.credentials.password,
     email: target,
   });
-  const second = await mailToken(target, 'change-email', stack.tick, first);
-  expect(second.length).toBe(43);
+  const second = await mailCode(target, '换绑邮箱', stack.tick, [first]);
+  expect(second.length).toBe(6);
   const statuses = (
     await Promise.all([
-      stack.browser().write('/api/v1/auth/confirm-email-change', { token: first }),
-      stack.browser().write('/api/v1/auth/confirm-email-change', { token: second }),
+      a.http.write('/api/v1/me/security/email/confirm', {
+        email: target,
+        code: first,
+        currentPassword: a.credentials.password,
+      }),
+      b.http.write('/api/v1/me/security/email/confirm', {
+        email: target,
+        code: second,
+        currentPassword: b.credentials.password,
+      }),
     ])
   )
     .map((response) => response.status)
@@ -165,11 +182,7 @@ it('两人并发确认同一邮箱仅一人成功，失败消费回滚且保留�
     (await stack.owner.pool.query('SELECT id FROM users WHERE email=$1', [target])).rowCount,
   ).toBe(1);
   expect(
-    (
-      await stack.owner.pool.query(
-        "SELECT token_hash FROM auth_tokens WHERE purpose='email_change' AND consumed_at IS NULL",
-      )
-    ).rowCount,
+    (await stack.owner.pool.query('SELECT code_hash FROM email_verification_codes')).rowCount,
   ).toBe(1);
 });
 it('停用申请只属于本人，重复申请冲突，撤回幂等且账号保持可用；过期 MFA 拒绝安全写入', async () => {

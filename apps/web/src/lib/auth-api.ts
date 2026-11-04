@@ -107,6 +107,17 @@ export const authApi = {
         }),
       AuthNoticeResponseSchema,
     ),
+  registrationCode: (email: string) =>
+    write(
+      (header) =>
+        api.requestRegistrationCode({
+          ...request,
+          body: { email },
+          params: { header },
+          signal: AbortSignal.timeout(10000),
+        }),
+      AuthNoticeResponseSchema,
+    ),
   register: (body: z.infer<typeof RegisterRequestSchema>) =>
     write(
       (header) =>

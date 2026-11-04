@@ -2941,11 +2941,200 @@ export type GetAuthContextResponses = {
 
 export type GetAuthContextResponse = GetAuthContextResponses[keyof GetAuthContextResponses];
 
+export type RequestRegistrationCodeData = {
+  body: {
+    email: string;
+  };
+  headers: {
+    /**
+     * 同源 CSRF 令牌，由认证上下文提供
+     */
+    'X-CSRF-Token': string;
+  };
+  path?: never;
+  query?: never;
+  url: '/api/v1/auth/register/code';
+};
+
+export type RequestRegistrationCodeErrors = {
+  400: {
+    error: {
+      code:
+        | 'INVALID_INPUT'
+        | 'VALIDATION_FAILED'
+        | 'UNAUTHENTICATED'
+        | 'FORBIDDEN'
+        | 'MFA_REQUIRED'
+        | 'REAUTH_REQUIRED'
+        | 'NOT_FOUND'
+        | 'CONFLICT'
+        | 'REVISION_CONFLICT'
+        | 'RATE_LIMITED'
+        | 'MAINTENANCE_MODE'
+        | 'SERVICE_UNAVAILABLE'
+        | 'INVALID_RESPONSE'
+        | 'INTERNAL_ERROR'
+        | 'UNSUPPORTED_FORMAT';
+      message: string;
+      fieldErrors: Array<{
+        path: string;
+        message: string;
+      }>;
+      requestId: string;
+    };
+  };
+  401: {
+    error: {
+      code:
+        | 'INVALID_INPUT'
+        | 'VALIDATION_FAILED'
+        | 'UNAUTHENTICATED'
+        | 'FORBIDDEN'
+        | 'MFA_REQUIRED'
+        | 'REAUTH_REQUIRED'
+        | 'NOT_FOUND'
+        | 'CONFLICT'
+        | 'REVISION_CONFLICT'
+        | 'RATE_LIMITED'
+        | 'MAINTENANCE_MODE'
+        | 'SERVICE_UNAVAILABLE'
+        | 'INVALID_RESPONSE'
+        | 'INTERNAL_ERROR'
+        | 'UNSUPPORTED_FORMAT';
+      message: string;
+      fieldErrors: Array<{
+        path: string;
+        message: string;
+      }>;
+      requestId: string;
+    };
+  };
+  403: {
+    error: {
+      code:
+        | 'INVALID_INPUT'
+        | 'VALIDATION_FAILED'
+        | 'UNAUTHENTICATED'
+        | 'FORBIDDEN'
+        | 'MFA_REQUIRED'
+        | 'REAUTH_REQUIRED'
+        | 'NOT_FOUND'
+        | 'CONFLICT'
+        | 'REVISION_CONFLICT'
+        | 'RATE_LIMITED'
+        | 'MAINTENANCE_MODE'
+        | 'SERVICE_UNAVAILABLE'
+        | 'INVALID_RESPONSE'
+        | 'INTERNAL_ERROR'
+        | 'UNSUPPORTED_FORMAT';
+      message: string;
+      fieldErrors: Array<{
+        path: string;
+        message: string;
+      }>;
+      requestId: string;
+    };
+  };
+  412: {
+    error: {
+      code:
+        | 'INVALID_INPUT'
+        | 'VALIDATION_FAILED'
+        | 'UNAUTHENTICATED'
+        | 'FORBIDDEN'
+        | 'MFA_REQUIRED'
+        | 'REAUTH_REQUIRED'
+        | 'NOT_FOUND'
+        | 'CONFLICT'
+        | 'REVISION_CONFLICT'
+        | 'RATE_LIMITED'
+        | 'MAINTENANCE_MODE'
+        | 'SERVICE_UNAVAILABLE'
+        | 'INVALID_RESPONSE'
+        | 'INTERNAL_ERROR'
+        | 'UNSUPPORTED_FORMAT';
+      message: string;
+      fieldErrors: Array<{
+        path: string;
+        message: string;
+      }>;
+      requestId: string;
+    };
+  };
+  429: {
+    error: {
+      code:
+        | 'INVALID_INPUT'
+        | 'VALIDATION_FAILED'
+        | 'UNAUTHENTICATED'
+        | 'FORBIDDEN'
+        | 'MFA_REQUIRED'
+        | 'REAUTH_REQUIRED'
+        | 'NOT_FOUND'
+        | 'CONFLICT'
+        | 'REVISION_CONFLICT'
+        | 'RATE_LIMITED'
+        | 'MAINTENANCE_MODE'
+        | 'SERVICE_UNAVAILABLE'
+        | 'INVALID_RESPONSE'
+        | 'INTERNAL_ERROR'
+        | 'UNSUPPORTED_FORMAT';
+      message: string;
+      fieldErrors: Array<{
+        path: string;
+        message: string;
+      }>;
+      requestId: string;
+    };
+  };
+  503: {
+    error: {
+      code:
+        | 'INVALID_INPUT'
+        | 'VALIDATION_FAILED'
+        | 'UNAUTHENTICATED'
+        | 'FORBIDDEN'
+        | 'MFA_REQUIRED'
+        | 'REAUTH_REQUIRED'
+        | 'NOT_FOUND'
+        | 'CONFLICT'
+        | 'REVISION_CONFLICT'
+        | 'RATE_LIMITED'
+        | 'MAINTENANCE_MODE'
+        | 'SERVICE_UNAVAILABLE'
+        | 'INVALID_RESPONSE'
+        | 'INTERNAL_ERROR'
+        | 'UNSUPPORTED_FORMAT';
+      message: string;
+      fieldErrors: Array<{
+        path: string;
+        message: string;
+      }>;
+      requestId: string;
+    };
+  };
+};
+
+export type RequestRegistrationCodeError =
+  RequestRegistrationCodeErrors[keyof RequestRegistrationCodeErrors];
+
+export type RequestRegistrationCodeResponses = {
+  200: {
+    data: {
+      message: string;
+    };
+  };
+};
+
+export type RequestRegistrationCodeResponse =
+  RequestRegistrationCodeResponses[keyof RequestRegistrationCodeResponses];
+
 export type RegisterAccountData = {
   body: {
     username: string;
     email: string;
     password: string;
+    code: string;
   };
   headers: {
     /**
@@ -9356,6 +9545,193 @@ export type RequestOwnEmailChangeResponses = {
 
 export type RequestOwnEmailChangeResponse =
   RequestOwnEmailChangeResponses[keyof RequestOwnEmailChangeResponses];
+
+export type ConfirmOwnEmailChangeCodeData = {
+  body: {
+    currentPassword: string;
+    email: string;
+    code: string;
+  };
+  headers: {
+    'X-CSRF-Token': string;
+  };
+  path?: never;
+  query?: never;
+  url: '/api/v1/me/security/email/confirm';
+};
+
+export type ConfirmOwnEmailChangeCodeErrors = {
+  400: {
+    error: {
+      code:
+        | 'INVALID_INPUT'
+        | 'VALIDATION_FAILED'
+        | 'UNAUTHENTICATED'
+        | 'FORBIDDEN'
+        | 'MFA_REQUIRED'
+        | 'REAUTH_REQUIRED'
+        | 'NOT_FOUND'
+        | 'CONFLICT'
+        | 'REVISION_CONFLICT'
+        | 'RATE_LIMITED'
+        | 'MAINTENANCE_MODE'
+        | 'SERVICE_UNAVAILABLE'
+        | 'INVALID_RESPONSE'
+        | 'INTERNAL_ERROR'
+        | 'UNSUPPORTED_FORMAT';
+      message: string;
+      fieldErrors: Array<{
+        path: string;
+        message: string;
+      }>;
+      requestId: string;
+    };
+  };
+  401: {
+    error: {
+      code:
+        | 'INVALID_INPUT'
+        | 'VALIDATION_FAILED'
+        | 'UNAUTHENTICATED'
+        | 'FORBIDDEN'
+        | 'MFA_REQUIRED'
+        | 'REAUTH_REQUIRED'
+        | 'NOT_FOUND'
+        | 'CONFLICT'
+        | 'REVISION_CONFLICT'
+        | 'RATE_LIMITED'
+        | 'MAINTENANCE_MODE'
+        | 'SERVICE_UNAVAILABLE'
+        | 'INVALID_RESPONSE'
+        | 'INTERNAL_ERROR'
+        | 'UNSUPPORTED_FORMAT';
+      message: string;
+      fieldErrors: Array<{
+        path: string;
+        message: string;
+      }>;
+      requestId: string;
+    };
+  };
+  403: {
+    error: {
+      code:
+        | 'INVALID_INPUT'
+        | 'VALIDATION_FAILED'
+        | 'UNAUTHENTICATED'
+        | 'FORBIDDEN'
+        | 'MFA_REQUIRED'
+        | 'REAUTH_REQUIRED'
+        | 'NOT_FOUND'
+        | 'CONFLICT'
+        | 'REVISION_CONFLICT'
+        | 'RATE_LIMITED'
+        | 'MAINTENANCE_MODE'
+        | 'SERVICE_UNAVAILABLE'
+        | 'INVALID_RESPONSE'
+        | 'INTERNAL_ERROR'
+        | 'UNSUPPORTED_FORMAT';
+      message: string;
+      fieldErrors: Array<{
+        path: string;
+        message: string;
+      }>;
+      requestId: string;
+    };
+  };
+  409: {
+    error: {
+      code:
+        | 'INVALID_INPUT'
+        | 'VALIDATION_FAILED'
+        | 'UNAUTHENTICATED'
+        | 'FORBIDDEN'
+        | 'MFA_REQUIRED'
+        | 'REAUTH_REQUIRED'
+        | 'NOT_FOUND'
+        | 'CONFLICT'
+        | 'REVISION_CONFLICT'
+        | 'RATE_LIMITED'
+        | 'MAINTENANCE_MODE'
+        | 'SERVICE_UNAVAILABLE'
+        | 'INVALID_RESPONSE'
+        | 'INTERNAL_ERROR'
+        | 'UNSUPPORTED_FORMAT';
+      message: string;
+      fieldErrors: Array<{
+        path: string;
+        message: string;
+      }>;
+      requestId: string;
+    };
+  };
+  429: {
+    error: {
+      code:
+        | 'INVALID_INPUT'
+        | 'VALIDATION_FAILED'
+        | 'UNAUTHENTICATED'
+        | 'FORBIDDEN'
+        | 'MFA_REQUIRED'
+        | 'REAUTH_REQUIRED'
+        | 'NOT_FOUND'
+        | 'CONFLICT'
+        | 'REVISION_CONFLICT'
+        | 'RATE_LIMITED'
+        | 'MAINTENANCE_MODE'
+        | 'SERVICE_UNAVAILABLE'
+        | 'INVALID_RESPONSE'
+        | 'INTERNAL_ERROR'
+        | 'UNSUPPORTED_FORMAT';
+      message: string;
+      fieldErrors: Array<{
+        path: string;
+        message: string;
+      }>;
+      requestId: string;
+    };
+  };
+  503: {
+    error: {
+      code:
+        | 'INVALID_INPUT'
+        | 'VALIDATION_FAILED'
+        | 'UNAUTHENTICATED'
+        | 'FORBIDDEN'
+        | 'MFA_REQUIRED'
+        | 'REAUTH_REQUIRED'
+        | 'NOT_FOUND'
+        | 'CONFLICT'
+        | 'REVISION_CONFLICT'
+        | 'RATE_LIMITED'
+        | 'MAINTENANCE_MODE'
+        | 'SERVICE_UNAVAILABLE'
+        | 'INVALID_RESPONSE'
+        | 'INTERNAL_ERROR'
+        | 'UNSUPPORTED_FORMAT';
+      message: string;
+      fieldErrors: Array<{
+        path: string;
+        message: string;
+      }>;
+      requestId: string;
+    };
+  };
+};
+
+export type ConfirmOwnEmailChangeCodeError =
+  ConfirmOwnEmailChangeCodeErrors[keyof ConfirmOwnEmailChangeCodeErrors];
+
+export type ConfirmOwnEmailChangeCodeResponses = {
+  200: {
+    data: {
+      message: string;
+    };
+  };
+};
+
+export type ConfirmOwnEmailChangeCodeResponse =
+  ConfirmOwnEmailChangeCodeResponses[keyof ConfirmOwnEmailChangeCodeResponses];
 
 export type WithdrawOwnDeactivationData = {
   body?: never;
@@ -56177,6 +56553,8 @@ export type GetAdminTaskFailureResponses = {
         | 'MAIL_SEND_FAILED'
         | 'MAIL_NOT_CONFIGURED'
         | 'MAIL_PAYLOAD_INVALID'
+        | 'MAIL_RECIPIENT_REJECTED'
+        | 'MAIL_VERIFICATION_EXPIRED'
         | 'MAIL_RESULT_UNCERTAIN'
         | 'MAIL_RECEIPT_UNCERTAIN'
         | 'QUEUE_EXECUTION_FAILED';
@@ -56947,6 +57325,8 @@ export type ListAdminTaskFailuresResponses = {
         | 'MAIL_SEND_FAILED'
         | 'MAIL_NOT_CONFIGURED'
         | 'MAIL_PAYLOAD_INVALID'
+        | 'MAIL_RECIPIENT_REJECTED'
+        | 'MAIL_VERIFICATION_EXPIRED'
         | 'MAIL_RESULT_UNCERTAIN'
         | 'MAIL_RECEIPT_UNCERTAIN'
         | 'QUEUE_EXECUTION_FAILED';

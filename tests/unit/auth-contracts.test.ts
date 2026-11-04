@@ -18,8 +18,11 @@ describe('认证契约与高熵令牌', () => {
       username: 'writer',
       email: 'writer@example.com',
       password: 'long passphrase for testing',
+      code: '012345',
     };
     expect(RegisterRequestSchema.safeParse(input).success).toBe(true);
+    for (const code of ['', '12345', '1234567', 'abc123'])
+      expect(RegisterRequestSchema.safeParse({ ...input, code }).success).toBe(false);
     for (const key of ['role', 'emailVerified', 'status', 'id'])
       expect(RegisterRequestSchema.safeParse({ ...input, [key]: 'forged' }).success).toBe(false);
     for (const value of ['ab', 'has/slash', 'with space', '1first', 'x'.repeat(33)])

@@ -15,6 +15,7 @@ import { ApiHeader, ApiOkResponse, ApiOperation, ApiResponse, ApiTags } from '@n
 import {
   AuthNoticeResponseSchema,
   ChangeEmailRequestSchema,
+  ConfirmEmailChangeCodeSchema,
   ChangePasswordRequestSchema,
   DeactivationRequestSchema,
   DeactivationResponseSchema,
@@ -52,7 +53,7 @@ export class SecurityController {
   }
   @Post('email')
   @HttpCode(200)
-  @ApiOperation({ operationId: 'requestOwnEmailChange', summary: '向新邮箱发送用途绑定的确认链接' })
+  @ApiOperation({ operationId: 'requestOwnEmailChange', summary: '向新邮箱发送换绑验证码' })
   @ApiHeader({ name: 'X-CSRF-Token', required: true })
   @ApiOkResponse({ standardSchema: AuthNoticeResponseSchema })
   @SerializeOptions({ schema: AuthNoticeResponseSchema })
@@ -62,6 +63,20 @@ export class SecurityController {
     @Res({ passthrough: true }) response: Response,
   ) {
     return this.service.email(input, request, response);
+  }
+  @Post('email/confirm')
+  @HttpCode(200)
+  @ApiOperation({ operationId: 'confirmOwnEmailChangeCode', summary: '校验验证码并绑定新邮箱' })
+  @ApiHeader({ name: 'X-CSRF-Token', required: true })
+  @ApiOkResponse({ standardSchema: AuthNoticeResponseSchema })
+  @SerializeOptions({ schema: AuthNoticeResponseSchema })
+  emailCode(
+    @Body({ schema: ConfirmEmailChangeCodeSchema })
+    input: z.infer<typeof ConfirmEmailChangeCodeSchema>,
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    return this.service.confirmEmailCode(input, request, response);
   }
   @Get('deactivation')
   @ApiOperation({ operationId: 'getOwnDeactivationRequest', summary: '读取本人的停用申请状态' })

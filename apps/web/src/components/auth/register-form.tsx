@@ -1,15 +1,15 @@
 'use client';
-import { HydratedForm } from './hydrated-form';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { RegisterRequestSchema, canonicalJson } from '@personamarket/contracts';
+import { RegisterRequestSchema } from '@personamarket/contracts';
 import type { z } from 'zod';
 import { FieldGroup } from '@personamarket/ui/components/field';
 import { Button, buttonVariants } from '@personamarket/ui/components/button';
 import { AuthField, FormNotice, SubmitButton } from './auth-fields';
 import { authApi, authQuery, ApiError } from '@/lib/auth-api';
+import { EmailCodeField } from './email-code-field';
 import { useHydrationReady } from '@/lib/use-hydration-ready';
 
 export function RegisterForm() {
@@ -17,15 +17,25 @@ export function RegisterForm() {
   const availability = useQuery(authQuery);
   const form = useForm<z.infer<typeof RegisterRequestSchema>>({
     resolver: zodResolver(RegisterRequestSchema),
-    defaultValues: { username: '', email: '', password: '' },
+    defaultValues: { username: '', email: '', password: '', code: '' },
   });
   const mutation = useMutation({
     mutationFn: authApi.register,
-    onSuccess: (_result, input) => {
-      if (canonicalJson(form.getValues()) === canonicalJson(input)) form.reset();
-    },
+    onSuccess: () => form.reset(),
+    gcTime: 0,
     retry: false,
   });
+  const send = useMutation({
+    mutationFn: authApi.registrationCode,
+    retry: false,
+    onSuccess: () => {
+      form.setValue('code', '', { shouldDirty: true });
+      form.setFocus('code');
+    },
+  });
+  async function requestCode() {
+    if (await form.trigger('email')) send.mutate(form.getValues('email').trim().toLowerCase());
+  }
   const settings = availability.data?.data;
   if (!hydrated || !settings)
     return (
@@ -42,14 +52,17 @@ export function RegisterForm() {
         )}
       </div>
     );
+  if (mutation.isSuccess)
+    return (
+      <div className="flex flex-col items-start gap-4">
+        <FormNotice message={mutation.data.data.message} />
+        <Link href="/login" className={buttonVariants()}>
+          前往登录
+        </Link>
+      </div>
+    );
   const closed = !settings.registrationAvailable;
-  if (
-    closed &&
-    !form.formState.isDirty &&
-    !mutation.isError &&
-    !mutation.isPending &&
-    !mutation.isSuccess
-  )
+  if (closed && !form.formState.isDirty && !mutation.isError && !mutation.isPending)
     return (
       <div className="flex flex-col items-start gap-3">
         <FormNotice message="注册暂未开放，请稍后再来" />
@@ -69,68 +82,72 @@ export function RegisterForm() {
         </Button>
       </div>
     );
+  const fieldsDisabled = mutation.isPending || availability.isError || closed;
   const conflict =
     mutation.error instanceof ApiError && mutation.error.code === 'REVISION_CONFLICT';
   return (
-    <HydratedForm
+    <form
+      method="post"
       noValidate
+      aria-busy={mutation.isPending || send.isPending}
       onSubmit={form.handleSubmit((values) => mutation.mutate(values))}
       className="flex flex-col gap-5"
     >
-      {!mutation.isSuccess && (
-        <p
-          className="text-sm leading-7 text-muted-foreground"
-          data-registration-mode={settings.registrationPolicy.verificationEmailTiming}
-        >
-          {settings.registrationPolicy.verificationEmailTiming === 'on_registration'
-            ? '当前注册方式会安排发送验证邮件；未验证也可以先登录和编辑私有草稿'
-            : '当前注册方式不自动发送验证邮件；可先登录，再到账号页主动申请。提交作品与公开互动等仍需验证邮箱'}
-        </p>
-      )}
+      <p className="text-sm leading-7 text-muted-foreground">
+        获取 6 位邮箱验证码并在 10 分钟内提交，验证通过后即可创建账号
+      </p>
       {closed && <FormNotice message="当前注册入口暂停，已填内容保留；已有账号可照常登录" />}
       {availability.isError && (
         <FormNotice error="无法核对当前注册设置，已填内容保留，请重新读取后再提交" />
       )}
-      <fieldset
-        disabled={mutation.isPending || availability.isError || availability.isFetching || closed}
-        className="min-w-0 border-0 p-0"
-      >
-        <FieldGroup>
-          <AuthField
-            id="register-username"
-            label="用户名"
-            autoComplete="username"
-            spellCheck={false}
-            description="3 至 32 位字母、数字或下划线，以字母开头"
-            {...form.register('username')}
-            error={form.formState.errors.username?.message}
-          />
-          <AuthField
-            id="register-email"
-            label="邮箱"
-            type="email"
-            autoComplete="email"
-            spellCheck={false}
-            {...form.register('email')}
-            error={form.formState.errors.email?.message}
-          />
-          <AuthField
-            id="register-password"
-            label="密码"
-            type="password"
-            autoComplete="new-password"
-            description="12 至 64 个字符，可以使用较长的口令"
-            {...form.register('password')}
-            error={form.formState.errors.password?.message}
-          />
-        </FieldGroup>
-      </fieldset>
-      <FormNotice error={mutation.error} message={mutation.data?.data.message} />
-      {mutation.isSuccess && (
-        <p className="text-sm leading-7 text-muted-foreground">
-          你可以先登录，未验证邮箱可编辑私有草稿；需要公开写入前，请在账号页完成邮箱验证
-        </p>
-      )}
+      <FieldGroup>
+        <AuthField
+          id="register-username"
+          disabled={fieldsDisabled}
+          label="用户名"
+          autoComplete="username"
+          spellCheck={false}
+          description="3 至 32 位字母、数字或下划线，以字母开头"
+          {...form.register('username')}
+          error={form.formState.errors.username?.message}
+        />
+        <AuthField
+          id="register-email"
+          disabled={fieldsDisabled}
+          label="邮箱"
+          type="email"
+          autoComplete="email"
+          spellCheck={false}
+          readOnly={send.isPending}
+          {...form.register('email', {
+            onChange: () => {
+              send.reset();
+              form.setValue('code', '');
+            },
+          })}
+          error={form.formState.errors.email?.message}
+        />
+        <AuthField
+          id="register-password"
+          disabled={fieldsDisabled}
+          label="密码"
+          type="password"
+          autoComplete="new-password"
+          description="12 至 64 个字符，可以使用较长的口令"
+          {...form.register('password')}
+          error={form.formState.errors.password?.message}
+        />
+        <EmailCodeField
+          id="register-code"
+          disabled={fieldsDisabled}
+          field={form.register('code')}
+          error={form.formState.errors.code?.message}
+          sending={send.isPending}
+          sent={send.isSuccess}
+          onSend={() => void requestCode()}
+        />
+      </FieldGroup>
+      <FormNotice error={mutation.error ?? send.error} message={send.data?.data.message} />
       {(conflict || availability.isError || closed) && (
         <Button
           type="button"
@@ -143,7 +160,7 @@ export function RegisterForm() {
       )}
       <SubmitButton
         pending={mutation.isPending}
-        disabled={closed || availability.isError || availability.isFetching}
+        disabled={closed || availability.isError || send.isPending}
       >
         创建账号
       </SubmitButton>
@@ -153,6 +170,6 @@ export function RegisterForm() {
           前往登录
         </Link>
       </p>
-    </HydratedForm>
+    </form>
   );
 }

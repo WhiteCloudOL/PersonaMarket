@@ -22,16 +22,7 @@ async function author() {
   const email = username + '@fixture.invalid';
   const password = 'A verified creative passphrase 2026';
   const http = stack.browser();
-  expect((await http.write('/api/v1/auth/register', { username, email, password })).status).toBe(
-    200,
-  );
-  expect(
-    (
-      await http.write('/api/v1/auth/verify-email', {
-        token: await mailToken(email, 'verify-email', stack.tick),
-      })
-    ).status,
-  ).toBe(200);
+  expect((await http.register({ username, email, password }, stack.tick)).status).toBe(200);
   expect((await http.write('/api/v1/auth/login', { identifier: username, password })).status).toBe(
     200,
   );

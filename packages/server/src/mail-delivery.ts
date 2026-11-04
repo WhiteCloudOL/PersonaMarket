@@ -110,6 +110,16 @@ export async function deliverMail(
       const context = await readMailContext(database, data.eventId, message.to);
       if (context && context.state !== 'valid')
         throw new UnrecoverableError('MAIL_PAYLOAD_INVALID');
+      if (
+        message.verificationCode &&
+        !(
+          await connection.query(
+            'SELECT 1 FROM email_verification_codes WHERE event_id=$1 AND expires_at > clock_timestamp()',
+            [data.eventId],
+          )
+        ).rowCount
+      )
+        throw new UnrecoverableError('MAIL_VERIFICATION_EXPIRED');
       smtpStarted = true;
       await mail.sender.send(data.eventId, message);
       accepted = true;
@@ -144,7 +154,9 @@ export async function deliverMail(
         : uncertain
           ? 'MAIL_RESULT_UNCERTAIN'
           : cause instanceof UnrecoverableError
-            ? 'MAIL_PAYLOAD_INVALID'
+            ? cause.message === 'MAIL_VERIFICATION_EXPIRED'
+              ? cause.message
+              : 'MAIL_PAYLOAD_INVALID'
             : cause instanceof MailSendError
               ? cause.code
               : 'MAIL_SEND_FAILED';
@@ -156,6 +168,7 @@ export async function deliverMail(
         .catch(() => undefined); // 写入失败仍保留sending，下一次持久guard阻断发送
       if (uncertain) throw new UnrecoverableError('MAIL_RESULT_UNCERTAIN');
       if (cause instanceof UnrecoverableError) throw cause;
+      if (code === 'MAIL_RECIPIENT_REJECTED') throw new UnrecoverableError(code);
       throw Error('MAIL_DELIVERY_FAILED', { cause });
     }
   } catch (cause) {

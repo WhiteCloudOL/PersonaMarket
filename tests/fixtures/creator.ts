@@ -2,22 +2,13 @@ import { randomUUID } from 'node:crypto';
 import { expect } from 'vitest';
 import { DraftResponseSchema, type PersonaDraft } from '@personamarket/contracts';
 import type { createAuthStack } from './auth-stack.js';
-import { mailToken } from './mailpit.js';
+
 export async function verifiedCreator(stack: Awaited<ReturnType<typeof createAuthStack>>) {
   const username = 'writer_' + randomUUID().replaceAll('-', '').slice(0, 12);
   const email = username + '@fixture.invalid';
   const password = 'Creative fixture passphrase 2026';
   const http = stack.browser();
-  expect((await http.write('/api/v1/auth/register', { username, email, password })).status).toBe(
-    200,
-  );
-  expect(
-    (
-      await http.write('/api/v1/auth/verify-email', {
-        token: await mailToken(email, 'verify-email', stack.tick),
-      })
-    ).status,
-  ).toBe(200);
+  expect((await http.register({ username, email, password }, stack.tick)).status).toBe(200);
   expect((await http.write('/api/v1/auth/login', { identifier: username, password })).status).toBe(
     200,
   );

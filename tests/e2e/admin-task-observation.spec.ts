@@ -6,6 +6,7 @@ import { AdminTaskListResponseSchema } from '@personamarket/contracts';
 import { queueConnection } from '@personamarket/server';
 import { e2eQueueName } from '../../scripts/e2e-queue.js';
 import { browserWrite } from '../fixtures/browser-account.js';
+import { seedLegacyUnverified } from '../fixtures/legacy-account.js';
 import { loginBrowserAdmin } from '../fixtures/browser-admin.js';
 
 test.use({ trace: 'off', screenshot: 'off' });
@@ -53,11 +54,13 @@ test.beforeAll(async ({ browser }, info) => {
     );
     const page = await anonymous.newPage();
     const username = 'observe_' + randomUUID().replaceAll('-', '').slice(0, 12);
-    const response = await browserWrite(page, '/api/v1/auth/register', {
+    const email = username + '@fixture.invalid';
+    await seedLegacyUnverified(database, {
       username,
-      email: username + '@fixture.invalid',
+      email,
       password: 'Mail observation fixture passphrase 2026',
     });
+    const response = await browserWrite(page, '/api/v1/auth/resend-verification', { email });
     expect(response.status()).toBe(200);
     await expect
       .poll(

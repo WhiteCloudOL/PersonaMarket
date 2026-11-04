@@ -2,6 +2,7 @@ import {
   changeOwnPassword,
   requestOwnEmailChange,
   confirmOwnEmailChange,
+  confirmOwnEmailChangeCode,
   getOwnDeactivationRequest,
   requestOwnDeactivation,
   withdrawOwnDeactivation,
@@ -11,6 +12,7 @@ import {
   DeactivationResponseSchema,
   type ChangePasswordRequestSchema,
   type ChangeEmailRequestSchema,
+  type ConfirmEmailChangeCodeSchema,
   type DeactivationRequestSchema,
 } from '@personamarket/contracts';
 import type { z } from 'zod';
@@ -30,6 +32,11 @@ export const securityApi = {
   confirmEmail: (token: string) =>
     authenticatedWrite(
       (header) => confirmOwnEmailChange({ ...options(), body: { token }, params: { header } }),
+      AuthNoticeResponseSchema,
+    ),
+  confirmEmailCode: (body: z.infer<typeof ConfirmEmailChangeCodeSchema>) =>
+    authenticatedWrite(
+      (header) => confirmOwnEmailChangeCode({ ...options(), body, params: { header } }),
       AuthNoticeResponseSchema,
     ),
   deactivation: async () =>

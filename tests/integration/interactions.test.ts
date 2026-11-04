@@ -10,6 +10,7 @@ import {
 } from '@personamarket/contracts';
 import { createAuthStack } from '../fixtures/auth-stack.js';
 import { completePersona, verifiedCreator } from '../fixtures/creator.js';
+import { seedLegacyUnverified } from '../fixtures/legacy-account.js';
 import type { AuthHttp } from '../fixtures/auth-http.js';
 
 let stack: Awaited<ReturnType<typeof createAuthStack>>;
@@ -229,15 +230,11 @@ it('邮箱、CSRF、账号与资源权限由服务端复查，批量读取不返
   const unverified = stack.browser();
   const username = 'unverified_' + randomUUID().replaceAll('-', '').slice(0, 10);
   const password = 'Unverified fixture passphrase 2026';
-  expect(
-    (
-      await unverified.write('/api/v1/auth/register', {
-        username,
-        email: username + '@fixture.invalid',
-        password,
-      })
-    ).status,
-  ).toBe(200);
+  await seedLegacyUnverified(stack.owner, {
+    username,
+    email: username + '@fixture.invalid',
+    password,
+  });
   expect(
     (await unverified.write('/api/v1/auth/login', { identifier: username, password })).status,
   ).toBe(200);

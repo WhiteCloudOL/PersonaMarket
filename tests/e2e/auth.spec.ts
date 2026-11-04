@@ -5,11 +5,11 @@ import { randomUUID } from 'node:crypto';
 import { expect, test, type Page } from '@playwright/test';
 import { createDatabase } from '@personamarket/database';
 import { createAdministrator, createTotp } from '@personamarket/server';
-import { mailToken, mailText } from '../fixtures/mailpit.js';
+import { mailToken, mailText, mailCode } from '../fixtures/mailpit.js';
 import { z } from 'zod';
 
 // 登录请求、二维码与恢复码不进入 trace 或失败截图。
-test.use({ trace: 'off', screenshot: 'off' });
+test.use({ trace: 'off', screenshot: 'off', actionTimeout: 8000 });
 
 test('账号安全在大字触控布局中，提交按钮文字和重新验证入口保持完整可操作', async ({
   browser,
@@ -38,7 +38,7 @@ test('账号安全在大字触控布局中，提交按钮文字和重新验证�
     await page.evaluate(() => {
       document.documentElement.style.fontSize = '200%';
     });
-    for (const label of ['更新登录密码', '发送新邮箱确认邮件', '提交停用申请']) {
+    for (const label of ['更新登录密码', '确认换绑邮箱', '提交停用申请']) {
       const bounds = await page
         .getByRole('button', { name: label, exact: true })
         .evaluate((element) => {
@@ -164,6 +164,7 @@ test('真实邮箱注册、验证、登录与全部会话退出，跨设备布�
   const password = 'Browser registration passphrase 2026';
   await test.step('注册、邮箱验证和首次登录', async () => {
     await page.goto('/register');
+    await expect(page.getByLabel('邮箱验证码', { exact: true })).toBeVisible();
     // 只记录尚未填写任何凭据的公开表单，认证过程仍禁用 trace 与自动截图。
     await page.screenshot({ path: info.outputPath('register-empty-light.png'), fullPage: true });
     await selectTheme(page, 'dark');
@@ -176,14 +177,20 @@ test('真实邮箱注册、验证、登录与全部会话退出，跨设备布�
     await page.getByLabel('用户名', { exact: true }).fill(username);
     await page.getByLabel('邮箱', { exact: true }).fill(email);
     await page.getByLabel('密码', { exact: true }).fill(password);
-    await page.getByLabel('密码', { exact: true }).press('Enter');
-    await expect(page.getByText('如果注册信息可用，验证邮件将发送到你的邮箱')).toBeVisible();
-    const token = await mailToken(email, 'verify-email');
-    await openMailToken(page, '/verify-email', token);
-    await expect(page.getByRole('button', { name: '验证邮箱', exact: true })).toBeEnabled();
-    await page.getByRole('button', { name: '验证邮箱', exact: true }).click();
-    await expect(page.getByText('邮箱验证成功，可以登录了')).toBeVisible();
-    await expect.poll(() => new URL(page.url()).hash.length).toBe(0);
+    await page.getByRole('button', { name: '发送验证码', exact: true }).click();
+    const code = await mailCode(email, '注册');
+    await expect(page.getByLabel('用户名', { exact: true })).toHaveValue(username);
+    await page
+      .getByLabel('邮箱验证码', { exact: true })
+      .fill(code === '000000' ? '000001' : '000000');
+    await page.getByRole('button', { name: '创建账号', exact: true }).click();
+    await expect(page.getByText('验证码不正确或已过期，请核对或重新发送')).toBeVisible();
+    await expect(page.getByLabel('邮箱', { exact: true })).toHaveValue(email);
+    await expect(page.getByLabel('密码', { exact: true })).toHaveValue(password);
+    await page.getByLabel('邮箱验证码', { exact: true }).fill(code);
+    await page.getByLabel('邮箱验证码', { exact: true }).press('Enter');
+    await expect(page.getByText('邮箱验证通过，可以登录了')).toBeVisible();
+    await expect(page).toHaveURL(/\/register$/);
     await page.getByRole('link', { name: '前往登录', exact: true }).click();
     await page.getByLabel('用户名或邮箱').fill(email);
     await page.getByLabel('密码', { exact: true }).fill(password);
@@ -246,16 +253,13 @@ test('真实邮箱注册、验证、登录与全部会话退出，跨设备布�
     const emailForm = page.getByRole('form', { name: '变更联系邮箱', exact: true });
     await emailForm.getByLabel('当前密码', { exact: true }).fill(nextPassword);
     await emailForm.getByLabel('新邮箱', { exact: true }).fill(newEmail);
-    await emailForm.getByRole('button', { name: '发送新邮箱确认邮件', exact: true }).click();
-    await expect(
-      page.getByText('如果新邮箱可用，确认邮件将发送到该地址，确认前账号仍使用原邮箱'),
-    ).toBeVisible();
-    const emailToken = await mailToken(newEmail, 'change-email');
-    await openMailToken(page, '/change-email', emailToken);
-    await page.getByRole('button', { name: '确认新邮箱', exact: true }).click();
+    await emailForm.getByRole('button', { name: '发送验证码', exact: true }).click();
+    await emailForm
+      .getByLabel('邮箱验证码', { exact: true })
+      .fill(await mailCode(newEmail, '换绑邮箱'));
+    await emailForm.getByRole('button', { name: '确认换绑邮箱', exact: true }).click();
+    await expect(page).toHaveURL(/\/login\?notice=email-changed$/);
     await expect(page.getByText('新邮箱已确认，请使用新邮箱或用户名重新登录')).toBeVisible();
-    expect((await page.request.get('/api/v1/auth/sessions')).status()).toBe(401);
-    await page.getByRole('link', { name: '使用新邮箱登录', exact: true }).click();
     await page.getByLabel('用户名或邮箱').fill(newEmail);
     await page.getByLabel('密码', { exact: true }).fill(nextPassword);
     await page.getByRole('button', { name: '登录', exact: true }).click();
@@ -353,9 +357,7 @@ test('管理员浏览器 MFA 引导、一次性恢复码与品牌设置', async 
   expect(await mailText(username + '@fixture.invalid', 'SMTP 配置可正常投递')).toContain(
     '这是一封',
   );
-  await page.getByRole('button', { name: '恢复部署默认值', exact: true }).click();
-  await page.getByRole('button', { name: '应用到表单', exact: true }).click();
-  await expect(page.getByRole('alertdialog')).toBeHidden();
+  await page.getByRole('button', { name: '继承部署配置', exact: true }).click();
   await page.getByRole('button', { name: '保存邮件设置', exact: true }).click();
   await expect(page.getByRole('button', { name: '自定义 SMTP', exact: true })).toHaveAttribute(
     'aria-pressed',

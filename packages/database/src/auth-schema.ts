@@ -12,6 +12,21 @@ import {
   uuid,
   varchar,
 } from 'drizzle-orm/pg-core';
+import { outboxEvents } from './outbox-schema.js';
+
+export const emailVerificationCodes = pgTable(
+  'email_verification_codes',
+  {
+    scopeHash: varchar('scope_hash', { length: 64 }).primaryKey(),
+    codeHash: varchar('code_hash', { length: 64 }).notNull(),
+    eventId: uuid('event_id')
+      .notNull()
+      .unique()
+      .references(() => outboxEvents.id),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  },
+  (table) => [index('email_verification_codes_expiry_idx').on(table.expiresAt)],
+);
 
 export const users = pgTable(
   'users',

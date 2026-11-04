@@ -8,8 +8,9 @@ import {
   enqueueMail,
   readMailContext,
 } from '@personamarket/server';
+import { seedLegacyUnverified } from '../fixtures/legacy-account.js';
 import { createAuthStack } from '../fixtures/auth-stack.js';
-import { mailToken, mailText } from '../fixtures/mailpit.js';
+import { mailCode, mailText } from '../fixtures/mailpit.js';
 
 let stack: Awaited<ReturnType<typeof createAuthStack>>;
 beforeEach(async () => {
@@ -129,15 +130,13 @@ it('普通Unicode短原因在HTTP层拒绝而非数据库500，五字符原因�
 it('新验证邮件绑定真实账号/令牌；替代、消费、过期及地址变化均可核对，不猜旧密文', async () => {
   const http = stack.browser(),
     username = 'context_' + randomBytes(5).toString('hex');
-  expect(
-    (
-      await http.write('/api/v1/auth/register', {
-        username,
-        email: username + '@fixture.invalid',
-        password: 'Fixture secure password 2026',
-      })
-    ).status,
-  ).toBe(200);
+  const email = username + '@fixture.invalid';
+  await seedLegacyUnverified(stack.owner, {
+    username,
+    email,
+    password: 'Fixture secure password 2026',
+  });
+  expect((await http.write('/api/v1/auth/resend-verification', { email })).status).toBe(200);
   const row = (
     await stack.owner.pool.query<{ event_id: string; token_id: string; user_id: string }>(
       "SELECT event_id,token_id,user_id FROM mail_task_contexts WHERE purpose='email_verify'",
@@ -371,15 +370,11 @@ it('邮件unknown可追加核对记录，绝不改写SMTP结果或产生重发�
   expect((await stack.browser().raw(path)).status).toBe(401);
   const ordinary = stack.browser(),
     username = 'ordinary_' + randomBytes(5).toString('hex');
-  expect(
-    (
-      await ordinary.write('/api/v1/auth/register', {
-        username,
-        email: username + '@fixture.invalid',
-        password: 'Fixture secure password 2026',
-      })
-    ).status,
-  ).toBe(200);
+  await seedLegacyUnverified(stack.owner, {
+    username,
+    email: username + '@fixture.invalid',
+    password: 'Fixture secure password 2026',
+  });
   expect(
     (
       await ordinary.write('/api/v1/auth/login', {
@@ -464,8 +459,16 @@ it('邮箱成功变更后，真实安全审计绑定的旧邮箱提醒仍投递�
     ).status,
   ).toBe(200);
   await stack.worker.resume();
-  const token = await mailToken(nextEmail, 'change-email', stack.tick);
-  expect((await http.write('/api/v1/auth/confirm-email-change', { token })).status).toBe(200);
+  const code = await mailCode(nextEmail, '换绑邮箱', stack.tick);
+  expect(
+    (
+      await http.write('/api/v1/me/security/email/confirm', {
+        code,
+        email: nextEmail,
+        currentPassword: 'Fixture secure password 2026',
+      })
+    ).status,
+  ).toBe(200);
   const row = (
     await stack.owner.pool.query<{ event_id: string }>(
       "SELECT c.event_id FROM mail_task_contexts c JOIN auth_audit_events a ON a.id=c.source_id WHERE c.user_id=$1 AND c.purpose='security_notice' AND c.source_type='auth_audit' AND a.event='auth.email_changed'",

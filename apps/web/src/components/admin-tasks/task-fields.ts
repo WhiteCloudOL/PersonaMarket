@@ -37,6 +37,8 @@ export const taskReasons = {
   MAIL_SEND_FAILED: '邮件未能发送，请核对邮件服务和原业务状态',
   MAIL_NOT_CONFIGURED: '邮件配置暂不可用，请先核对邮件服务',
   MAIL_PAYLOAD_INVALID: '邮件内容无法安全处理，请从原业务重新发起',
+  MAIL_RECIPIENT_REJECTED: '邮件服务拒绝了收件地址，请核对地址后重新申请',
+  MAIL_VERIFICATION_EXPIRED: '验证码已失效，请重新申请',
   MAIL_RESULT_UNCERTAIN: '发送结果尚待确认，请先核对邮件记录，避免重复发送',
   MAIL_RECEIPT_UNCERTAIN: '邮件已由服务接收，但投递回执尚待确认',
   QUEUE_EXECUTION_FAILED: '队列执行失败，请核对对应业务状态',

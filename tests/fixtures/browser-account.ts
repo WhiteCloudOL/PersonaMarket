@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { expect, type Page } from '@playwright/test';
 import { AuthContextResponseSchema } from '@personamarket/contracts';
-import { mailToken } from './mailpit.js';
+import { mailCode } from './mailpit.js';
 export async function browserWrite(
   page: Page,
   path: string,
@@ -27,14 +27,11 @@ export async function loginCreator(page: Page) {
   const username = 'creator_' + randomUUID().replaceAll('-', '').slice(0, 12);
   const email = username + '@fixture.invalid';
   const password = 'A real creative account passphrase 2026';
-  expect(
-    (await browserWrite(page, '/api/v1/auth/register', { username, email, password })).status(),
-  ).toBe(200);
+  expect((await browserWrite(page, '/api/v1/auth/register/code', { email })).status()).toBe(200);
+  const code = await mailCode(email, '注册');
   expect(
     (
-      await browserWrite(page, '/api/v1/auth/verify-email', {
-        token: await mailToken(email, 'verify-email'),
-      })
+      await browserWrite(page, '/api/v1/auth/register', { username, email, password, code })
     ).status(),
   ).toBe(200);
   await page.goto('/login');

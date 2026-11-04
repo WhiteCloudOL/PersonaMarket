@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  ChangeEmailRequestSchema,
+  ConfirmEmailChangeCodeSchema,
   ChangePasswordRequestSchema,
   DeactivationRequestSchema,
 } from '@personamarket/contracts';
@@ -31,6 +31,7 @@ import {
 import { authQuery } from '@/lib/auth-api';
 import { securityApi } from '@/lib/security-api';
 import { AuthField, FormNotice, SubmitButton } from './auth-fields';
+import { EmailCodeField } from './email-code-field';
 import { useAuthChange } from './use-auth-change';
 const submitLayout = 'h-auto min-h-11 whitespace-normal px-2 py-2';
 function PasswordForm() {
@@ -94,55 +95,93 @@ function PasswordForm() {
   );
 }
 function EmailForm({ email }: { email: string }) {
-  const form = useForm<z.infer<typeof ChangeEmailRequestSchema>>({
-    resolver: zodResolver(ChangeEmailRequestSchema),
-    defaultValues: { currentPassword: '', email: '' },
+  const changed = useAuthChange();
+  const form = useForm<z.infer<typeof ConfirmEmailChangeCodeSchema>>({
+    resolver: zodResolver(ConfirmEmailChangeCodeSchema),
+    defaultValues: { currentPassword: '', email: '', code: '' },
   });
-  const mutation = useMutation({
-    mutationFn: () => securityApi.email(ChangeEmailRequestSchema.parse(form.getValues())),
+  const send = useMutation({
+    mutationFn: securityApi.email,
     gcTime: 0,
     retry: false,
-    onSuccess: () => form.reset(),
+    onSuccess: () => {
+      form.setValue('code', '');
+      form.setFocus('code');
+    },
   });
+  const mutation = useMutation({
+    mutationFn: securityApi.confirmEmailCode,
+    gcTime: 0,
+    retry: false,
+    onSuccess: async () => {
+      form.reset();
+      await changed('/login?notice=email-changed', 'logout');
+    },
+  });
+  async function requestCode() {
+    if (await form.trigger(['currentPassword', 'email'])) {
+      const { currentPassword, email: target } = form.getValues();
+      send.mutate({ currentPassword, email: target.trim().toLowerCase() });
+    }
+  }
   return (
     <Card>
       <CardHeader>
         <CardTitle>
           <h2>变更联系邮箱</h2>
         </CardTitle>
-        <CardDescription>确认新邮箱前，账号仍使用原地址</CardDescription>
+        <CardDescription>新邮箱收到 6 位验证码后，请在 10 分钟内确认换绑</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         <p className="break-all text-sm">当前邮箱：{email}</p>
         <form
           noValidate
           aria-label="变更联系邮箱"
-          onSubmit={form.handleSubmit(() => mutation.mutate())}
+          onSubmit={form.handleSubmit((values) => mutation.mutate(values))}
           className="flex flex-col gap-4"
         >
-          <FieldSet disabled={mutation.isPending}>
-            <FieldGroup>
-              <AuthField
-                id="email-current-password"
-                label="当前密码"
-                type="password"
-                autoComplete="current-password"
-                {...form.register('currentPassword')}
-                error={form.formState.errors.currentPassword?.message}
-              />
-              <AuthField
-                id="change-email"
-                label="新邮箱"
-                type="email"
-                autoComplete="email"
-                {...form.register('email')}
-                error={form.formState.errors.email?.message}
-              />
-            </FieldGroup>
-          </FieldSet>
-          <FormNotice error={mutation.error} message={mutation.data?.data.message} />
-          <SubmitButton pending={mutation.isPending} className={submitLayout}>
-            发送新邮箱确认邮件
+          <FieldGroup>
+            <AuthField
+              id="email-current-password"
+              disabled={mutation.isPending}
+              label="当前密码"
+              type="password"
+              autoComplete="current-password"
+              {...form.register('currentPassword')}
+              error={form.formState.errors.currentPassword?.message}
+            />
+            <AuthField
+              id="change-email"
+              disabled={mutation.isPending}
+              label="新邮箱"
+              type="email"
+              autoComplete="email"
+              readOnly={send.isPending}
+              {...form.register('email', {
+                onChange: () => {
+                  send.reset();
+                  form.setValue('code', '');
+                },
+              })}
+              error={form.formState.errors.email?.message}
+            />
+            <EmailCodeField
+              id="change-email-code"
+              disabled={mutation.isPending}
+              field={form.register('code')}
+              error={form.formState.errors.code?.message}
+              sending={send.isPending}
+              sent={send.isSuccess}
+              onSend={() => void requestCode()}
+            />
+          </FieldGroup>
+          <FormNotice error={mutation.error ?? send.error} message={send.data?.data.message} />
+          <SubmitButton
+            pending={mutation.isPending}
+            disabled={send.isPending}
+            className={submitLayout}
+          >
+            确认换绑邮箱
           </SubmitButton>
         </form>
       </CardContent>

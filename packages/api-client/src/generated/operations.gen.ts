@@ -520,6 +520,42 @@ export interface ApiPaths {
       };
     };
   };
+  '/api/v1/auth/register/code': {
+    post: {
+      parameters: Params<Models.RequestRegistrationCodeData>;
+      requestBody: { content: { 'application/json': Models.RequestRegistrationCodeData['body'] } };
+      responses: {
+        200: {
+          headers: Record<string, unknown>;
+          content: { 'application/json': Models.RequestRegistrationCodeResponses[200] };
+        };
+        400: {
+          headers: Record<string, unknown>;
+          content: { 'application/json': Models.RequestRegistrationCodeErrors[400] };
+        };
+        401: {
+          headers: Record<string, unknown>;
+          content: { 'application/json': Models.RequestRegistrationCodeErrors[401] };
+        };
+        403: {
+          headers: Record<string, unknown>;
+          content: { 'application/json': Models.RequestRegistrationCodeErrors[403] };
+        };
+        412: {
+          headers: Record<string, unknown>;
+          content: { 'application/json': Models.RequestRegistrationCodeErrors[412] };
+        };
+        429: {
+          headers: Record<string, unknown>;
+          content: { 'application/json': Models.RequestRegistrationCodeErrors[429] };
+        };
+        503: {
+          headers: Record<string, unknown>;
+          content: { 'application/json': Models.RequestRegistrationCodeErrors[503] };
+        };
+      };
+    };
+  };
   '/api/v1/auth/register': {
     post: {
       parameters: Params<Models.RegisterAccountData>;
@@ -1680,6 +1716,44 @@ export interface ApiPaths {
         503: {
           headers: Record<string, unknown>;
           content: { 'application/json': Models.RequestOwnEmailChangeErrors[503] };
+        };
+      };
+    };
+  };
+  '/api/v1/me/security/email/confirm': {
+    post: {
+      parameters: Params<Models.ConfirmOwnEmailChangeCodeData>;
+      requestBody: {
+        content: { 'application/json': Models.ConfirmOwnEmailChangeCodeData['body'] };
+      };
+      responses: {
+        200: {
+          headers: Record<string, unknown>;
+          content: { 'application/json': Models.ConfirmOwnEmailChangeCodeResponses[200] };
+        };
+        400: {
+          headers: Record<string, unknown>;
+          content: { 'application/json': Models.ConfirmOwnEmailChangeCodeErrors[400] };
+        };
+        401: {
+          headers: Record<string, unknown>;
+          content: { 'application/json': Models.ConfirmOwnEmailChangeCodeErrors[401] };
+        };
+        403: {
+          headers: Record<string, unknown>;
+          content: { 'application/json': Models.ConfirmOwnEmailChangeCodeErrors[403] };
+        };
+        409: {
+          headers: Record<string, unknown>;
+          content: { 'application/json': Models.ConfirmOwnEmailChangeCodeErrors[409] };
+        };
+        429: {
+          headers: Record<string, unknown>;
+          content: { 'application/json': Models.ConfirmOwnEmailChangeCodeErrors[429] };
+        };
+        503: {
+          headers: Record<string, unknown>;
+          content: { 'application/json': Models.ConfirmOwnEmailChangeCodeErrors[503] };
         };
       };
     };
@@ -9787,6 +9861,12 @@ export function getAuthContext({
 }: FetchOptions<ApiPaths['/api/v1/auth/context']['get']> & { baseUrl?: string } = {}) {
   return createClient<ApiPaths>({ baseUrl }).GET('/api/v1/auth/context', options);
 }
+export function requestRegistrationCode({
+  baseUrl = '',
+  ...options
+}: FetchOptions<ApiPaths['/api/v1/auth/register/code']['post']> & { baseUrl?: string }) {
+  return createClient<ApiPaths>({ baseUrl }).POST('/api/v1/auth/register/code', options);
+}
 export function registerAccount({
   baseUrl = '',
   ...options
@@ -9992,6 +10072,12 @@ export function requestOwnEmailChange({
   ...options
 }: FetchOptions<ApiPaths['/api/v1/me/security/email']['post']> & { baseUrl?: string }) {
   return createClient<ApiPaths>({ baseUrl }).POST('/api/v1/me/security/email', options);
+}
+export function confirmOwnEmailChangeCode({
+  baseUrl = '',
+  ...options
+}: FetchOptions<ApiPaths['/api/v1/me/security/email/confirm']['post']> & { baseUrl?: string }) {
+  return createClient<ApiPaths>({ baseUrl }).POST('/api/v1/me/security/email/confirm', options);
 }
 export function getOwnDeactivationRequest({
   baseUrl = '',

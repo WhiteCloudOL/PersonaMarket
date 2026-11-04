@@ -6,7 +6,7 @@ import {
   PublicConfigResponseSchema,
 } from '@personamarket/contracts';
 import { createAuthStack } from '../fixtures/auth-stack.js';
-import { mailText, mailToken } from '../fixtures/mailpit.js';
+import { mailText } from '../fixtures/mailpit.js';
 import { setTimeout as pause } from 'node:timers/promises';
 let stack: Awaited<ReturnType<typeof createAuthStack>>;
 beforeAll(async () => {
@@ -123,8 +123,7 @@ it('真实 SMTP 测试只发往当前管理员，Worker 立即使用数据库配
     password: 'A real registration passphrase 2026',
   };
   const browser = stack.browser();
-  expect((await browser.write('/api/v1/auth/register', person)).status).toBe(200);
-  expect((await mailToken(person.email, 'verify-email', stack.tick)).length).toBe(43);
+  expect((await browser.register(person, stack.tick)).status).toBe(200);
   const settings = await http.raw('/api/v1/admin/settings/mail');
   expect(
     (
@@ -134,14 +133,9 @@ it('真实 SMTP 测试只发往当前管理员，Worker 立即使用数据库配
     ).status,
   ).toBe(200);
   expect((await browser.context()).data.registrationAvailable).toBe(false);
-  expect(
-    (
-      await browser.write('/api/v1/auth/register', {
-        ...person,
-        username: 'blocked_' + randomUUID().slice(0, 8),
-      })
-    ).status,
-  ).toBe(503);
+  expect((await browser.write('/api/v1/auth/register/code', { email: person.email })).status).toBe(
+    503,
+  );
   const unavailable = await http.write('/api/v1/admin/settings/mail/test', {});
   expect(unavailable.status).toBe(503);
   expect(JSON.stringify(await unavailable.json())).not.toContain('SMTP_NOT_CONFIGURED');
@@ -184,7 +178,7 @@ it('SMTP 失败、测试限流与权威注册开关，新会话使用新的有�
     email: username + '@fixture.invalid',
     password: 'A session duration passphrase 2026',
   };
-  expect((await browser.write('/api/v1/auth/register', credentials)).status).toBe(200);
+  expect((await browser.register(credentials, stack.tick)).status).toBe(200);
   expect(
     (
       await browser.write('/api/v1/auth/login', {

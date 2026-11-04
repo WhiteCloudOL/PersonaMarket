@@ -4,7 +4,7 @@ import { crc32 } from 'node:zlib';
 import { fromBufferPromise } from 'yauzl';
 import { expect, type Page } from '@playwright/test';
 import { DraftResponseSchema, SubmissionListResponseSchema } from '@personamarket/contracts';
-import { mailToken } from './mailpit.js';
+import { mailCode } from './mailpit.js';
 
 /** 隔离浏览器站点的真实注册、收信、验证与登录；认证期间不采集图片或trace */
 export async function registerJourneyCreator(page: Page) {
@@ -15,18 +15,10 @@ export async function registerJourneyCreator(page: Page) {
   await page.getByLabel('用户名', { exact: true }).fill(username);
   await page.getByLabel('邮箱', { exact: true }).fill(email);
   await page.getByLabel('密码', { exact: true }).fill(password);
+  await page.getByRole('button', { name: '发送验证码', exact: true }).click();
+  await page.getByLabel('邮箱验证码', { exact: true }).fill(await mailCode(email, '注册'));
   await page.getByRole('button', { name: '创建账号', exact: true }).click();
-  await expect(
-    page.getByText('如果注册信息可用，验证邮件将发送到你的邮箱；你也可以先登录并编辑私有草稿', {
-      exact: true,
-    }),
-  ).toBeVisible();
-  const token = await mailToken(email, 'verify-email');
-  await page.evaluate((token) => window.location.assign('/verify-email#token=' + token), token);
-  await expect(page.getByRole('button', { name: '验证邮箱', exact: true })).toBeEnabled();
-  await page.getByRole('button', { name: '验证邮箱', exact: true }).click();
-  await expect(page.getByText('邮箱验证成功，可以登录了', { exact: true })).toBeVisible();
-  await expect.poll(() => new URL(page.url()).hash.length).toBe(0);
+  await expect(page.getByText('邮箱验证通过，可以登录了')).toBeVisible();
   await page.getByRole('link', { name: '前往登录', exact: true }).click();
   await page.getByLabel('用户名或邮箱', { exact: true }).fill(username);
   await page.getByLabel('密码', { exact: true }).fill(password);

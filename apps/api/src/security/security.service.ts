@@ -5,7 +5,6 @@ import {
   BusinessError,
   hashAuthSecret,
   hashPassword,
-  issueAuthSecret,
   verifyPassword,
 } from '@personamarket/server';
 import { AuthService } from '../auth/auth.service.js';
@@ -48,13 +47,22 @@ export class SecurityService {
     const identity = await this.authorize(input.currentPassword, 'email', request);
     await this.auth.requireMail();
     await this.auth.rate.take('mail-recipient', input.email, 3, 900);
-    await this.repository.email(
+    await this.repository.email(identity, input.email, this.auth.requestId(response));
+    return { data: { message: '如果新邮箱可用，验证码将发送到该地址，10 分钟内有效' } };
+  }
+  async confirmEmailCode(
+    input: { currentPassword: string; email: string; code: string },
+    request: Request,
+    response: Response,
+  ) {
+    const identity = await this.authorize(input.currentPassword, 'email-confirm', request);
+    await this.repository.confirmEmailCode(
       identity,
       input.email,
-      issueAuthSecret('email_change'),
+      input.code,
       this.auth.requestId(response),
     );
-    return { data: { message: '如果新邮箱可用，确认邮件将发送到该地址，确认前账号仍使用原邮箱' } };
+    return { data: { message: '新邮箱已确认，请使用新邮箱或用户名重新登录' } };
   }
   async confirmEmail(token: string, response: Response) {
     const hash = hashAuthSecret('email_change', token);

@@ -23,6 +23,7 @@ import {
 import { DATABASE, ENVIRONMENT } from '../tokens.js';
 import { lockIdentity } from './locked-identity.js';
 import { recordSecurityEvent } from './security-notification.js';
+import { consumeEmailCode, issueEmailCode } from './email-verification-code.js';
 
 export type Account = typeof users.$inferSelect;
 export type Session = typeof authSessions.$inferSelect;
@@ -125,60 +126,113 @@ export class AuthRepository {
       userId: account.id,
     });
   }
+  private async checkRegistration(transaction: Transaction, expected: RegistrationExpectation) {
+    await assertOrdinaryWriteAllowed(transaction);
+    const [settings] = await transaction
+      .select()
+      .from(siteSettings)
+      .where(eq(siteSettings.key, 'accounts'))
+      .for('share');
+    if (!settings) throw new BusinessError('SERVICE_UNAVAILABLE', '注册策略尚未完成初始化');
+    const policy = accountSettings(settings.value, this.env);
+    if (settings.revision !== expected.accountsRevision)
+      throw new BusinessError(
+        'REVISION_CONFLICT',
+        '注册策略已变化，输入已保留，请重新读取后再确认注册',
+      );
+    if (!policy.registrationEnabled)
+      throw new BusinessError('SERVICE_UNAVAILABLE', '注册暂未开放，请稍后再来');
+    const [mail] = await transaction
+      .select()
+      .from(siteSettings)
+      .where(eq(siteSettings.key, 'mail'))
+      .for('share');
+    if (!mail || mail.revision !== expected.mailRevision)
+      throw new BusinessError('REVISION_CONFLICT', '邮件配置已变化，请重新确认注册');
+    const configured = StoredMailSettingsSchema.parse(mail.value);
+    if (
+      configured.mode === 'disabled' ||
+      (configured.mode === 'environment' && !environmentMail(this.env))
+    )
+      throw new BusinessError('SERVICE_UNAVAILABLE', '邮件服务暂时不可用，请稍后重试');
+  }
+  async requestRegistrationCode(email: string, expected: RegistrationExpectation) {
+    await this.database.db.transaction(async (transaction) => {
+      await this.checkRegistration(transaction, expected);
+      const [occupied] = await transaction
+        .select({ status: users.status, emailVerifiedAt: users.emailVerifiedAt })
+        .from(users)
+        .where(eq(users.email, email));
+      if (!occupied || (occupied.status === 'active' && !occupied.emailVerifiedAt))
+        await issueEmailCode(transaction, this.env.APP_ENCRYPTION_KEY, {
+          purpose: 'registration',
+          email,
+        });
+    });
+  }
   async register(
     input: { username: string; email: string; passwordHash: string },
-    issue: MailIssue | undefined,
+    code: string,
     expected: RegistrationExpectation,
+    legacyPasswordHash?: string,
   ) {
-    return this.database.db.transaction(async (transaction) => {
-      await assertOrdinaryWriteAllowed(transaction);
-      const [settings] = await transaction
-        .select()
-        .from(siteSettings)
-        .where(eq(siteSettings.key, 'accounts'))
-        .for('share');
-      if (!settings) throw new BusinessError('SERVICE_UNAVAILABLE', '注册策略尚未完成初始化');
-      const policy = accountSettings(settings.value, this.env);
-      if (settings.revision !== expected.accountsRevision)
-        throw new BusinessError(
-          'REVISION_CONFLICT',
-          '注册策略已变化，输入已保留，请重新读取后再确认注册',
-        );
-      if (!policy.registrationEnabled)
-        throw new BusinessError('SERVICE_UNAVAILABLE', '注册暂未开放，请稍后再来');
-      const [mail] = await transaction
-        .select()
-        .from(siteSettings)
-        .where(eq(siteSettings.key, 'mail'))
-        .for('share');
-      if (!mail || mail.revision !== expected.mailRevision)
-        throw new BusinessError('REVISION_CONFLICT', '邮件配置已变化，请重新确认注册');
-      const configured = StoredMailSettingsSchema.parse(mail.value);
-      if (
-        configured.mode === 'disabled' ||
-        (configured.mode === 'environment' && !environmentMail(this.env))
-      )
-        throw new BusinessError('SERVICE_UNAVAILABLE', '邮件服务暂时不可用，请稍后重试');
-      if (
-        policy.verificationEmailTiming === 'on_registration' &&
-        (!issue || issue.purpose !== 'email_verify')
-      )
-        throw new Error('REGISTRATION_VERIFICATION_ISSUE_REQUIRED');
+    await this.database.db.transaction(async (transaction) => {
+      await this.checkRegistration(transaction, expected);
+      await consumeEmailCode(
+        transaction,
+        this.env.APP_ENCRYPTION_KEY,
+        { purpose: 'registration', email: input.email },
+        code,
+      );
       const [account] = await transaction
         .insert(users)
-        .values(input)
+        .values({ ...input, emailVerifiedAt: sql`clock_timestamp()` })
         .onConflictDoNothing()
-        .returning();
-      if (account) {
-        await transaction.insert(authAuditEvents).values({
-          userId: account.id,
-          event: 'auth.registration_requested',
-          requestId: expected.requestId,
-        });
-        if (policy.verificationEmailTiming === 'on_registration' && issue)
-          await this.queueMail(transaction, account, issue);
+        .returning({ id: users.id });
+      if (!account && legacyPasswordHash) {
+        const [verified] = await transaction
+          .update(users)
+          .set({ emailVerifiedAt: sql`clock_timestamp()` })
+          .where(
+            and(
+              eq(users.email, input.email),
+              eq(users.username, input.username),
+              eq(users.passwordHash, legacyPasswordHash),
+              eq(users.status, 'active'),
+              isNull(users.emailVerifiedAt),
+            ),
+          )
+          .returning({ id: users.id });
+        if (verified) {
+          await transaction
+            .update(authSessions)
+            .set({ revokedAt: sql`clock_timestamp()` })
+            .where(and(eq(authSessions.userId, verified.id), isNull(authSessions.revokedAt)));
+          await transaction
+            .update(authTokens)
+            .set({ consumedAt: sql`clock_timestamp()` })
+            .where(
+              and(
+                eq(authTokens.userId, verified.id),
+                eq(authTokens.purpose, 'email_verify'),
+                isNull(authTokens.consumedAt),
+              ),
+            );
+          await recordSecurityEvent(
+            transaction,
+            verified.id,
+            expected.requestId,
+            'auth.email_verify_completed',
+          );
+          return;
+        }
       }
-      return { verificationEmailTiming: policy.verificationEmailTiming };
+      if (!account) throw new BusinessError('CONFLICT', '用户名或邮箱不可用，请核对后重试');
+      await transaction.insert(authAuditEvents).values({
+        userId: account.id,
+        event: 'auth.registration_requested',
+        requestId: expected.requestId,
+      });
     });
   }
   async requestMail(email: string, issue: MailIssue) {

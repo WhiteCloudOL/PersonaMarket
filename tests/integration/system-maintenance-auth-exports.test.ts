@@ -1,12 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { afterEach, beforeEach, expect, it } from 'vitest';
 import { AuthRepository, MetricsRepository } from '@personamarket/api/testing';
-import {
-  createAdministrator,
-  createTotp,
-  hashPassword,
-  issueAuthSecret,
-} from '@personamarket/server';
+import { createAdministrator, createTotp, hashPassword } from '@personamarket/server';
 import {
   AccountSettingsResponseSchema,
   AdminUserResponseSchema,
@@ -95,23 +90,17 @@ it('注册最终Tx即使已完成策略/SMTP前置准备仍拒绝维护，不留
       email: username + '@fixture.invalid',
       password: 'A normal late registration passphrase 2026',
     };
-  const passwordHash = await hashPassword(input.password),
-    secret = issueAuthSecret('email_verify');
+  const passwordHash = await hashPassword(input.password);
   await setMaintenance(admin.http, true, '暂时无法提交，请稍后重试');
   const before = await stack.owner.pool.query(
     'SELECT id,topic,md5(payload::text) AS digest FROM outbox_events ORDER BY id',
   );
   expect((await http.context()).data.registrationAvailable).toBe(false);
-  await expectMaintenance(await http.write('/api/v1/auth/register', input));
+  await expectMaintenance(await http.write('/api/v1/auth/register/code', { email: input.email }));
   await expect(
     new AuthRepository(stack.owner, stack.env).register(
       { username, email: input.email, passwordHash },
-      {
-        tokenHash: secret.hash,
-        rawToken: secret.token,
-        purpose: 'email_verify',
-        requestId: randomUUID(),
-      },
+      '000000',
       {
         accountsRevision: accounts.meta.revision,
         mailRevision: mail.meta.revision,
@@ -123,8 +112,7 @@ it('注册最终Tx即使已完成策略/SMTP前置准备仍拒绝维护，不留
     (await stack.owner.pool.query('SELECT id FROM users WHERE username=$1', [username])).rowCount,
   ).toBe(0);
   expect(
-    (await stack.owner.pool.query('SELECT id FROM auth_tokens WHERE token_hash=$1', [secret.hash]))
-      .rowCount,
+    (await stack.owner.pool.query('SELECT scope_hash FROM email_verification_codes')).rowCount,
   ).toBe(0);
   expect(
     (
@@ -134,14 +122,7 @@ it('注册最终Tx即使已完成策略/SMTP前置准备仍拒绝维护，不留
     ).rows,
   ).toEqual(before.rows);
   await setMaintenance(admin.http, false);
-  expect((await http.write('/api/v1/auth/register', input)).status).toBe(200);
-  expect(
-    (
-      await http.write('/api/v1/auth/verify-email', {
-        token: await mailToken(input.email, 'verify-email', stack.tick),
-      })
-    ).status,
-  ).toBe(200);
+  expect((await http.register(input, stack.tick)).status).toBe(200);
   expect(
     (await http.write('/api/v1/auth/login', { identifier: username, password: input.password }))
       .status,

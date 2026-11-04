@@ -2,12 +2,17 @@ import nodemailer from 'nodemailer';
 import { z } from 'zod';
 import type { ServerEnvironment } from './env.js';
 import { environmentMail, type MailConnection } from './settings.js';
-import { MailSendError, smtpDefinitelyNotAccepted } from './mail-send-error.js';
+import {
+  MailSendError,
+  smtpDefinitelyNotAccepted,
+  smtpRecipientRejected,
+} from './mail-send-error.js';
 
 export const MailMessageSchema = z.strictObject({
   to: z.email(),
   subject: z.string().max(200),
   text: z.string().max(20000),
+  verificationCode: z.literal(true).optional(),
 });
 export type MailMessage = z.infer<typeof MailMessageSchema>;
 export class MailSender {
@@ -73,7 +78,9 @@ export class MailSender {
       await this.using(async (transport, connection) => {
         started = true;
         const result = await transport.sendMail({
-          ...checked,
+          to: checked.to,
+          subject: checked.subject,
+          text: checked.text,
           from: connection.from,
           messageId: '<' + id + '@' + connection.from.split('@')[1] + '>',
         });
@@ -88,6 +95,8 @@ export class MailSender {
       });
     } catch (cause) {
       if (cause instanceof MailSendError) throw cause;
+      if (smtpRecipientRejected(cause))
+        throw new MailSendError('MAIL_RECIPIENT_REJECTED', 'none', { cause });
       const known = !started || smtpDefinitelyNotAccepted(cause);
       throw new MailSendError(
         !started && cause instanceof Error && cause.message === 'SMTP_NOT_CONFIGURED'

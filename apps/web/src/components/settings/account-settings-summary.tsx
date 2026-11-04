@@ -12,8 +12,7 @@ export function AccountSettingsSummary({ value }: { value: AccountSettings }) {
       <div>
         <dt className="text-muted-foreground">注册与邮箱验证</dt>
         <dd>
-          {value.registrationEnabled ? '开放新用户注册' : '暂停新用户注册'} ·{' '}
-          {verificationTimingLabel(value.verificationEmailTiming)}
+          {value.registrationEnabled ? '开放新用户注册' : '暂停新用户注册'} · 注册时校验邮箱验证码
         </dd>
       </div>
       <div>
@@ -44,13 +43,6 @@ export function AccountSettingsChanges({
       after: after.registrationEnabled,
       current: before.registrationEnabled ? '开放' : '关闭',
       next: after.registrationEnabled ? '开放' : '关闭',
-    },
-    {
-      label: '验证邮件发送时机',
-      before: before.verificationEmailTiming,
-      after: after.verificationEmailTiming,
-      current: verificationTimingLabel(before.verificationEmailTiming),
-      next: verificationTimingLabel(after.verificationEmailTiming),
     },
     {
       label: '注册尝试次数',
@@ -117,7 +109,7 @@ export function AccountSettingsRecordSummary({ value }: { value: AccountSettings
             </dd>
           </div>
           <div>
-            <dt className="text-muted-foreground">验证邮件时机</dt>
+            <dt className="text-muted-foreground">历史邮件发送时机</dt>
             <dd>
               {stored.verificationEmailTiming === null
                 ? fallback

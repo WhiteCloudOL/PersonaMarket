@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { RegisterRequestSchema } from '@personamarket/contracts';
+import { AccountCredentialsSchema } from '@personamarket/contracts';
 import { authAuditEvents, users, type Database } from '@personamarket/database';
 import { hashPassword } from './password.js';
 import { BusinessError } from './errors.js';
@@ -7,7 +7,7 @@ import { assertNewPassword } from './password-policy.js';
 
 /** 仅由受控服务器 CLI 调用，不提供 HTTP 初始化入口。 */
 export async function createAdministrator(database: Database, input: unknown) {
-  const account = RegisterRequestSchema.parse(input);
+  const account = AccountCredentialsSchema.parse(input);
   assertNewPassword(account.password, account);
   const passwordHash = await hashPassword(account.password);
   return database.db.transaction(async (transaction) => {

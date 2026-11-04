@@ -379,6 +379,13 @@
       "when": 1793779750696,
       "tag": "0053_optional_release_changelog",
       "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "7",
+      "when": 1793790403542,
+      "tag": "0054_email_verification_codes",
+      "breakpoints": true
     }
   ]
 }

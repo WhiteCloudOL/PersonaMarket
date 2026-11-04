@@ -3,7 +3,6 @@ import { beforeAll, afterAll, expect, it } from 'vitest';
 import { AssetResponseSchema, AssetJobResponseSchema } from '@personamarket/contracts';
 import { createAuthStack } from '../fixtures/auth-stack.js';
 import { fixturePng } from '../fixtures/image.js';
-import { mailToken } from '../fixtures/mailpit.js';
 let stack: Awaited<ReturnType<typeof createAuthStack>>;
 beforeAll(async () => {
   stack = await createAuthStack();
@@ -16,16 +15,7 @@ it('真实 multipart 上传、私有图片和授权证据隔离、内容嗅探�
   const username = 'image_' + randomUUID().replaceAll('-', '').slice(0, 12);
   const email = username + '@fixture.invalid';
   const password = 'Real image fixture password 2026';
-  expect((await http.write('/api/v1/auth/register', { username, email, password })).status).toBe(
-    200,
-  );
-  expect(
-    (
-      await http.write('/api/v1/auth/verify-email', {
-        token: await mailToken(email, 'verify-email', stack.tick),
-      })
-    ).status,
-  ).toBe(200);
+  expect((await http.register({ username, email, password }, stack.tick)).status).toBe(200);
   expect((await http.write('/api/v1/auth/login', { identifier: username, password })).status).toBe(
     200,
   );

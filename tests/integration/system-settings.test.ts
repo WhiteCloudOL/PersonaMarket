@@ -349,11 +349,9 @@ it.each(['missing', 'invalid'] as const)(
     ).toBe(200);
     const username = 'blocked_' + randomUUID().replaceAll('-', '').slice(0, 12);
     await error(
-      await stack.browser().write('/api/v1/auth/register', {
-        username,
-        email: username + '@fixture.invalid',
-        password: 'A valid blocked registration passphrase 2026',
-      }),
+      await stack
+        .browser()
+        .write('/api/v1/auth/register/code', { email: username + '@fixture.invalid' }),
       503,
       'SERVICE_UNAVAILABLE',
     );
@@ -408,11 +406,9 @@ it('共享门禁与正常维护切换形成提交边界，后续新事务明确�
         .rowCount,
     ).toBe(0);
     await expectMaintenance(
-      await stack.browser().write('/api/v1/auth/register', {
-        username: username + '_api',
-        email: username + '_api@fixture.invalid',
-        password: 'A valid maintenance registration passphrase 2026',
-      }),
+      await stack
+        .browser()
+        .write('/api/v1/auth/register/code', { email: username + '_api@fixture.invalid' }),
     );
   } finally {
     ready.complete();

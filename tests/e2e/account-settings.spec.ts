@@ -15,7 +15,7 @@ import {
 import { browserWrite } from '../fixtures/browser-account.js';
 import { loginBrowserAdmin } from '../fixtures/browser-admin.js';
 import { logoutAccount, selectAccountNavigation } from '../fixtures/account-navigation.js';
-import { mailToken } from '../fixtures/mailpit.js';
+import { mailCode, mailToken } from '../fixtures/mailpit.js';
 
 const endpoint = '/api/v1/admin/settings/accounts';
 const savedText = '注册设置已保存，新注册和之后创建的完整会话使用当前策略';
@@ -132,14 +132,13 @@ test('注册策略默认差异和字段定位完整，并发的独立字段一�
   const initial = await current(page);
   await page.goto('/admin/settings/accounts');
   await expect(page.getByLabel('新会话有效期（秒）', { exact: true })).toBeHidden();
-  await page.getByRole('button', { name: '登录后主动申请', exact: true }).click();
   await advanced(page);
   const ttl = initial.defaults.sessionTtlSeconds === 600 ? '1200' : '600';
   await page.getByLabel('新会话有效期（秒）', { exact: true }).fill(ttl);
   await page.getByRole('button', { name: '恢复部署默认值', exact: true }).click();
   const defaults = page.getByRole('alertdialog', { name: '恢复注册默认值', exact: true });
   await expect(defaults.getByRole('region', { name: '注册默认值差异', exact: true })).toContainText(
-    '验证邮件发送时机',
+    '新会话有效期',
   );
   await defaults.getByRole('button', { name: '保留当前输入', exact: true }).click();
   await expect(page.getByLabel('新会话有效期（秒）', { exact: true })).toHaveValue(ttl);
@@ -322,7 +321,7 @@ test('高危策略分别使用未绑定密码和实际MFA原地确认，验证�
     await expire(admin.username, 'mfa');
     await bound.goto('/admin/settings/accounts');
     const previous = await current(bound);
-    await bound.getByRole('button', { name: '登录后主动申请', exact: true }).click();
+    await bound.getByRole('switch', { name: '开放新用户注册', exact: true }).click();
     await confirmSave(bound);
 
     const mfaSheet = bound.getByRole('dialog', { name: '验证高危操作', exact: true });
@@ -333,16 +332,32 @@ test('高危策略分别使用未绑定密码和实际MFA原地确认，验证�
     expect((await current(bound)).meta).toEqual(previous.meta);
     await confirmSave(bound);
     await expect(bound.getByText(savedText, { exact: true })).toBeVisible();
-    expect((await current(bound)).data.verificationEmailTiming).toBe('on_request');
+    expect((await current(bound)).data.registrationEnabled).toBe(
+      !previous.data.registrationEnabled,
+    );
   } finally {
     await context.close();
   }
 });
 
+async function markLegacyUnverified(username: string) {
+  const source = process.env['TEST_DATABASE_URL'];
+  if (!source || !new URL(source).pathname.endsWith('_test')) throw new Error('必须使用隔离测试库');
+  const database = createDatabase(source);
+  try {
+    await database.pool.query('UPDATE users SET email_verified_at=NULL WHERE username=$1', [
+      username,
+    ]);
+  } finally {
+    await database.close();
+  }
+}
 async function fillRegistration(page: Page, username: string, email: string, password: string) {
   await page.getByLabel('用户名', { exact: true }).fill(username);
   await page.getByLabel('邮箱', { exact: true }).fill(email);
   await page.getByLabel('密码', { exact: true }).fill(password);
+  await page.getByRole('button', { name: '发送验证码', exact: true }).click();
+  await page.getByLabel('邮箱验证码', { exact: true }).fill(await mailCode(email, '注册'));
 }
 async function register(page: Page) {
   const response = page.waitForResponse(
@@ -360,7 +375,7 @@ async function register(page: Page) {
   return notice.data.message;
 }
 
-test('按需注册的冲突和429保留输入，未验证真实登录私有编辑，主动申请邮件验证后重新登录', async ({
+test('验证码注册的冲突和429保留输入，历史未验证账号仍可登录编辑私稿和申请验证', async ({
   page,
   browser,
 }) => {
@@ -373,7 +388,6 @@ test('按需注册的冲突和429保留输入，未验证真实登录私有编�
       email = username + '@fixture.invalid',
       password = 'Requested verification creator passphrase 2026';
     await author.goto('/register');
-    await expect(author.locator('[data-registration-mode="on_request"]')).toBeVisible();
     await fillRegistration(author, username, email, password);
     let attempts = 0;
     const pattern = '**/api/v1/auth/register';
@@ -412,8 +426,9 @@ test('按需注册的冲突和429保留输入，未验证真实登录私有编�
         .evaluate((element: HTMLInputElement) => element.value.length),
     ).toBe(password.length);
     const message = await register(author);
-    expect(message).toContain('主动申请');
+    expect(message).toContain('邮箱验证通过');
     await author.unroute(pattern);
+    await markLegacyUnverified(username);
     await login(author, username, password);
     await expect(author.getByText('邮箱待验证', { exact: true })).toBeVisible();
     const auth = AuthContextResponseSchema.parse(
@@ -484,7 +499,7 @@ test('按需注册的冲突和429保留输入，未验证真实登录私有编�
   }
 });
 
-test('默认自动发信有真实Mailpit邮件，关注册后已有未验证账号仍可登录、申请和找回', async ({
+test('验证码注册有真实邮件，关注册后历史未验证账号仍可登录、申请和找回', async ({
   page,
   browser,
 }) => {
@@ -496,10 +511,8 @@ test('默认自动发信有真实Mailpit邮件，关注册后已有未验证账�
       email = username + '@fixture.invalid',
       password = 'Automatic verification creator passphrase 2026';
     await author.goto('/register');
-    await expect(author.locator('[data-registration-mode="on_registration"]')).toBeVisible();
     await fillRegistration(author, username, email, password);
-    expect(await register(author)).toContain('验证邮件将发送');
-    const first = await mailToken(email, 'verify-email');
+    expect(await register(author)).toContain('邮箱验证通过');
     const state = await current(page);
     await update(page, { ...state.data, registrationEnabled: false });
     const closed = await visitor.newPage();
@@ -507,10 +520,11 @@ test('默认自动发信有真实Mailpit邮件，关注册后已有未验证账�
     await expect(closed.getByText('注册暂未开放，请稍后再来', { exact: true })).toBeVisible();
     await expect(closed.getByRole('link', { name: '登录已有账号', exact: true })).toBeVisible();
     await expect(closed.getByRole('button', { name: '创建账号', exact: true })).toHaveCount(0);
+    await markLegacyUnverified(username);
     await login(author, username, password);
     await expect(author.getByText('邮箱待验证', { exact: true })).toBeVisible();
     await author.getByRole('button', { name: '申请验证邮件', exact: true }).click();
-    await mailToken(email, 'verify-email', undefined, first);
+    await mailToken(email, 'verify-email');
     await author.goto('/forgot-password');
     await author.getByLabel('注册邮箱', { exact: true }).fill(email);
     await author.getByRole('button', { name: '发送重置邮件', exact: true }).click();
@@ -563,6 +577,7 @@ test('真实访客注册与普通账号冷启动和刷新保持SSR水合一致�
       password = 'Hydration regression creator passphrase 2026';
     await fillRegistration(author, username, email, password);
     await register(author);
+    await markLegacyUnverified(username);
     await login(author, username, password);
     await test.step('普通未验证账号冷载刷新与首个账号导航交互', async () => {
       for (let pass = 0; pass < 4; pass++) {

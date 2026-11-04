@@ -211,48 +211,60 @@ export class AuthService implements OnApplicationShutdown {
     );
     setAuthCookie(this.env, response, 'csrf', issue.csrf, 86400_000);
   }
-  async register(
-    input: { username: string; email: string; password: string },
-    request: Request,
-    response: Response,
-  ) {
-    await this.rate.take('register-ip', request.ip ?? 'unknown', 10, 3600);
+  private async registrationPolicy() {
     await assertOrdinaryRequestAllowed(this.database);
     const policy = await readAccountSettings(this.database, this.env);
     if (!policy.data.registrationEnabled)
       throw new BusinessError('SERVICE_UNAVAILABLE', '注册暂未开放，请稍后再来');
+    return policy;
+  }
+  async requestRegistrationCode(email: string, request: Request, response: Response) {
+    await this.rate.take('registration-code-ip', request.ip ?? 'unknown', 10, 3600);
+    await this.rate.take('mail-recipient', email, 3, 900);
+    const policy = await this.registrationPolicy();
+    await this.repository.requestRegistrationCode(email, {
+      accountsRevision: policy.meta.revision,
+      mailRevision: await this.registrationMailRevision(),
+      requestId: this.requestId(response),
+    });
+    return { data: { message: '如果邮箱可用，验证码将发送到该地址，10 分钟内有效' } };
+  }
+  async register(
+    input: { username: string; email: string; password: string; code: string },
+    request: Request,
+    response: Response,
+  ) {
+    await this.rate.take('register-ip', request.ip ?? 'unknown', 10, 3600);
+    const policy = await this.registrationPolicy();
     await this.rate.take(
       registrationRateScope(policy.data.registrationRateLimit),
       request.ip ?? 'unknown',
       policy.data.registrationRateLimit.maxAttempts,
       policy.data.registrationRateLimit.windowSeconds,
     );
-    const automatic = policy.data.verificationEmailTiming === 'on_registration';
-    if (automatic) await this.rate.take('mail-recipient', input.email, 3, 900);
-    const mailRevision = await this.registrationMailRevision();
+    await this.rate.take('registration-code-check', input.email, 5, 900);
+    const { row } = await this.mailSettings.read();
     assertNewPassword(input.password, input);
-    const passwordHash = await hashPassword(input.password);
-    const token = automatic ? issueAuthSecret('email_verify') : undefined;
-    const result = await this.repository.register(
+    const previous = await this.repository.findAccount(input.email);
+    const legacyPasswordHash =
+      previous?.username === input.username &&
+      previous.status === 'active' &&
+      !previous.emailVerifiedAt &&
+      (await verifyPassword(previous.passwordHash, input.password))
+        ? previous.passwordHash
+        : undefined;
+    const passwordHash = legacyPasswordHash ?? (await hashPassword(input.password));
+    await this.repository.register(
       { username: input.username, email: input.email, passwordHash },
-      token
-        ? {
-            tokenHash: token.hash,
-            rawToken: token.token,
-            purpose: 'email_verify',
-            requestId: this.requestId(response),
-          }
-        : undefined,
-      { accountsRevision: policy.meta.revision, mailRevision, requestId: this.requestId(response) },
-    );
-    return {
-      data: {
-        message:
-          result.verificationEmailTiming === 'on_registration'
-            ? '如果注册信息可用，验证邮件将发送到你的邮箱；你也可以先登录并编辑私有草稿'
-            : '如果注册信息可用，你可以登录账号并主动申请验证邮件；公开投稿和互动前仍需验证邮箱',
+      input.code,
+      {
+        accountsRevision: policy.meta.revision,
+        mailRevision: row.revision,
+        requestId: this.requestId(response),
       },
-    };
+      legacyPasswordHash,
+    );
+    return { data: { message: '邮箱验证通过，可以登录了' } };
   }
   async requestMail(
     email: string,

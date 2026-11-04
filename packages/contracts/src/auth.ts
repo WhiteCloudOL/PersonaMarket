@@ -25,11 +25,16 @@ export const OpaqueAuthTokenSchema = z
   .string()
   .regex(/^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$/, '验证令牌格式不正确');
 export const AuthTokenHashSchema = z.string().regex(/^[0-9a-f]{64}$/);
+export const EmailVerificationCodeSchema = z.string().regex(/^[0-9]{6}$/, '请输入 6 位邮箱验证码');
+export const RequestRegistrationCodeSchema = z.strictObject({ email: EmailSchema });
 
-export const RegisterRequestSchema = z.strictObject({
+export const AccountCredentialsSchema = z.strictObject({
   username: UsernameSchema,
   email: EmailSchema,
   password: NewPasswordSchema,
+});
+export const RegisterRequestSchema = AccountCredentialsSchema.extend({
+  code: EmailVerificationCodeSchema,
 });
 export const LoginRequestSchema = z.strictObject({
   identifier: z.union([UsernameSchema, EmailSchema]),
@@ -99,6 +104,9 @@ export const ChangePasswordRequestSchema = z.strictObject({
 export const ChangeEmailRequestSchema = z.strictObject({
   currentPassword: textSchema(1, 128),
   email: EmailSchema,
+});
+export const ConfirmEmailChangeCodeSchema = ChangeEmailRequestSchema.extend({
+  code: EmailVerificationCodeSchema,
 });
 export const DeactivationRequestSchema = z.strictObject({
   currentPassword: textSchema(1, 128),

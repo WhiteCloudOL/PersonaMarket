@@ -1,3 +1,4 @@
+import { seedLegacyUnverified } from '../fixtures/legacy-account.js';
 import { randomUUID } from 'node:crypto';
 import { beforeAll, afterAll, expect, it } from 'vitest';
 import { DraftResponseSchema, MyPersonasResponseSchema } from '@personamarket/contracts';
@@ -13,15 +14,11 @@ async function author() {
   const username = 'draft_' + randomUUID().replaceAll('-', '').slice(0, 12);
   const http = stack.browser();
   const password = 'Draft creation passphrase 2026';
-  expect(
-    (
-      await http.write('/api/v1/auth/register', {
-        username,
-        email: username + '@fixture.invalid',
-        password,
-      })
-    ).status,
-  ).toBe(200);
+  await seedLegacyUnverified(stack.owner, {
+    username,
+    email: username + '@fixture.invalid',
+    password,
+  });
   expect((await http.write('/api/v1/auth/login', { identifier: username, password })).status).toBe(
     200,
   );
