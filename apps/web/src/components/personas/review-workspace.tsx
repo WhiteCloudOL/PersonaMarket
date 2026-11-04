@@ -127,6 +127,9 @@ function ReviewDetail({ id, refreshed }: { id: string; refreshed: () => void }) 
       </div>
     );
   const { submission, previous, records, evidenceAssetIds } = detail.data.data;
+  const viewer = auth.data?.data.account;
+  const reviewingOwnWork = viewer?.username === submission.publication.publisher;
+  const reviewerOwnWork = reviewingOwnWork && viewer?.role === 'moderator';
   return (
     <div className="flex flex-col gap-6">
       <EditorSection
@@ -243,28 +246,30 @@ function ReviewDetail({ id, refreshed }: { id: string; refreshed: () => void }) 
                 <Textarea id="review-reason" {...form.register('reason')} />
                 <FieldError>{form.formState.errors.reason?.message}</FieldError>
               </Field>
-              <div className="flex items-start gap-3">
-                <Checkbox
-                  id="self-review"
-                  checked={selfConfirmed}
-                  onCheckedChange={(v) => form.setValue('selfReviewConfirmed', v === true)}
-                />
-                <label htmlFor="self-review" className="text-sm leading-6">
-                  若为本人作品，我确认以管理员身份自审，并已填写明确理由
-                </label>
-              </div>
+              {reviewingOwnWork && viewer?.role === 'admin' && (
+                <Field orientation="horizontal">
+                  <Checkbox
+                    id="self-review"
+                    checked={selfConfirmed}
+                    onCheckedChange={(v) => form.setValue('selfReviewConfirmed', v === true)}
+                  />
+                  <FieldLabel htmlFor="self-review" className="text-sm leading-6">
+                    若为本人作品，我确认以管理员身份自审，并已填写明确理由
+                  </FieldLabel>
+                </Field>
+              )}
               <FormNotice
-                error={mutation.error}
+                error={reviewerOwnWork ? '审核员不能审核自己的作品' : mutation.error}
                 message={mutation.isSuccess ? '审核决定已保存' : undefined}
               />
-              <SubmitButton pending={mutation.isPending}>
+              <SubmitButton pending={mutation.isPending} disabled={reviewerOwnWork}>
                 {decision === 'approve' ? '通过并发布' : '驳回并通知作者'}
               </SubmitButton>
             </FieldGroup>
           </form>
         </EditorSection>
       )}
-      {auth.data?.data.account?.role === 'admin' && (
+      {viewer?.role === 'admin' && (
         <EditorSection
           title="管理员处置"
           description="作品封禁与作者隐藏分别记录，解除封禁不会替作者恢复隐藏状态"
@@ -272,7 +277,7 @@ function ReviewDetail({ id, refreshed }: { id: string; refreshed: () => void }) 
           <div className="flex flex-wrap gap-3">
             <PersonaModerationActions
               id={submission.personaId}
-              accountId={auth.data.data.account.id}
+              accountId={viewer.id}
               onSuccess={refresh}
             />
             {submission.status === 'APPROVED' && (

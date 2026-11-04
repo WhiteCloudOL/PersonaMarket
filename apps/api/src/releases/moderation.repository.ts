@@ -132,10 +132,9 @@ export class ModerationRepository {
       if (persona.moderationState === 'blocked')
         throw new BusinessError('CONFLICT', '作品已被封禁，不能批准或驳回');
       const selfReview = persona.ownerId === account.id;
-      if (
-        selfReview &&
-        (account.role !== 'admin' || !input.selfReviewConfirmed || !input.reason.trim())
-      )
+      if (selfReview && account.role !== 'admin')
+        throw new BusinessError('FORBIDDEN', '审核员不能审核自己的作品');
+      if (selfReview && (!input.selfReviewConfirmed || !input.reason.trim()))
         throw new BusinessError('FORBIDDEN', '管理员自审需要明确确认和理由');
       if (input.action === 'reject' && !input.reason.trim())
         throw new BusinessError('VALIDATION_FAILED', '驳回时请填写审核意见');

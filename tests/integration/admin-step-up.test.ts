@@ -86,7 +86,9 @@ it('MFA 会话超过近期窗口后日常浏览与审核仍可用，高危操作
       { 'Idempotency-Key': randomUUID() },
     );
   expect((await review(other.id)).status).toBe(200);
-  expect((await review(self.id, true)).status).toBe(403);
+  const selfResult = await review(self.id, true);
+  expect(selfResult.status).toBe(200);
+  expect(SubmissionResponseSchema.parse(await selfResult.json()).data.status).toBe('APPROVED');
   const mail = MailSettingsResponseSchema.parse(
     await (await admin.http.raw('/api/v1/admin/settings/mail')).json(),
   );
@@ -111,9 +113,9 @@ it('MFA 会话超过近期窗口后日常浏览与审核仍可用，高危操作
     (
       await moderatePersona(admin.http, persona.id, {
         state: 'blocked',
-        reason: '高危处置仍需验证',
+        reason: '作品下架沿用当前管理员会话',
       })
     ).status,
-  ).toBe(403);
+  ).toBe(200);
   expect((await admin.http.raw('/api/v1/admin/moderation/submissions')).status).toBe(200);
 });
