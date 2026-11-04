@@ -42,6 +42,7 @@ import { publicMediaSettingsQuery } from '@/lib/media-settings-api';
 import { FormNotice } from '../auth/auth-fields';
 import { useUnsavedDraft } from '../personas/use-unsaved-draft';
 import { ProfileContentView, profileStatuses } from './content';
+import { AvatarCropDialog } from './avatar-crop-dialog';
 
 export function OwnProfileEditor({
   accountId,
@@ -64,6 +65,8 @@ export function OwnProfileEditor({
     [candidate, setCandidate] = useState<OwnProfile>();
   const [confirmation, setConfirmation] = useState<'submit' | 'withdraw'>(),
     [notice, setNotice] = useState<string>();
+  const [cropFile, setCropFile] = useState<File>();
+  const avatarInput = useRef<HTMLInputElement>(null);
   const nonce = useRef<{ signature: string; key: string } | undefined>(undefined);
   const dirty = form.formState.isDirty;
   useUnsavedDraft(dirty, '个人资料还有未保存输入，确定离开吗');
@@ -101,7 +104,7 @@ export function OwnProfileEditor({
     gcTime: 0,
     onSuccess: (result) => {
       form.setValue('avatarAssetId', result.data.id, { shouldDirty: true, shouldValidate: true });
-      setNotice('头像已安全处理，请保存草稿并提交审核');
+      setNotice('裁切后的头像已保存为 WebP，请保存草稿并提交审核');
     },
   });
   const action = useMutation({
@@ -150,6 +153,14 @@ export function OwnProfileEditor({
   const avatar = useWatch({ control: form.control, name: 'avatarAssetId' });
   return (
     <div className="grid min-w-0 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+      {cropFile && (
+        <AvatarCropDialog
+          file={cropFile}
+          returnFocus={avatarInput}
+          onUpload={upload.mutateAsync}
+          onClosed={() => setCropFile(undefined)}
+        />
+      )}
       <form
         noValidate
         onSubmit={form.handleSubmit((content) => save.mutate(content))}
@@ -164,10 +175,7 @@ export function OwnProfileEditor({
             {save.isPending ? '正在保存…' : '保存草稿'}
           </Button>
         </div>
-        <FormNotice
-          error={save.error ?? upload.error ?? action.error ?? read.error}
-          message={notice}
-        />
+        <FormNotice error={save.error ?? action.error ?? read.error} message={notice} />
         {save.isError || action.isError ? (
           <Button type="button" variant="outline" onClick={() => read.mutate()} disabled={busy}>
             读取最新资料并保留输入
@@ -248,6 +256,7 @@ export function OwnProfileEditor({
                 <FieldLabel htmlFor="profile-avatar">资料头像</FieldLabel>
                 <Input
                   id="profile-avatar"
+                  ref={avatarInput}
                   type="file"
                   accept="image/png,image/jpeg,image/webp"
                   disabled={busy || !mediaSettings?.uploadsEnabled}
@@ -265,11 +274,20 @@ export function OwnProfileEditor({
                         });
                         return;
                       }
-                      upload.mutate(file);
+                      if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+                        form.setError('avatarAssetId', {
+                          message: '请选择 JPEG、PNG 或 WebP 图片',
+                        });
+                        return;
+                      }
+                      form.clearErrors('avatarAssetId');
+                      setCropFile(file);
                     }
                   }}
                 />
-                <FieldDescription>安全处理后保存为私有图片，审核通过前不会公开</FieldDescription>
+                <FieldDescription>
+                  选择图片后在弹窗裁切，保存为 WebP，审核通过后公开
+                </FieldDescription>
                 {media.isPending && <FieldDescription>正在读取图片上传限制…</FieldDescription>}
                 {mediaSettings && (
                   <FieldDescription>

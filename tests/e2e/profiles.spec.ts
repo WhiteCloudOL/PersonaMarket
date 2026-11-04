@@ -66,6 +66,7 @@ async function review(page: Page, id: string, decision: 'approve' | 'reject', re
 }
 
 test('资料编辑、头像、审核和旧版公开隔离形成真实浏览器闭环', async ({ page, browser }, info) => {
+  if (info.project.name === 'desktop') await page.setViewportSize({ width: 1440, height: 900 });
   const author = await loginCreator(page);
   const adminContext = await browser.newContext({
     baseURL: process.env['PLAYWRIGHT_ORIGIN'] ?? 'http://127.0.0.1:3100',
@@ -87,11 +88,74 @@ test('资料编辑、头像、审核和旧版公开隔离形成真实浏览器�
     await page.getByRole('button', { name: '添加公开链接', exact: true }).click();
     await page.getByLabel('链接名称 1', { exact: true }).fill('创作手记');
     await page.getByLabel('链接地址 1', { exact: true }).fill('https://example.com/notes');
+    const input = page.getByLabel('资料头像', { exact: true });
+    if (process.env['PROFILE_AVATAR_CAPTURE'] === 'before') {
+      await input.scrollIntoViewIfNeeded();
+      await page.screenshot({
+        path: join('data/tests/step-up', 'profile-avatar-before-' + info.project.name + '.png'),
+        animations: 'disabled',
+      });
+    }
+    const image = await page.evaluate(() => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 320;
+      canvas.height = 160;
+      const context = canvas.getContext('2d');
+      if (!context) throw Error('缺少测试图片画布');
+      context.fillStyle = '#b11226';
+      context.fillRect(0, 0, 160, 160);
+      context.fillStyle = '#125ab1';
+      context.fillRect(160, 0, 160, 160);
+      return canvas.toDataURL().split(',')[1] ?? '';
+    });
+    const file = {
+      name: 'avatar.png',
+      mimeType: 'image/png',
+      buffer: Buffer.from(image, 'base64'),
+    };
+    let uploads = 0;
+    page.on('request', (request) => {
+      if (request.method() === 'POST' && request.url().endsWith('/api/v1/me/assets/upload/avatar'))
+        uploads++;
+    });
+    await input.setInputFiles(file);
+    const crop = page.getByRole('dialog', { name: '裁切头像', exact: true });
+    await expect(crop).toBeVisible();
+    await crop.getByRole('button', { name: '取消', exact: true }).click();
+    await expect(crop).toBeHidden();
+    await expect(input).toBeFocused();
+    expect(uploads).toBe(0);
+    await expect(page.getByLabel('公开昵称', { exact: true })).toHaveValue('清风创作者');
+    await input.setInputFiles(file);
+    const preview = crop.getByLabel('头像裁切预览', { exact: true });
+    const zoom = crop.getByLabel('缩放', { exact: true });
+    await zoom.press('ArrowRight');
+    await expect(zoom).toHaveValue('1.05');
+    await preview.focus();
+    await page.keyboard.press('End');
+    await expect(crop.getByRole('button', { name: '使用裁切头像', exact: true })).toBeEnabled();
+    await page.screenshot({ path: join(directory, 'avatar-crop.png'), animations: 'disabled' });
     const uploaded = response(page, '/api/v1/me/assets/upload/avatar', 'POST');
-    await page
-      .getByLabel('资料头像', { exact: true })
-      .setInputFiles({ name: 'avatar.png', mimeType: 'image/png', buffer: fixturePng });
-    expect((await uploaded).status()).toBe(200);
+    await crop.getByRole('button', { name: '使用裁切头像', exact: true }).click();
+    const result = await uploaded;
+    expect(result.status()).toBe(200);
+    const asset = AssetResponseSchema.parse(await result.json()).data;
+    expect(asset.mime).toBe('image/webp');
+    expect(asset.width).toBe(asset.height);
+    const pixel = await page.evaluate(async (id) => {
+      const response = await fetch('/api/v1/me/assets/' + id);
+      const bitmap = await createImageBitmap(await response.blob());
+      const canvas = document.createElement('canvas');
+      canvas.width = canvas.height = 1;
+      const context = canvas.getContext('2d');
+      if (!context) throw Error('缺少测试图片画布');
+      context.drawImage(bitmap, 0, 0, 1, 1);
+      bitmap.close();
+      return Array.from(context.getImageData(0, 0, 1, 1).data);
+    }, asset.id);
+    expect(pixel[2]).toBeGreaterThan(pixel[0] ?? 0);
+    await expect(crop).toBeHidden();
+    expect(uploads).toBe(1);
     await expect(page.getByRole('img', { name: '当前草稿头像', exact: true })).toBeVisible();
     await save(page);
     const first = await submit(page);
