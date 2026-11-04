@@ -114,6 +114,17 @@ docker compose --profile maintenance run --rm admin
 
 生产仅使用 compose.yaml，配置真实 HTTPS origin 与域名，数据库和 Redis 保持内网访问。迁移进程成功后应用才启动；Caddy 处理 HTTPS，服务具备健康探针和日志轮转。
 
+首次上线前，将正式域名解析到服务器并开放入站 80/443，设置 `CADDY_DOMAIN` 和对应的 `PUBLIC_ORIGIN`。新实例单独生成高熵凭据。迁移现有实例时，保留原应用加密密钥与数据库凭据，并先按 [备份与恢复](OPERATIONS.md#备份与恢复) 验证隔离恢复。正式 SMTP 通过实际收件验证后再开启注册。公共规则、转载与举报联系方式由站点所有者确认后发布。
+
+```sh
+docker compose -f compose.yaml config --quiet
+node scripts/build-images.mjs
+docker compose --parallel 1 -f compose.yaml up -d --wait
+docker compose -f compose.yaml ps
+```
+
+启动后，用实际 HTTPS 域名核对首页与 `/health/ready`，再检查注册邮件和必要的管理员流程。
+
 Compose 使用 Caddy 作为 Web 与 API 的统一外部入口，两者的 `TRUST_PROXY_HOPS` 均设为 `1`。Web 只向公开榜单读取转发来自受信代理的单个合法访客 IP，保持每个访客独立限流；直接开发运行默认不信任转发头。增加前置代理时同步核对完整信任链和入口隔离配置。
 
 当前配置用于本地运行。对公网发布前须完成依赖与镜像安全处置、业务权限验收和恢复演练，并提供 AGPL 对应版本源码获取方式；运行镜像采用固定摘要的精简系统和可审查补丁构建，构建时需访问官方镜像源、Go 模块源及 Alpine 软件源。
