@@ -35,7 +35,7 @@ export async function loginBrowserAdmin(page: Page) {
     error: failure?.success ? failure.data.error.code : undefined,
   }).toEqual({ status: 200, error: undefined });
   await expect(page).toHaveURL(/\/account$/);
-  await page.getByRole('link', { name: '设置二次验证', exact: true }).click();
+  await page.getByRole('tab', { name: '二次验证', exact: true }).click();
   const setup = page.waitForResponse(
     (response) =>
       response.url().endsWith('/api/v1/auth/mfa/setup') && response.request().method() === 'POST',
@@ -55,6 +55,6 @@ export async function loginBrowserAdmin(page: Page) {
   const recoveryCode = MfaConfirmResponseSchema.parse(await confirmed.json()).data.recoveryCodes[0];
   if (!recoveryCode) throw new Error('缺少一次性测试恢复码');
   await page.getByRole('button', { name: '已安全保存，继续' }).click();
-  await expect(page).toHaveURL(/\/account$/);
+  await expect(page).toHaveURL(/\/account\?tab=mfa$/);
   return { username, recoveryCode };
 }
