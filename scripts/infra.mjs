@@ -15,15 +15,23 @@ for (const field of ['POSTGRES_PASSWORD', 'POSTGRES_APP_PASSWORD', 'REDIS_PASSWO
   if (!env[field] || env[field].startsWith('CHANGE_ME'))
     throw new Error(`请先运行 pnpm env:init 并配置 ${field}。`);
 }
-const args = [
-  'compose',
-  '-f',
-  'compose.yaml',
-  '-f',
-  'compose.dev.yaml',
-  ...(mode === 'up'
-    ? ['--parallel', '1', 'up', '-d', '--build', '--wait', ...services]
-    : ['stop', ...services]),
-];
-const result = spawnSync('docker', args, { cwd: root, env, stdio: 'inherit', windowsHide: true });
-process.exitCode = result.status ?? 1;
+function compose(args) {
+  const result = spawnSync(
+    'docker',
+    ['compose', '--parallel', '1', '-f', 'compose.yaml', '-f', 'compose.dev.yaml', ...args],
+    { cwd: root, env, stdio: 'inherit', windowsHide: true },
+  );
+  if (result.error) console.error(result.error.message);
+  return result.status ?? 1;
+}
+
+if (mode === 'up') {
+  // Compose 的 --parallel 不限制同一次 Bake 构建中的目标；data-init 与 Redis 共用镜像。
+  for (const service of ['postgres', 'redis']) {
+    const code = compose(['build', service]);
+    if (code !== 0) process.exit(code);
+  }
+  process.exitCode = compose(['up', '-d', '--no-build', '--wait', ...services]);
+} else {
+  process.exitCode = compose(['stop', ...services]);
+}
