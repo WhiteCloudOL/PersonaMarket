@@ -20,12 +20,15 @@ export async function applyExploreFilters(page: Page) {
 
 export async function selectExploreFilter(page: Page, label: string, option: string) {
   const { sheet } = await openExploreFilters(page);
-  if (label === '分类' || label === '标签 / 风格')
-    await sheet
+  if (label === '分类' || label === '标签 / 风格') {
+    const row = sheet.getByRole('group', { name: label, exact: true });
+    const choice = row
       .getByRole('group', { name: label + '选项', exact: true })
-      .getByRole('button', { name: option, exact: true })
-      .click();
-  else {
+      .getByRole('button', { name: option, exact: true });
+    if (!(await choice.isVisible()))
+      await row.getByRole('button', { name: '更多', exact: true }).click();
+    await choice.click();
+  } else {
     await sheet.getByRole('combobox', { name: label + '筛选', exact: true }).click();
     await page.getByRole('option', { name: option, exact: true }).click();
   }
