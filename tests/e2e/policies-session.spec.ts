@@ -33,7 +33,7 @@ async function login(page: Page, username: string, password: string) {
   return context.account;
 }
 
-test('管理员角色被真实撤销后核对规则刷新身份并隐藏私有表单，普通身份重新登录仍被拒绝', async ({
+test('管理员角色被真实撤销后保存前刷新身份并隐藏私有表单，普通身份重新登录仍被拒绝', async ({
   page,
   browser,
 }, info) => {
@@ -87,29 +87,18 @@ test('管理员角色被真实撤销后核对规则刷新身份并隐藏私有�
     expect(result.records[0]?.actor.id).toBe(managerAccount.id);
     await expect(page.getByLabel('规则标题', { exact: true })).toBeVisible();
 
-    let deniedSeen = false;
-    const denied = page.waitForResponse((response) => {
-      if (
-        new URL(response.url()).pathname !== policyPath ||
-        response.request().method() !== 'PATCH'
-      )
-        return false;
-      deniedSeen = true;
-      return true;
+    const attemptedWrites: string[] = [];
+    page.on('request', (request) => {
+      if (new URL(request.url()).pathname === policyPath && request.method() === 'PATCH')
+        attemptedWrites.push(request.method());
     });
     const refreshed = page.waitForResponse(
       (response) =>
-        deniedSeen &&
         new URL(response.url()).pathname === '/api/v1/auth/context' &&
         response.request().method() === 'GET',
     );
     await page.getByLabel('规则标题', { exact: true }).fill('权限撤销后的输入');
     await page.getByRole('button', { name: '保存规则草稿', exact: true }).click();
-    const rejected = await denied;
-    expect([401, 403]).toContain(rejected.status());
-    expect(ErrorResponseSchema.parse(await rejected.json()).error.code).toBe(
-      rejected.status() === 401 ? 'UNAUTHENTICATED' : 'FORBIDDEN',
-    );
     const refreshedResponse = await refreshed;
     expect(refreshedResponse.status()).toBe(200);
     expect(
@@ -119,6 +108,8 @@ test('管理员角色被真实撤销后核对规则刷新身份并隐藏私有�
     await expect(page.getByLabel('规则正文', { exact: true })).toHaveCount(0);
     await expect(page.getByRole('button', { name: '保存规则草稿', exact: true })).toHaveCount(0);
     await expect(page.getByText('此页面需要管理员权限', { exact: true })).toBeVisible();
+
+    expect(attemptedWrites).toEqual([]);
 
     const regular = await login(page, first, password);
     expect(regular.id).toBe(targetAccount.id);

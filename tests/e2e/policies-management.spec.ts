@@ -10,7 +10,7 @@ import {
 } from '@personamarket/contracts';
 import { browserWrite } from '../fixtures/browser-account.js';
 
-test.use({ trace: 'off', screenshot: 'off' });
+test.use({ trace: 'off', screenshot: 'off', actionTimeout: 7000 });
 const endpoint = (slug: PolicySlug) => '/api/v1/admin/settings/policies/' + slug;
 const errors = new WeakMap<Page, string[]>();
 test.beforeEach(async ({ page }, info) => {

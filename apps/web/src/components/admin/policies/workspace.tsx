@@ -46,7 +46,7 @@ export function PolicyWorkspace() {
     queryKey: [...policiesKey(accountId), 'detail', slug],
     queryFn: ({ signal }) => policiesApi.read(accountId, slug, signal),
     enabled: authorized,
-    refetchOnMount: 'always',
+    staleTime: 0,
     retry: false,
   });
   if (!authorized) return <FormNotice error="请使用有效管理员会话维护公共规则" />;
