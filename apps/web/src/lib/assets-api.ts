@@ -10,12 +10,7 @@ import {
   AssetResponseSchema,
   AssetJobResponseSchema,
 } from '@personamarket/contracts';
-import {
-  checkedResponse,
-  authenticatedWrite,
-  authenticatedWriteFor,
-  sessionRequestOptions,
-} from './auth-api';
+import { checkedResponse, authenticatedWriteFor, sessionRequestOptions } from './auth-api';
 const options = () => ({ ...sessionRequestOptions, signal: AbortSignal.timeout(15000) });
 export const assetsApi = {
   list: async () => checkedResponse(await listOwnAssets(options()), AssetListResponseSchema),
@@ -36,13 +31,14 @@ export const assetsApi = {
         }),
       AssetResponseSchema,
     ),
-  upload: (file: File, purpose: 'content' | 'evidence') =>
-    authenticatedWrite(
+  upload: (accountId: string, file: File, purpose: 'content' | 'evidence') =>
+    authenticatedWriteFor(
+      accountId,
       (header) =>
         uploadOwnImage({
           ...options(),
           body: { file },
-          params: { path: { purpose }, header },
+          params: { path: { purpose }, header: { ...header, 'X-Expected-Account': accountId } },
           bodySerializer: (body) => {
             const form = new FormData();
             form.set('file', body.file);
@@ -51,8 +47,9 @@ export const assetsApi = {
         }),
       AssetResponseSchema,
     ),
-  queue: (url: string) =>
-    authenticatedWrite(
+  queue: (accountId: string, url: string) =>
+    authenticatedWriteFor(
+      accountId,
       (header) => importOwnImageUrl({ ...options(), body: { url }, params: { header } }),
       AssetJobResponseSchema,
     ),

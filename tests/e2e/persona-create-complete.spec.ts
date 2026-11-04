@@ -5,6 +5,7 @@ import { fixturePng } from '../fixtures/image.js';
 
 test.use({ trace: 'off', screenshot: 'off' });
 test('创建页完整填写、平台正文与来源切换保留、真实初始化和移动预览', async ({ page }, info) => {
+  if (info.project.name === 'desktop') await page.setViewportSize({ width: 1440, height: 900 });
   const browserErrors: string[] = [];
   page.on('pageerror', (error) => browserErrors.push(error.message));
   await loginCreator(page);
@@ -27,10 +28,34 @@ test('创建页完整填写、平台正文与来源切换保留、真实初始�
   await expect(
     page.getByRole('button', { name: '移除标签 星海图书馆', exact: true }),
   ).toBeVisible();
-  await page
-    .getByLabel('人设头像', { exact: true })
-    .setInputFiles({ name: 'avatar.png', mimeType: 'image/png', buffer: fixturePng });
+  const avatarFile = { name: 'avatar.png', mimeType: 'image/png', buffer: fixturePng };
+  const avatarInput = page.getByLabel('人设头像', { exact: true });
+  const crop = page.getByRole('dialog', { name: '裁切头像', exact: true });
+  let avatarUploads = 0;
+  page.on('request', (request) => {
+    if (request.method() === 'POST' && request.url().endsWith('/me/assets/upload-persona-avatar'))
+      avatarUploads++;
+  });
+  await avatarInput.scrollIntoViewIfNeeded();
+  await page.screenshot({ path: info.outputPath('create-avatar-field.png') });
+  await avatarInput.setInputFiles(avatarFile);
+  await expect(crop).toBeVisible();
+  await expect(crop.getByRole('button', { name: '使用裁切头像' })).toBeEnabled();
+  await page.screenshot({ path: info.outputPath('create-avatar-crop.png') });
+  if (info.project.name === 'mobile') {
+    await page.emulateMedia({ colorScheme: 'dark' });
+    await page.screenshot({ path: info.outputPath('create-avatar-crop-dark.png') });
+    await page.emulateMedia({ colorScheme: 'light' });
+  }
+  await crop.getByRole('button', { name: '取消', exact: true }).click();
+  await expect(crop).toHaveCount(0);
+  await expect(avatarInput).toBeFocused();
+  await expect(page.getByLabel('一句话简介', { exact: true })).toHaveValue('创建时一起保存的简介');
+  expect(avatarUploads).toBe(0);
+  await avatarInput.setInputFiles(avatarFile);
+  await crop.getByRole('button', { name: '使用裁切头像' }).click();
   await expect(page.getByAltText('当前人设头像')).toBeVisible();
+  expect(avatarUploads).toBe(1);
   await page.getByLabel('人格设定', { exact: true }).fill('  喜欢星光与阅读\n保留空白  ');
   await page.getByLabel('表达风格', { exact: true }).fill('温和自然');
   await page.getByLabel('行为风格', { exact: true }).fill('尊重边界');
@@ -86,4 +111,25 @@ test('创建页完整填写、平台正文与来源切换保留、真实初始�
   await expect(page.getByLabel('人格设定', { exact: true })).toHaveValue(
     '  喜欢星光与阅读\n保留空白  ',
   );
+  await avatarInput.setInputFiles(avatarFile);
+  const position = crop.getByRole('group', { name: '头像裁切预览', exact: true });
+  await position.press('End');
+  await page.screenshot({ path: info.outputPath('edit-avatar-crop.png') });
+  await crop.getByRole('button', { name: '使用裁切头像' }).click();
+  await expect(crop).toHaveCount(0);
+  await expect(page.getByAltText('当前人设头像')).not.toHaveAttribute(
+    'src',
+    '/api/v1/me/assets/' + saved.data.draft.avatarAssetId,
+  );
+  await expect(page.getByText('已保存到服务器', { exact: true })).toBeVisible();
+  await page.reload();
+  const editedAvatar = page.getByAltText('当前人设头像');
+  await expect(editedAvatar).toBeVisible();
+  await expect
+    .poll(() => editedAvatar.evaluate((image: HTMLImageElement) => image.naturalWidth))
+    .toBe(1);
+  expect(await editedAvatar.evaluate((image: HTMLImageElement) => image.naturalHeight)).toBe(1);
+  const avatar = await page.request.get((await editedAvatar.getAttribute('src')) ?? '');
+  expect(avatar.status()).toBe(200);
+  expect(avatar.headers()['content-type']).toContain('image/webp');
 });

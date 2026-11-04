@@ -18,7 +18,7 @@ test('新窗口首次登录保留访客创作，换账号清理表单、平台�
   const login = await page.context().newPage();
   try {
     await loginCreator(login);
-    await expect(page.getByLabel('上传作品图片', { exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: '上传图片', exact: true })).toBeEnabled();
     await expect(page.getByLabel('人设名称', { exact: true })).toHaveValue('访客先写下的灵感');
     await expect(page.getByLabel('人格设定', { exact: true })).toHaveValue('MaiBot 的本地设定');
     await page.getByRole('button', { name: '转载作品', exact: true }).click();
@@ -27,12 +27,12 @@ test('新窗口首次登录保留访客创作，换账号清理表单、平台�
     await page
       .getByRole('textbox', { name: 'Markdown 介绍', exact: true })
       .fill('前一个账号的私有介绍');
-    await page.getByLabel('上传作品图片', { exact: true }).setInputFiles({
+    await page.getByLabel('作品封面', { exact: true }).setInputFiles({
       name: 'private.png',
       mimeType: 'image/png',
       buffer: fixturePng,
     });
-    await page.getByRole('button', { name: '设为封面', exact: true }).click();
+    await expect(page.getByAltText('当前作品封面')).toBeVisible();
     await loginCreator(login);
     await expect(page.getByLabel('人设名称', { exact: true })).toHaveValue('');
     await expect(page.getByLabel('人格设定', { exact: true })).toHaveValue('');
@@ -43,10 +43,9 @@ test('新窗口首次登录保留访客创作，换账号清理表单、平台�
     const editor = page.getByRole('textbox', { name: 'Markdown 介绍', exact: true });
     await editor.press('ControlOrMeta+z');
     await expect(editor).not.toContainText('前一个账号的私有介绍');
-    await expect(page.getByRole('button', { name: '设为封面', exact: true })).toHaveCount(0);
-    await expect(
-      page.getByText('上传图片后，会出现在你的私有素材库', { exact: true }),
-    ).toBeVisible();
+    await expect(page.getByAltText('当前作品封面')).toHaveCount(0);
+    await page.getByRole('button', { name: '选择已有图片', exact: true }).click();
+    await expect(page.getByText('暂无已上传的作品图片', { exact: true })).toBeVisible();
   } finally {
     await login.close();
   }
@@ -73,7 +72,7 @@ test('同账号会话失效后重登保留输入，另一窗口主动退出清�
     await login.getByLabel('密码', { exact: true }).fill(account.password);
     await login.getByRole('button', { name: '登录', exact: true }).click();
     await expect(login).toHaveURL(/\/account$/);
-    await expect(page.getByLabel('上传作品图片', { exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: '上传图片', exact: true })).toBeEnabled();
     await expect(page.getByLabel('人设名称', { exact: true })).toHaveValue('重新登录后继续的灵感');
     await logoutAccount(login);
     await expect(page).toHaveURL(/\/$/);

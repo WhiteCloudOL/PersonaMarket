@@ -14,6 +14,7 @@ import {
 } from '@personamarket/ui/components/select';
 import { Field, FieldLabel } from '@personamarket/ui/components/field';
 import { DraftText, EditorSection } from './draft-fields';
+import { PersonaEvidenceField } from './persona-attachments';
 type Origin = PersonaDraft['origin'];
 export function OriginFields({ step = '07' }: { step?: string }) {
   const form = useFormContext<PersonaDraft>();
@@ -129,6 +130,7 @@ export function OriginFields({ step = '07' }: { step?: string }) {
         />
       )}
       <DraftText name="authorNotes" label="作者使用说明" limit={2000} multiline />
+      <PersonaEvidenceField />
       <Field orientation="horizontal">
         <Checkbox
           id="rights-accepted"

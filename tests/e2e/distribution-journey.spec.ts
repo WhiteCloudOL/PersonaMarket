@@ -152,17 +152,20 @@ for (const platform of ['maibot', 'astrbot'] as const) {
             await author
               .getByRole('textbox', { name: 'Markdown 介绍', exact: true })
               .fill('# 星海书房的中文说明\n\n完整旅程的图文说明，保留原作者来源');
-            await author.getByLabel('上传作品图片', { exact: true }).setInputFiles({
+            const illustration = {
               name: '书房插画.png',
               mimeType: 'image/png',
               buffer: await readFile('apps/web/public/images/anime-story-garden.png'),
-            });
+            };
+            await author.getByLabel('上传作品图片', { exact: true }).setInputFiles(illustration);
             await expect(
-              author.getByRole('button', { name: '插入 README', exact: true }),
-            ).toHaveCount(1);
-            await author.getByRole('button', { name: '插入 README', exact: true }).click();
-            await author.getByRole('button', { name: '设为封面', exact: true }).click();
-            await author.getByRole('button', { name: '设为头像', exact: true }).click();
+              author.getByRole('textbox', { name: 'Markdown 介绍', exact: true }),
+            ).toContainText('asset://');
+            await author.getByRole('button', { name: '选择已有图片', exact: true }).click();
+            await author.getByRole('button', { name: '将图片 1 设为封面', exact: true }).click();
+            await author.getByLabel('人设头像', { exact: true }).setInputFiles(illustration);
+            await author.getByRole('button', { name: '使用裁切头像', exact: true }).click();
+            await expect(author.getByAltText('当前人设头像')).toBeVisible();
             await author
               .getByLabel('作者使用说明', { exact: true })
               .fill('完整旅程第一版，保留原作者和转载许可');
@@ -346,7 +349,14 @@ for (const platform of ['maibot', 'astrbot'] as const) {
             expect(files.get('README.md')?.toString('utf8')).toBe(portable.metadata.readmeMarkdown);
             expect(files.has('LICENSE.txt')).toBe(true);
             expect(files.size).toBe(3 + portable.assets.length);
-            expect(portable.assets).toHaveLength(1);
+            expect(portable.assets).toHaveLength(2);
+            expect(portable.metadata.avatarKey).not.toBe(portable.metadata.coverKey);
+            expect(portable.assets.map((asset) => asset.key)).toEqual(
+              expect.arrayContaining([portable.metadata.avatarKey, portable.metadata.coverKey]),
+            );
+            expect(portable.metadata.readmeMarkdown).toContain(
+              replacements.get('asset://' + portable.metadata.coverKey),
+            );
             await guest.keyboard.press('Escape');
             const restored = await importJourneyFile(
               author,

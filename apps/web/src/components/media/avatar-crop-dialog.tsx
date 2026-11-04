@@ -1,6 +1,6 @@
 'use client';
 import Image from 'next/image';
-import { useEffect, useRef, useState, type RefObject } from 'react';
+import { useEffect, useId, useRef, useState, type RefObject } from 'react';
 import { Button } from '@personamarket/ui/components/button';
 import { Input } from '@personamarket/ui/components/input';
 import { Field, FieldLabel } from '@personamarket/ui/components/field';
@@ -18,16 +18,19 @@ const clamp = (value: number) => Math.min(1, Math.max(0, value));
 
 export function AvatarCropDialog({
   file,
+  description,
   returnFocus,
   onUpload,
   onClosed,
 }: {
   file: File;
+  description: string;
   returnFocus: RefObject<HTMLInputElement | null>;
   onUpload: (file: File) => Promise<unknown>;
   onClosed: () => void;
 }) {
   const [open, setOpen] = useState(true);
+  const id = useId();
   const [image, setImage] = useState<HTMLImageElement>();
   const [error, setError] = useState<Error>();
   const [pending, setPending] = useState(false);
@@ -110,7 +113,7 @@ export function AvatarCropDialog({
       >
         <SheetHeader>
           <SheetTitle>裁切头像</SheetTitle>
-          <SheetDescription>调整方框里的头像，确认后上传到资料草稿</SheetDescription>
+          <SheetDescription>{description}</SheetDescription>
         </SheetHeader>
         <div className="flex flex-col gap-4 px-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
           {image ? (
@@ -118,7 +121,7 @@ export function AvatarCropDialog({
               <div
                 role="group"
                 aria-label="头像裁切预览"
-                aria-describedby="avatar-crop-help"
+                aria-describedby={id + '-help'}
                 tabIndex={0}
                 className="relative mx-auto aspect-square w-full max-w-64 touch-none cursor-grab overflow-hidden rounded-xl border bg-muted select-none focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing"
                 onPointerDown={(event) => {
@@ -174,13 +177,13 @@ export function AvatarCropDialog({
                   }}
                 />
               </div>
-              <p id="avatar-crop-help" className="text-sm text-muted-foreground">
+              <p id={id + '-help'} className="text-sm text-muted-foreground">
                 拖动图片或用方向键移动位置，Home 居中，End 移到右下角
               </p>
               <Field>
-                <FieldLabel htmlFor="avatar-crop-zoom">缩放</FieldLabel>
+                <FieldLabel htmlFor={id + '-zoom'}>缩放</FieldLabel>
                 <Input
-                  id="avatar-crop-zoom"
+                  id={id + '-zoom'}
                   type="range"
                   min={1}
                   max={3}

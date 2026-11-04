@@ -54,7 +54,7 @@ test('创作提示在本页登录并返回，保留两个平台正文且不手�
   await page.getByRole('button', { name: 'MaiBot', exact: true }).click();
   await expect(page.getByLabel('人格设定', { exact: true })).toHaveValue('保留 MaiBot 正文');
   await expect(login).toHaveCount(0);
-  await expect(page.getByLabel('上传作品图片', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: '上传图片', exact: true })).toBeEnabled();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true,
   );

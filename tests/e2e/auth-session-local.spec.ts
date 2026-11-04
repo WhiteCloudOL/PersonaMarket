@@ -24,7 +24,7 @@ test('本窗口主动退出后，新的访客创作首次登录另一账号仍�
   const login = await page.context().newPage();
   try {
     await loginCreator(login);
-    await expect(page.getByLabel('上传作品图片', { exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: '上传图片', exact: true })).toBeEnabled();
     await expect(page.getByLabel('人设名称', { exact: true })).toHaveValue(
       '退出后重新开始的访客创作',
     );

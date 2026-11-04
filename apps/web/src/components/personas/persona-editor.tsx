@@ -17,7 +17,8 @@ import { useDraftSave } from './use-draft-save';
 import { DraftText, EditorSection, MaiBotFields, AstrBotFields } from './draft-fields';
 import { ReadmeEditor } from './readme-editor';
 import { MetadataFields } from './metadata-fields';
-import { AssetLibrary } from './asset-library';
+import { PersonaAvatarField } from './persona-avatar-field';
+import { PersonaCoverField } from './persona-attachments';
 import { ReleaseCreate } from './release-create';
 import { CreatorPreview, DraftSavingHelp } from './creator-preview';
 import { CreatorPreviewSheet } from './creator-preview-sheet';
@@ -144,6 +145,10 @@ function Editor({
             >
               <DraftText name="title" label="人设名称" limit={80} />
               <DraftText name="summary" label="一句话简介" limit={200} />
+              <div className="grid min-w-0 items-start gap-5 sm:grid-cols-2">
+                <PersonaAvatarField />
+                <PersonaCoverField />
+              </div>
             </EditorSection>
             {taxonomy.data ? (
               initial.data.draft.platform === 'maibot' ? (
@@ -157,7 +162,6 @@ function Editor({
               <Skeleton className="h-64 w-full" />
             )}
             <ReadmeEditor />
-            <AssetLibrary />
             <MetadataFields />
           </div>
           <aside className="hidden min-w-0 flex-col gap-5 lg:sticky lg:top-44 lg:flex lg:max-h-[calc(100dvh-12rem)] lg:self-start lg:overflow-y-auto">

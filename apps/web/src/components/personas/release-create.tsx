@@ -34,7 +34,7 @@ import { releasesApi } from '@/lib/releases-api';
 import { ApiError } from '@/lib/auth-api';
 import { SnapshotView, type Snapshot } from './snapshot-view';
 import { PendingSubmissionHint } from './pending-submission-hint';
-import { personaAvatarUploadKey } from './persona-avatar-field';
+import { personaMediaUploadKey } from './persona-media';
 const formSchema = CreateReleaseSchema.pick({ version: true }).extend({
   changelog: CreateReleaseSchema.shape.changelog.removeDefault(),
   confirmed: z.boolean().refine(Boolean, '请确认本次发版信息'),
@@ -50,7 +50,7 @@ export function ReleaseCreate({
 }) {
   const draft = useFormContext<PersonaDraft>();
   const client = useQueryClient();
-  const avatarPending = useIsMutating({ mutationKey: personaAvatarUploadKey }) > 0;
+  const mediaPending = useIsMutating({ mutationKey: personaMediaUploadKey }) > 0;
   const opener = useRef<HTMLButtonElement>(null);
   const operation = useRef<{ body: string; key: string } | undefined>(undefined);
   const initialHandled = useRef(false);
@@ -113,7 +113,7 @@ export function ReleaseCreate({
           submit.reset();
           prepare.mutate();
         }}
-        disabled={prepare.isPending || avatarPending}
+        disabled={prepare.isPending || mediaPending}
       >
         {prepare.isPending ? '正在准备快照…' : '创建 Release'}
       </Button>

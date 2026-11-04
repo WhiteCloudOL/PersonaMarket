@@ -1,46 +1,38 @@
 'use client';
 
 import Image from 'next/image';
+import { useRef, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  PERSONA_AVATAR_MAX_BYTES,
-  type AuthContextResponse,
-  type PersonaDraft,
-} from '@personamarket/contracts';
+import { useMutation } from '@tanstack/react-query';
+import { PERSONA_AVATAR_MAX_BYTES, type PersonaDraft } from '@personamarket/contracts';
 import { Button } from '@personamarket/ui/components/button';
 import { Input } from '@personamarket/ui/components/input';
 import { Field, FieldLabel, FieldDescription } from '@personamarket/ui/components/field';
 import { assetsApi } from '@/lib/assets-api';
-import { authQuery } from '@/lib/auth-api';
-import { publicMediaSettingsQuery } from '@/lib/media-settings-api';
 import { FormNotice } from '../auth/auth-fields';
-
-export const personaAvatarUploadKey = ['private', 'persona-avatar-upload'] as const;
+import { AvatarCropDialog } from '../media/avatar-crop-dialog';
+import {
+  imageAccept,
+  personaAssetsKey,
+  personaMediaUploadKey,
+  usePersonaMedia,
+} from './persona-media';
 
 export function PersonaAvatarField() {
   const form = useFormContext<PersonaDraft>();
   const id = useWatch({ control: form.control, name: 'avatarAssetId' });
-  const account = useQuery(authQuery).data?.data;
-  const media = useQuery({
-    ...publicMediaSettingsQuery,
-    enabled: account?.assurance === 'authenticated',
-  });
-  const client = useQueryClient();
+  const { accountId, policy, client, ownsSession } = usePersonaMedia();
+  const input = useRef<HTMLInputElement>(null);
+  const [crop, setCrop] = useState<{ file: File; accountId: string }>();
+  const [selectionError, setSelectionError] = useState<string>();
   const upload = useMutation({
-    mutationKey: personaAvatarUploadKey,
-    mutationFn: (file: File) => {
-      if (!account?.account || account.assurance !== 'authenticated') throw new Error('请先登录');
-      if (file.size === 0 || file.size >= PERSONA_AVATAR_MAX_BYTES)
-        throw new Error('请选择小于 10 MiB 的图片');
-      return assetsApi.uploadAvatar(account.account.id, file);
-    },
-    onSuccess: ({ data }) => {
-      const current = client.getQueryData<AuthContextResponse>(authQuery.queryKey)?.data;
-      if (current?.assurance !== 'authenticated' || current.account?.id !== account?.account?.id)
-        return;
+    mutationKey: personaMediaUploadKey,
+    mutationFn: ({ file, accountId }: { file: File; accountId: string }) =>
+      assetsApi.uploadAvatar(accountId, file),
+    onSuccess: ({ data }, { accountId }) => {
+      if (!ownsSession(accountId)) return;
       form.setValue('avatarAssetId', data.id, { shouldDirty: true });
-      void client.invalidateQueries({ queryKey: ['private', 'assets'] });
+      void client.invalidateQueries({ queryKey: personaAssetsKey });
     },
     gcTime: 0,
     retry: false,
@@ -72,39 +64,51 @@ export function PersonaAvatarField() {
         </div>
       )}
       <Input
+        ref={input}
         id="persona-avatar-file"
         type="file"
-        accept="image/png,image/jpeg,image/webp"
+        accept={imageAccept}
         aria-describedby="persona-avatar-help"
         disabled={
-          upload.isPending ||
-          account?.assurance !== 'authenticated' ||
-          media.isError ||
-          !media.data?.data.uploadsEnabled
+          upload.isPending || !accountId || policy.isError || !policy.data?.data.uploadsEnabled
         }
         onChange={(event) => {
           const file = event.currentTarget.files?.[0];
-          if (file) upload.mutate(file);
           event.currentTarget.value = '';
+          if (!file || !accountId) return;
+          setSelectionError(undefined);
+          if (file.size === 0 || file.size >= PERSONA_AVATAR_MAX_BYTES) {
+            setSelectionError('请选择小于 10 MiB 的有效图片');
+            return;
+          }
+          if (!imageAccept.split(',').includes(file.type)) {
+            setSelectionError('请选择 JPEG、PNG 或 WebP 图片');
+            return;
+          }
+          setCrop({ file, accountId });
         }}
       />
       <FieldDescription id="persona-avatar-help">
-        选填。支持小于 10 MiB 的静态 JPEG、PNG 和 WebP，上传后仅保存压缩的 WebP。
-        {account?.assurance !== 'authenticated' && ' 登录后可上传。'}
-        {media.data?.data.uploadsEnabled === false && ' 本地上传暂未开放。'}
+        选填。选择小于 10 MiB 的 JPEG、PNG 或 WebP，裁切后保存为 WebP。
+        {!accountId && ' 登录后可上传。'}
+        {policy.data?.data.uploadsEnabled === false && ' 本地上传暂未开放。'}
       </FieldDescription>
-      {media.isError && (
-        <Button type="button" variant="outline" onClick={() => void media.refetch()}>
+      {policy.isError && (
+        <Button type="button" variant="outline" onClick={() => void policy.refetch()}>
           重试读取图片设置
         </Button>
       )}
-      {upload.isPending && (
-        <p role="status" className="text-sm text-muted-foreground">
-          正在上传并压缩头像…
-        </p>
+      {crop && (
+        <AvatarCropDialog
+          file={crop.file}
+          description="调整方框里的头像，确认后应用到人设草稿"
+          returnFocus={input}
+          onUpload={(file) => upload.mutateAsync({ file, accountId: crop.accountId })}
+          onClosed={() => setCrop(undefined)}
+        />
       )}
       <FormNotice
-        error={upload.error}
+        error={selectionError}
         message={id && upload.data?.data.id === id ? '头像已上传，保存草稿后生效' : undefined}
       />
     </Field>

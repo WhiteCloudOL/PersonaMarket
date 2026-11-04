@@ -38,12 +38,13 @@ import { authQuery } from '@/lib/auth-api';
 import { personasApi } from '@/lib/personas-api';
 import { DraftText, EditorSection, MaiBotFields, AstrBotFields } from './draft-fields';
 import { CategoryField, TagsField } from './taxonomy-fields';
-import { PersonaAvatarField, personaAvatarUploadKey } from './persona-avatar-field';
+import { PersonaAvatarField } from './persona-avatar-field';
+import { personaMediaUploadKey } from './persona-media';
+import { PersonaCoverField } from './persona-attachments';
 import { RecommendedModelsFields } from './model-fields';
 import { OriginFields } from './origin-fields';
 import { PlatformField } from './platform-field';
 import { ReadmeEditor } from './readme-editor';
-import { AssetLibrary } from './asset-library';
 import { CreatorCard } from './creator-preview';
 import { DraftChecks } from './draft-checks';
 import { CreatorPreviewSheet } from './creator-preview-sheet';
@@ -149,12 +150,12 @@ function CreatePersonaFields({ auth }: { auth: UseQueryResult<AuthContextRespons
         : { ...current, platform: 'astrbot', content: structuredClone(buffers.current.astrbot) };
     form.reset(draft, { keepDefaultValues: true });
   };
-  const avatarPending = useIsMutating({ mutationKey: personaAvatarUploadKey }) > 0;
+  const mediaPending = useIsMutating({ mutationKey: personaMediaUploadKey }) > 0;
   const save = form.handleSubmit((draft) => {
-    if (!avatarPending) mutation.mutate({ draft, intent: 'edit' });
+    if (!mediaPending) mutation.mutate({ draft, intent: 'edit' });
   });
   const release = form.handleSubmit((draft) => {
-    if (avatarPending) return;
+    if (mediaPending) return;
     const checked = createPublicSnapshotSchema(limits).safeParse(publicSnapshotCandidate(draft));
     if (!checked.success || !draft.rightsAccepted) {
       form.setError('root.publication', {
@@ -169,7 +170,7 @@ function CreatePersonaFields({ auth }: { auth: UseQueryResult<AuthContextRespons
     <>
       <Button
         type="submit"
-        disabled={pending || avatarPending}
+        disabled={pending || mediaPending}
         className="h-auto min-h-11 min-w-0 flex-1 whitespace-normal"
         variant="outline"
       >
@@ -182,7 +183,7 @@ function CreatePersonaFields({ auth }: { auth: UseQueryResult<AuthContextRespons
       </Button>
       <Button
         type="button"
-        disabled={pending || avatarPending || !taxonomy.data}
+        disabled={pending || mediaPending || !taxonomy.data}
         className="h-auto min-h-11 min-w-0 flex-1 whitespace-normal"
         onClick={() => void release()}
       >
@@ -284,6 +285,9 @@ function CreatePersonaFields({ auth }: { auth: UseQueryResult<AuthContextRespons
                   <DraftText name="summary" label="一句话简介" limit={200} />
                   <PersonaAvatarField />
                   <div className="min-w-0 sm:col-span-2">
+                    <PersonaCoverField />
+                  </div>
+                  <div className="min-w-0 sm:col-span-2">
                     <TagsField />
                   </div>
                 </div>
@@ -306,23 +310,8 @@ function CreatePersonaFields({ auth }: { auth: UseQueryResult<AuthContextRespons
                 <AstrBotFields limits={limits} step="03" />
               )}
               <RecommendedModelsFields step="04" />
-              {auth.data?.data.assurance === 'authenticated' ? (
-                <AssetLibrary step="05" />
-              ) : (
-                <EditorSection
-                  id="persona-assets"
-                  step="05"
-                  title="素材库"
-                  description="登录后可上传作品图片，授权证据仅自己和审核人员可见"
-                >
-                  <p className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <LockKeyholeIcon className="size-4" aria-hidden />
-                    当前输入可以继续保留，素材需要登录后添加
-                  </p>
-                </EditorSection>
-              )}
-              <ReadmeEditor step="06" />
-              <OriginFields />
+              <ReadmeEditor step="05" />
+              <OriginFields step="06" />
             </div>
           </fieldset>
           <p className="flex items-start gap-2 text-sm leading-6 text-muted-foreground">

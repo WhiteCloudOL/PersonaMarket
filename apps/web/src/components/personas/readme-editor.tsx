@@ -1,5 +1,6 @@
 'use client';
 import dynamic from 'next/dynamic';
+import { useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import type { PersonaDraft } from '@personamarket/contracts';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@personamarket/ui/components/tabs';
@@ -12,6 +13,8 @@ import {
 } from '@personamarket/ui/components/field';
 import { SafeMarkdown } from './safe-markdown';
 import { EditorSection } from './draft-fields';
+import { MediaPolicyNotice } from './media-policy-notice';
+import { usePersonaMedia } from './persona-media';
 const MarkdownInput = dynamic(() => import('./markdown-input'), {
   ssr: false,
   loading: () => <Skeleton className="h-72 w-full" />,
@@ -20,6 +23,8 @@ export function ReadmeEditor({ step = '03' }: { step?: string }) {
   const form = useFormContext<PersonaDraft>();
   const value = useWatch({ control: form.control, name: 'readmeMarkdown' });
   const error = form.getFieldState('readmeMarkdown', form.formState).error?.message;
+  const [tab, setTab] = useState('edit');
+  const { accountId, policy } = usePersonaMedia();
   return (
     <EditorSection
       id="persona-readme"
@@ -29,14 +34,18 @@ export function ReadmeEditor({ step = '03' }: { step?: string }) {
     >
       <Field>
         <FieldLabel>Markdown 介绍</FieldLabel>
-        <Tabs defaultValue="edit">
+        <Tabs
+          value={tab}
+          onValueChange={(value) => setTab(value === 'preview' ? 'preview' : 'edit')}
+        >
           <TabsList>
             <TabsTrigger value="edit">编辑介绍</TabsTrigger>
             <TabsTrigger value="preview">实时预览</TabsTrigger>
           </TabsList>
-          <TabsContent value="edit">
+          <TabsContent value="edit" keepMounted>
             <MarkdownInput
               value={value}
+              active={tab === 'edit'}
               onChange={(text) =>
                 form.setValue('readmeMarkdown', text, { shouldDirty: true, shouldValidate: true })
               }
@@ -53,9 +62,9 @@ export function ReadmeEditor({ step = '03' }: { step?: string }) {
           </TabsContent>
         </Tabs>
         <FieldDescription>
-          {Array.from(value).length.toLocaleString('zh-CN')} / 30,000
-          个字符，外链图片仅显示提示，导入本站后可预览
+          {Array.from(value).length.toLocaleString('zh-CN')} / 30,000 个字符
         </FieldDescription>
+        {accountId && <MediaPolicyNotice policy={policy} />}
         {error && <FieldError>{error}</FieldError>}
       </Field>
     </EditorSection>

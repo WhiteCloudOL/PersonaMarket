@@ -14,12 +14,12 @@ test('创建失败保留输入和已上传封面，手动重试仅创建一份�
   await page.goto('/dashboard/personas/new');
   await page.getByLabel('人设名称', { exact: true }).fill('失败后保留的星光');
   await page.getByLabel('一句话简介', { exact: true }).fill('网络恢复后继续创作');
-  await page.getByLabel('上传作品图片', { exact: true }).setInputFiles({
+  await page.getByLabel('作品封面', { exact: true }).setInputFiles({
     name: 'cover.png',
     mimeType: 'image/png',
     buffer: fixturePng,
   });
-  await page.getByRole('button', { name: '设为封面', exact: true }).click();
+  await expect(page.getByAltText('当前作品封面')).toBeVisible();
   await page.route('**/api/v1/me/personas', async (route) => {
     if (route.request().method() === 'POST') await route.abort('failed');
     else await route.continue();
@@ -78,7 +78,6 @@ test('创建版本先保存完整草稿并等待人工确认，提交后仍需�
   );
   expect(before.data).toEqual([]);
   await confirmation.getByLabel('版本号', { exact: true }).fill('1.0.0');
-  await confirmation.getByLabel('更新日志', { exact: true }).fill('第一次分享书房里的星光');
   await confirmation
     .getByRole('checkbox', {
       name: '我已核对公开内容、版本号及来源许可，确认提交审核',
@@ -92,6 +91,7 @@ test('创建版本先保存完整草稿并等待人工确认，提交后仍需�
   );
   expect(submitted.data).toHaveLength(1);
   expect(submitted.data[0]?.status).toBe('PENDING');
+  expect(submitted.data[0]?.changelog).toBe('');
   expect((await page.request.get(`/api/v1/personas/${id}`)).status()).toBe(404);
 });
 

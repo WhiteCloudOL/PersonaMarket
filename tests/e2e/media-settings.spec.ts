@@ -125,7 +125,7 @@ test('关闭上传和在线导入后入口提示当前策略，旧素材仍可�
     await author
       .getByLabel('上传作品图片', { exact: true })
       .setInputFiles({ name: 'owned.png', mimeType: 'image/png', buffer: fixturePng });
-    await expect(author.getByRole('button', { name: '设为封面', exact: true })).toBeVisible();
+    await expect(author.getByRole('textbox', { name: 'Markdown 介绍' })).toContainText('asset://');
     const assets = AssetListResponseSchema.parse(
       await (await author.request.get('/api/v1/me/assets')).json(),
     ).data;
@@ -152,11 +152,12 @@ test('关闭上传和在线导入后入口提示当前策略，旧素材仍可�
     ).toBe(200);
     await author.reload();
     await expect(author.getByLabel('上传作品图片', { exact: true })).toBeDisabled();
-    await expect(author.getByRole('button', { name: '导入在线图片', exact: true })).toBeDisabled();
+    await expect(author.getByRole('button', { name: '在线图片', exact: true })).toBeDisabled();
     await expect(
       author.getByText('单张原图最大 64 KiB · 新版本 README 最多 20 张图片', { exact: true }),
     ).toBeVisible();
-    await author.getByRole('button', { name: '设为封面', exact: true }).click();
+    await author.getByRole('button', { name: '选择已有图片', exact: true }).click();
+    await author.getByRole('button', { name: '将图片 1 设为封面', exact: true }).click();
     await author.getByLabel('人设名称', { exact: true }).fill('旧素材仍可继续创作');
     await author.getByRole('button', { name: '创建私有草稿', exact: true }).click();
     await expect(author).toHaveURL(/\/dashboard\/personas\/[a-f0-9-]+\/edit$/);

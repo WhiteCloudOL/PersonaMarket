@@ -42,7 +42,7 @@ import { publicMediaSettingsQuery } from '@/lib/media-settings-api';
 import { FormNotice } from '../auth/auth-fields';
 import { useUnsavedDraft } from '../personas/use-unsaved-draft';
 import { ProfileContentView, profileStatuses } from './content';
-import { AvatarCropDialog } from './avatar-crop-dialog';
+import { AvatarCropDialog } from '../media/avatar-crop-dialog';
 
 export function OwnProfileEditor({
   accountId,
@@ -156,6 +156,7 @@ export function OwnProfileEditor({
       {cropFile && (
         <AvatarCropDialog
           file={cropFile}
+          description="调整方框里的头像，确认后上传到资料草稿"
           returnFocus={avatarInput}
           onUpload={upload.mutateAsync}
           onClosed={() => setCropFile(undefined)}
