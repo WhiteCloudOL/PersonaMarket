@@ -28,7 +28,7 @@ export function HomeSettingsInputs({
   form,
   disabled,
 }: {
-  form: UseFormReturn<HomeSettingsWrite>;
+  form: UseFormReturn<Pick<HomeSettingsWrite, 'data'>>;
   disabled: boolean;
 }) {
   const sections = useFieldArray({ control: form.control, name: 'data.sections' });

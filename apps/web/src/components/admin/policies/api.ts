@@ -19,7 +19,7 @@ import {
   PolicyRecordResponseSchema,
   policyEtag,
   type PolicySlug,
-  type PolicyWrite,
+  type PolicyDraftFields,
   type SubmitPolicy,
   type WithdrawPolicy,
   type ReviewPolicy,
@@ -48,7 +48,7 @@ function failed(cause: unknown): never {
   throw new Error('公共规则暂时无法读取或保存，请核对状态后重试', { cause });
 }
 export type PolicyCommand =
-  | { kind: 'write'; input: PolicyWrite }
+  | { kind: 'write'; input: PolicyDraftFields }
   | { kind: 'submit'; input: SubmitPolicy }
   | { kind: 'withdraw'; id: string; input: WithdrawPolicy }
   | { kind: 'review'; id: string; input: ReviewPolicy }

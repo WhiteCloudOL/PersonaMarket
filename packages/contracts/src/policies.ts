@@ -40,7 +40,9 @@ export const PolicyFieldsSchema = PolicyDraftFieldsSchema.extend({
   bodyMarkdown: multiline(1, 30000),
 });
 export type PolicyFields = z.infer<typeof PolicyFieldsSchema>;
-export const PolicyWriteSchema = PolicyDraftFieldsSchema.extend({ reason });
+export const PolicyWriteSchema = PolicyDraftFieldsSchema.extend({
+  reason: reason.default('更新公共规则草稿'),
+});
 export type PolicyWrite = z.infer<typeof PolicyWriteSchema>;
 
 // CAS、账号核对和幂等沿用 headers，不接受客户端指定作者、状态或公开正文

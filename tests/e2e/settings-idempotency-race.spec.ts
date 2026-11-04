@@ -30,7 +30,6 @@ for (const kind of ['home', 'models'] as const) {
       const route = '/admin/settings/' + (kind === 'home' ? 'home' : 'model-suggestions');
       const button = kind === 'home' ? '保存首页设置' : '保存模型建议';
       const label = kind === 'home' ? '首页短提示' : '建议 1 · 备注';
-      const group = kind === 'home' ? '首页展示设置表单' : '模型建议表单';
       const local = '响应丢失时仍要保留的本地文字';
       const remote = '另一页面随后保存的文字';
       if (kind === 'models') {
@@ -70,7 +69,6 @@ for (const kind of ['home', 'models'] as const) {
           : ModelSuggestionsResponseSchema.parse(await (await page.request.get(path)).json());
       await page.goto(route);
       await page.getByLabel(label, { exact: true }).fill(local);
-      await page.getByLabel('处理理由', { exact: true }).fill('保留丢失响应后的本地编辑');
       const keys: string[] = [];
       let lost = false;
       await page.route('**' + path, async (route) => {
@@ -87,7 +85,7 @@ for (const kind of ['home', 'models'] as const) {
       });
       await page.getByRole('button', { name: button, exact: true }).click();
       await expect(
-        page.getByRole('group', { name: group, exact: true }).getByRole('alert'),
+        page.getByText('暂时无法确认保存结果，请再次点击保存。', { exact: true }),
       ).toBeVisible();
       if (kind === 'home') {
         const current = HomeSettingsResponseSchema.parse(
@@ -142,19 +140,13 @@ for (const kind of ['home', 'models'] as const) {
       expect(keys[0]).toBeTruthy();
       expect(keys[1]).toBe(keys[0]);
       await expect(page.getByLabel(label, { exact: true })).toHaveValue(local);
-      await expect(page.getByText(remote, { exact: true })).toBeVisible();
+      await expect(page.getByText(/其他管理员同时修改了相同设置/u)).toBeVisible();
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
         true,
       );
       await page.evaluate(() => document.fonts.ready);
       await page.getByLabel(label, { exact: true }).scrollIntoViewIfNeeded();
       await page.screenshot({ path: join(directory, 'local-input.png') });
-      await page
-        .getByRole('status')
-        .filter({ has: page.getByRole('button', { name: '采用最新修订继续核对', exact: true }) })
-        .scrollIntoViewIfNeeded();
-      await page.screenshot({ path: join(directory, 'candidate.png') });
-      await page.getByRole('button', { name: '采用最新修订继续核对', exact: true }).click();
       await expect(page.getByLabel(label, { exact: true })).toHaveValue(local);
       const saved = page.waitForResponse(
         (response) => response.url().endsWith(path) && response.request().method() === 'PATCH',

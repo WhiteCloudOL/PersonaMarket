@@ -23,9 +23,9 @@
 
 ## 保存、冲突与记录
 
-新客户端保存完整候选与非空理由，并携带当前 `ETag` 的 `If-Match`、UUID `Idempotency-Key`、当前账号的 `X-Expected-Account` 和 CSRF 令牌。账号核对头只用于防止误用另一账号的表单，不授予权限。读取返回 `"accounts-修订号"`；设置、追加变更记录与审计在同一事务提交。
+点击「保存注册设置」提交表单。客户端自动携带当前 `ETag`、幂等键、当前账号标识和 CSRF 令牌。设置、差异记录与审计在同一事务提交。
 
-并发修改会返回 `REVISION_CONFLICT`。重新读取后核对差异，保留自己的候选与理由，再次明确保存。`MFA_REQUIRED` / `REAUTH_REQUIRED` 要求原地完成身份确认，完成后不会自动重发原保存请求。网络结果未知时保留原始候选、理由、修订和幂等键，用相同请求显式核对，不换键盲目重发。已知成功的相同请求可在有效管理员会话内核对，不重复生成记录；同一键绑定不同请求会返回冲突。核对响应是当前设置，应结合变更记录确认原请求与后续更新。
+并发修改时，页面在后台读取当前设置并合并不同字段。同一字段发生冲突时保留你的输入，由你再次点击保存。网络结果不明时再次点击保存会先复用原幂等键确认结果。近期身份确认完成后，在原表单再次点击保存。
 
 「变更记录」按修订倒序，每页20条，页码范围1–100，只有管理员可读。新记录同时冻结当时实际生效的值与原始存储来源；`null` 表示采用部署回退值。旧记录没有保存的新字段或当时有效值显示为未知，不能用今天的部署默认值补成历史事实。记录只读，没有回滚历史记录或直接改写审计的入口。
 
@@ -34,7 +34,7 @@
 | 方法与路径（均以 `/api/v1` 为前缀）           | operationId                 | 用途                                                                                 |
 | --------------------------------------------- | --------------------------- | ------------------------------------------------------------------------------------ |
 | `GET /admin/settings/accounts`                | `getAccountSettings`        | 读取完整有效设置、部署默认值与修订，返回 ETag                                        |
-| `PATCH /admin/settings/accounts`              | `updateAccountSettings`     | 新载荷 `{data,reason}`，近期身份确认后保存                                           |
+| `PATCH /admin/settings/accounts`              | `updateAccountSettings`     | 提交 `{data}`，近期身份确认后保存                                                    |
 | `GET /admin/settings/accounts/records?page=1` | `getAccountSettingsRecords` | 读取只读差异记录                                                                     |
 | `GET /auth/context`                           | `getAuthContext`            | 原有身份信息外，返回 `registrationPolicy:{verificationEmailTiming,settingsRevision}` |
 

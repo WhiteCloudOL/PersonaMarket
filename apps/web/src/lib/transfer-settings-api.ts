@@ -49,7 +49,12 @@ export const transferSettingsApi = {
     })
       .then((result) => checkedResponse(result, TransferSettingsRecordsResponseSchema))
       .catch(failed),
-  write: (accountId: string, input: TransferSettingsWrite, revision: number, key: string) =>
+  write: (
+    accountId: string,
+    input: Omit<TransferSettingsWrite, 'reason'>,
+    revision: number,
+    key: string,
+  ) =>
     authenticatedWriteFor(
       accountId,
       (csrf) =>

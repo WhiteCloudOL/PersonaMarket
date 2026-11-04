@@ -1,49 +1,35 @@
 'use client';
 import Link from 'next/link';
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { PublicBrandSchema, type PublicBrand } from '@personamarket/contracts';
 import { FieldGroup } from '@personamarket/ui/components/field';
 import { Button } from '@personamarket/ui/components/button';
 import { authApi, authQuery } from '@/lib/auth-api';
 import { AuthField, FormNotice, SubmitButton } from './auth-fields';
-import { useSettingsDirty } from '../settings/settings-navigation';
-function BrandFields({
-  data,
-  revision,
-  onSaved,
-  saved,
-}: {
-  data: PublicBrand;
-  revision: number;
-  onSaved: () => void;
-  saved: boolean;
-}) {
+import { useSettingsForm } from '../settings/use-settings-form';
+type BrandResponse = Awaited<ReturnType<typeof authApi.brand>>;
+const brandKey = (accountId: string) => ['private', 'brand', accountId];
+function BrandFields({ accountId, initial }: { accountId: string; initial: BrandResponse }) {
   const client = useQueryClient();
-  const form = useForm<PublicBrand>({
+  const { form, save, busy, dirty, canSave, message, error } = useSettingsForm<
+    PublicBrand,
+    BrandResponse
+  >({
+    accountId,
+    queryKey: brandKey(accountId),
+    initial,
     resolver: zodResolver(PublicBrandSchema),
-    defaultValues: data,
-  });
-  useSettingsDirty(form.formState.isDirty);
-  const mutation = useMutation({
-    mutationFn: (value: PublicBrand) => authApi.updateBrand(value, revision),
-    onSuccess: async () => {
-      onSaved();
-      await client.invalidateQueries({ queryKey: ['private', 'brand'] });
-      await client.invalidateQueries({ queryKey: ['public'] });
-    },
-    retry: false,
+    valuesFor: (result) => result.data,
+    read: authApi.brand,
+    write: (value, base) => authApi.updateBrand(value, base.meta.revision),
+    saved: '品牌设置已保存，首页将展示最新内容',
+    onSaved: () => void client.invalidateQueries({ queryKey: ['public'] }),
   });
   return (
-    <form
-      noValidate
-      onSubmit={form.handleSubmit((values) => mutation.mutate(values))}
-      className="flex flex-col gap-5"
-    >
+    <form noValidate onSubmit={form.handleSubmit(save)} className="flex flex-col gap-5">
       <fieldset
-        disabled={mutation.isPending}
+        disabled={busy}
         className="flex min-w-0 flex-col gap-5 border-0 p-0"
         aria-label="品牌设置表单"
       >
@@ -63,17 +49,10 @@ function BrandFields({
             error={form.formState.errors.description?.message}
           />
         </FieldGroup>
-        <FormNotice
-          message={
-            form.formState.isDirty
-              ? '有未保存的更改'
-              : saved
-                ? '品牌设置已保存，首页将展示最新内容'
-                : undefined
-          }
-        />
-        <FormNotice error={mutation.error} />
-        <SubmitButton pending={mutation.isPending}>保存品牌设置</SubmitButton>
+        <FormNotice message={dirty ? '有未保存的更改' : message} error={error} />
+        <SubmitButton pending={busy} disabled={!canSave}>
+          保存品牌设置
+        </SubmitButton>
         <Link href="/" className="text-sm underline underline-offset-4">
           查看首页
         </Link>
@@ -82,12 +61,12 @@ function BrandFields({
   );
 }
 export function AdminBrandForm() {
-  const [saved, setSaved] = useState(false);
   const account = useQuery(authQuery);
+  const accountId = account.data?.data.account?.id ?? '';
   const enabled =
     account.data?.data.account?.role === 'admin' && account.data.data.assurance === 'authenticated';
   const query = useQuery({
-    queryKey: ['private', 'brand'],
+    queryKey: brandKey(accountId),
     queryFn: authApi.brand,
     enabled,
     retry: false,
@@ -114,13 +93,7 @@ export function AdminBrandForm() {
     );
   return (
     <div className="flex flex-col gap-4">
-      <BrandFields
-        key={query.data.meta.revision}
-        data={query.data.data}
-        revision={query.data.meta.revision}
-        onSaved={() => setSaved(true)}
-        saved={saved}
-      />
+      <BrandFields key={accountId} accountId={accountId} initial={query.data} />
     </div>
   );
 }

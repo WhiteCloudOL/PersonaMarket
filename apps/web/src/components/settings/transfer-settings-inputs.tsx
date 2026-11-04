@@ -31,7 +31,7 @@ export function TransferSettingsInputs({
   form,
   disabled,
 }: {
-  form: UseFormReturn<TransferSettingsWrite>;
+  form: UseFormReturn<Pick<TransferSettingsWrite, 'data'>>;
   disabled: boolean;
 }) {
   const id = useId();

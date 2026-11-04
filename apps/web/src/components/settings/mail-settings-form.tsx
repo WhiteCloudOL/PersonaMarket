@@ -41,6 +41,8 @@ import { settingsApi } from '@/lib/settings-api';
 import { AuthField, FormNotice, SubmitButton } from '../auth/auth-fields';
 import { SettingsError } from './settings-error';
 import { useSettingsDirty } from './settings-navigation';
+import { isSettingsConflict, mergeSettings, sameSettings } from '@/lib/settings-save';
+import { authQuery } from '@/lib/auth-api';
 const key = ['private', 'settings', 'mail'] as const;
 function values(data: MailSettingsResponse['data']): UpdateMailSettings {
   return data.mode === 'custom'
@@ -55,36 +57,45 @@ function values(data: MailSettingsResponse['data']): UpdateMailSettings {
       }
     : { mode: data.mode };
 }
-function MailFields({
-  data,
-  revision,
-  saved,
-}: {
-  data: MailSettingsResponse['data'];
-  revision: number;
-  saved: () => void;
-}) {
+function MailFields({ initial, saved }: { initial: MailSettingsResponse; saved: () => void }) {
   const client = useQueryClient();
   const [defaultsOpen, setDefaultsOpen] = useState(false);
+  const [snapshot, setSnapshot] = useState(initial);
+  const data = snapshot.data;
   const form = useForm<UpdateMailSettings>({
     resolver: zodResolver(UpdateMailSettingsSchema),
     defaultValues: values(data),
   });
   const mode = useWatch({ control: form.control, name: 'mode' });
   const passwordAction = useWatch({ control: form.control, name: 'password.action' });
-  useSettingsDirty(form.formState.isDirty);
+  const dirty = !sameSettings(useWatch({ control: form.control }), values(data));
   const save = useMutation({
-    mutationFn: () =>
-      settingsApi.updateMail(UpdateMailSettingsSchema.parse(form.getValues()), revision),
+    mutationFn: async (input: UpdateMailSettings) => {
+      try {
+        return await settingsApi.updateMail(input, snapshot.meta.revision);
+      } catch (error) {
+        if (!isSettingsConflict(error)) throw error;
+        const latest = await settingsApi.mail();
+        // SMTP 的密码不读回。配置发生并发写入时，由管理员确认后再保存。
+        const merged = mergeSettings(values(data), input, values(latest.data));
+        setSnapshot(latest);
+        form.reset(merged.data);
+        throw new Error('邮件设置同时被修改。当前输入已保留，确认后可再次点击保存。', {
+          cause: error,
+        });
+      }
+    },
     gcTime: 0,
     retry: false,
     onSuccess: async (result) => {
+      setSnapshot(result);
       form.reset(values(result.data));
       saved();
-      await client.invalidateQueries({ queryKey: key });
-      await client.invalidateQueries({ queryKey: ['auth-context'] });
+      client.setQueryData(key, result);
+      await client.invalidateQueries({ queryKey: authQuery.queryKey });
     },
   });
+  useSettingsDirty(dirty || save.isPending);
   const test = useMutation({ mutationFn: settingsApi.testMail, retry: false });
   const changeMode = (next: string) => {
     if (next === 'custom')
@@ -117,7 +128,7 @@ function MailFields({
       <CardContent className="flex flex-col gap-5">
         <form
           noValidate
-          onSubmit={form.handleSubmit(() => save.mutate())}
+          onSubmit={form.handleSubmit((input) => save.mutate(input))}
           className="flex flex-col gap-5"
         >
           <fieldset
@@ -255,14 +266,16 @@ function MailFields({
                 </dl>
               )}
             </FieldGroup>
-            {form.formState.isDirty && (
+            {dirty && (
               <p role="status" className="text-sm text-muted-foreground">
                 有未保存的设置，保存后即时生效
               </p>
             )}
             <FormNotice error={save.error} />
             <div className="flex flex-wrap gap-3">
-              <SubmitButton pending={save.isPending}>保存邮件设置</SubmitButton>
+              <SubmitButton pending={save.isPending} disabled={!dirty}>
+                保存邮件设置
+              </SubmitButton>
               <AlertDialog open={defaultsOpen} onOpenChange={setDefaultsOpen}>
                 <AlertDialogTrigger render={<Button type="button" variant="outline" />}>
                   恢复部署默认值
@@ -296,9 +309,7 @@ function MailFields({
           <FieldDescription>使用已保存的配置，只发送到当前管理员已验证邮箱</FieldDescription>
           <Button
             variant="outline"
-            disabled={
-              test.isPending || save.isPending || form.formState.isDirty || !data.configured
-            }
+            disabled={test.isPending || save.isPending || dirty || !data.configured}
             onClick={() => test.mutate()}
           >
             {test.isPending ? '正在发送…' : '发送测试邮件'}
@@ -320,12 +331,7 @@ export function MailSettingsForm() {
       <FormNotice
         message={saved ? '上次修改已保存，API 和 Worker 将使用当前邮件配置' : undefined}
       />
-      <MailFields
-        key={query.data.meta.revision}
-        data={query.data.data}
-        revision={query.data.meta.revision}
-        saved={() => setSaved(true)}
-      />
+      <MailFields initial={query.data} saved={() => setSaved(true)} />
     </div>
   );
 }

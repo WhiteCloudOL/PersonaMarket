@@ -99,7 +99,7 @@ export const releaseSubmissions = pgTable(
     ),
     check(
       'submission_bounds',
-      sql`${t.attemptNumber}>0 AND ${t.revision}>0 AND octet_length(${t.snapshot}::text)<=4194304 AND char_length(${t.changelog}) BETWEEN 1 AND 5000`,
+      sql`${t.attemptNumber}>0 AND ${t.revision}>0 AND octet_length(${t.snapshot}::text)<=4194304 AND char_length(${t.changelog}) <= 5000`,
     ),
     index('submission_queue_idx').on(t.status, t.createdAt),
     index('submission_persona_created_idx').on(t.personaId, t.createdAt, t.id),

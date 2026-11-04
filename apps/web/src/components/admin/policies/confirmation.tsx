@@ -136,10 +136,6 @@ export function PolicyConfirmation({
             tabIndex={0}
             className="flex flex-col gap-3 rounded-lg border p-3 focus-visible:outline-2 focus-visible:outline-ring"
           >
-            <p className="text-sm text-muted-foreground">
-              核对修订 {intent.revision}
-              {'submission' in intent ? ' · 送审来源修订 ' + intent.submission.sourceRevision : ''}
-            </p>
             <h3 className="font-semibold">{publication?.title}</h3>
             {publication?.summary && (
               <p className="text-sm text-muted-foreground">{publication.summary}</p>

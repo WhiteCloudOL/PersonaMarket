@@ -24,20 +24,10 @@ function Record({
   const id = useId();
   return (
     <li className="flex min-w-0 flex-col gap-3 rounded-xl border border-border p-3">
-      <p className="text-sm font-medium [overflow-wrap:anywhere]">
-        {record.actor} · 修订 {record.fromRevision} → {record.toRevision}
-      </p>
+      <p className="text-sm font-medium [overflow-wrap:anywhere]">{record.actor}</p>
       <time dateTime={record.createdAt} className="text-sm text-muted-foreground">
         {announcementDate(record.createdAt)}
       </time>
-      <div
-        role="region"
-        aria-label="文件与图片修改理由"
-        tabIndex={0}
-        className="max-h-40 overflow-y-auto overscroll-contain rounded-lg whitespace-pre-wrap text-sm [overflow-wrap:anywhere] focus-visible:outline-2 focus-visible:outline-ring"
-      >
-        {record.reason}
-      </div>
       <Button
         type="button"
         variant="outline"
@@ -87,10 +77,7 @@ export function MediaSettingsRecords({ accountId }: { accountId: string }) {
     router.replace(pathname + (next.size ? '?' + next.toString() : ''), { scroll: false });
   }
   return (
-    <EditorSection
-      title="文件与图片修改记录"
-      description="核对修改人、处理理由及每次设置差异，记录只读"
-    >
+    <EditorSection title="文件与图片修改记录" description="核对修改人及每次设置差异，记录只读">
       {!input ? (
         <>
           <FormNotice error="记录页码无效，请返回第一页" />

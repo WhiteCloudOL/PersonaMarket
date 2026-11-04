@@ -247,10 +247,10 @@ test('首页运营长内容在重点视口可用，五条真实内容、确认�
     });
     await page.getByLabel('首页短提示', { exact: true }).fill('确认保存后保留的首页提示');
     await page
-      .getByLabel('处理理由', { exact: true })
+      .getByLabel('首页短提示', { exact: true })
       .fill('保留长理由与有限空间中的输入'.repeat(80));
     await page.setViewportSize({ width: 390, height: 480 });
-    const reason = page.getByLabel('处理理由', { exact: true });
+    const reason = page.getByLabel('首页短提示', { exact: true });
     await reason.scrollIntoViewIfNeeded();
     await reason.focus();
     await expect(reason).toBeInViewport({ ratio: 1 });

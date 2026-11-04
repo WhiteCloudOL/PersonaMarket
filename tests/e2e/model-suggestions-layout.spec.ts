@@ -181,9 +181,9 @@ test('模型建议长内容在重点视口可操作，权限、下拉焦点、�
       document.documentElement.style.fontSize = '';
     });
     await page.getByLabel('建议 1 · 备注', { exact: true }).fill('保存中检查全部控件');
-    await page.getByLabel('处理理由', { exact: true }).fill('软键盘可用区域与保存状态检查');
+    await page.getByLabel('建议 1 · 备注', { exact: true }).fill('软键盘可用区域与保存状态检查');
     await page.setViewportSize({ width: 390, height: 480 });
-    const input = page.getByLabel('处理理由', { exact: true });
+    const input = page.getByLabel('建议 1 · 备注', { exact: true });
     await input.focus();
     await input.scrollIntoViewIfNeeded();
     const fieldBounds = await input.boundingBox(),

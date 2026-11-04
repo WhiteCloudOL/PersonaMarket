@@ -1,7 +1,7 @@
 'use client';
 import { useDeferredValue, useSyncExternalStore } from 'react';
 import { useFormContext } from 'react-hook-form';
-import type { PolicyWrite } from '@personamarket/contracts';
+import type { PolicyDraftFields } from '@personamarket/contracts';
 import { Input } from '@personamarket/ui/components/input';
 import { Textarea } from '@personamarket/ui/components/textarea';
 import {
@@ -22,11 +22,11 @@ function subscribe(change: () => void) {
 }
 const desktopSnapshot = () => matchMedia(desktopQuery).matches;
 const serverSnapshot = () => false;
-function Inputs({ values }: { values: PolicyWrite }) {
+function Inputs({ values }: { values: PolicyDraftFields }) {
   const {
     register,
     formState: { errors },
-  } = useFormContext<PolicyWrite>();
+  } = useFormContext<PolicyDraftFields>();
   return (
     <FieldGroup className="min-w-0 gap-5">
       <Field data-invalid={Boolean(errors.title)}>
@@ -79,7 +79,7 @@ function Inputs({ values }: { values: PolicyWrite }) {
     </FieldGroup>
   );
 }
-function Preview({ values }: { values: PolicyWrite }) {
+function Preview({ values }: { values: PolicyDraftFields }) {
   const deferred = useDeferredValue(values);
   return (
     <section
@@ -112,7 +112,7 @@ export function PolicyEditorFields({
   tab,
   setTab,
 }: {
-  values: PolicyWrite;
+  values: PolicyDraftFields;
   tab: 'edit' | 'preview';
   setTab: (value: 'edit' | 'preview') => void;
 }) {

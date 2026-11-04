@@ -22,7 +22,7 @@ export function RankingSettingsInputs({
   form,
   disabled,
 }: {
-  form: UseFormReturn<RankingSettingsWrite>;
+  form: UseFormReturn<Pick<RankingSettingsWrite, 'data'>>;
   disabled: boolean;
 }) {
   const id = useId();

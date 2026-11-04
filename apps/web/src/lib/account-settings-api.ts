@@ -49,7 +49,7 @@ export const accountSettingsApi = {
       .catch(failed),
   write: (
     accountId: string,
-    input: AccountSettingsWrite,
+    input: Omit<AccountSettingsWrite, 'reason'>,
     expected: AccountSettingsResponse['meta'],
     key: string,
   ) =>

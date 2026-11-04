@@ -725,10 +725,11 @@
                     "additionalProperties": false
                   },
                   "reason": {
+                    "default": "更新站点设置",
                     "type": "string"
                   }
                 },
-                "required": ["data", "reason"],
+                "required": ["data"],
                 "additionalProperties": false
               }
             }
@@ -2715,10 +2716,11 @@
                     "additionalProperties": false
                   },
                   "reason": {
+                    "default": "更新站点设置",
                     "type": "string"
                   }
                 },
-                "required": ["data", "reason"],
+                "required": ["data"],
                 "additionalProperties": false
               }
             }
@@ -5659,10 +5661,11 @@
                     "additionalProperties": false
                   },
                   "reason": {
+                    "default": "更新站点设置",
                     "type": "string"
                   }
                 },
-                "required": ["data", "reason"],
+                "required": ["data"],
                 "additionalProperties": false
               }
             }
@@ -17309,10 +17312,11 @@
                         "additionalProperties": false
                       },
                       "reason": {
+                        "default": "更新注册与账户设置",
                         "type": "string"
                       }
                     },
-                    "required": ["data", "reason"],
+                    "required": ["data"],
                     "additionalProperties": false
                   },
                   {
@@ -19276,6 +19280,7 @@
                     "additionalProperties": false
                   },
                   "reason": {
+                    "default": "更新维护设置",
                     "type": "string"
                   },
                   "confirmed": {
@@ -19283,7 +19288,7 @@
                     "enum": [true]
                   }
                 },
-                "required": ["data", "reason", "confirmed"],
+                "required": ["data", "confirmed"],
                 "additionalProperties": false
               }
             }
@@ -46268,6 +46273,7 @@
                     "pattern": "^(0|[1-9][0-9]{0,5})\\.(0|[1-9][0-9]{0,5})\\.(0|[1-9][0-9]{0,5})$"
                   },
                   "changelog": {
+                    "default": "",
                     "type": "string"
                   },
                   "expectedDraftRevision": {
@@ -46281,7 +46287,7 @@
                     "enum": [true]
                   }
                 },
-                "required": ["version", "changelog", "expectedDraftRevision", "confirmed"],
+                "required": ["version", "expectedDraftRevision", "confirmed"],
                 "additionalProperties": false
               }
             }
@@ -96952,10 +96958,11 @@
                     "additionalProperties": false
                   },
                   "reason": {
+                    "default": "更新站点设置",
                     "type": "string"
                   }
                 },
-                "required": ["data", "reason"],
+                "required": ["data"],
                 "additionalProperties": false
               }
             }
@@ -98918,10 +98925,11 @@
                     "additionalProperties": false
                   },
                   "reason": {
+                    "default": "更新站点设置",
                     "type": "string"
                   }
                 },
-                "required": ["data", "reason"],
+                "required": ["data"],
                 "additionalProperties": false
               }
             }
@@ -106670,10 +106678,11 @@
                     "type": "string"
                   },
                   "reason": {
+                    "default": "更新公共规则草稿",
                     "type": "string"
                   }
                 },
-                "required": ["title", "summary", "bodyMarkdown", "reason"],
+                "required": ["title", "summary", "bodyMarkdown"],
                 "additionalProperties": false
               }
             }

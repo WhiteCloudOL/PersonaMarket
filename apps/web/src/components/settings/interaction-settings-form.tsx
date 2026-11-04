@@ -1,8 +1,7 @@
 'use client';
-import { useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getCommunitySettings, updateCommunitySettings } from '@personamarket/api-client';
 import {
   InteractionSettingsSchema,
@@ -28,16 +27,16 @@ import {
   FieldError,
 } from '@personamarket/ui/components/field';
 import {
-  ApiError,
-  authenticatedWrite,
+  authQuery,
+  authenticatedWriteFor,
   checkedResponse,
   sessionRequestOptions,
 } from '@/lib/auth-api';
 import { EditorSection } from '../personas/editor-section';
 import { FormNotice, SubmitButton } from '../auth/auth-fields';
-import { useSettingsDirty } from './settings-navigation';
+import { useSettingsForm } from './use-settings-form';
 
-const key = ['private', 'settings', 'community'];
+const settingsKey = (accountId: string) => ['private', 'settings', 'community', accountId];
 async function readCommunity(signal: AbortSignal) {
   return checkedResponse(
     await getCommunitySettings({
@@ -47,58 +46,46 @@ async function readCommunity(signal: AbortSignal) {
     InteractionSettingsResponseSchema,
   );
 }
-function InteractionFields({
-  initial,
-  onSaved,
-}: {
-  initial: z.infer<typeof InteractionSettingsResponseSchema>;
-  onSaved: () => void;
-}) {
+type Response = z.infer<typeof InteractionSettingsResponseSchema>;
+function InteractionFields({ accountId, initial }: { accountId: string; initial: Response }) {
   const client = useQueryClient();
-  const [revision, setRevision] = useState(initial.meta.revision);
-  const latest = useQuery({
-    queryKey: [...key, 'conflict', initial.meta.revision],
-    queryFn: ({ signal }) => readCommunity(signal),
-    enabled: false,
-    retry: false,
-  });
-  const form = useForm<z.infer<typeof InteractionSettingsSchema>>({
+  const { form, save, busy, canSave, message, error } = useSettingsForm<
+    z.infer<typeof InteractionSettingsSchema>,
+    Response
+  >({
+    accountId,
+    queryKey: settingsKey(accountId),
+    initial,
     resolver: zodResolver(InteractionSettingsSchema),
-    defaultValues: initial.data,
-  });
-  useSettingsDirty(form.formState.isDirty);
-  const mutation = useMutation({
-    mutationFn: (body: z.infer<typeof InteractionSettingsSchema>) =>
-      authenticatedWrite(
+    valuesFor: (result) => result.data,
+    read: readCommunity,
+    write: (body, base) =>
+      authenticatedWriteFor(
+        accountId,
         (header) =>
           updateCommunitySettings({
             ...sessionRequestOptions,
             signal: AbortSignal.timeout(10000),
             body,
-            params: {
-              header: { ...header, 'If-Match': '"community-' + revision + '"' },
-            },
+            params: { header: { ...header, 'If-Match': '"community-' + base.meta.revision + '"' } },
           }),
         InteractionSettingsResponseSchema,
+        {
+          accountChanged: '登录账号已变化，请重新打开社区设置',
+          verificationRequired: '请先完成登录验证',
+        },
       ),
-    onSuccess: (result) => {
-      form.reset(result.data);
-      client.setQueryData(key, result);
-      onSaved();
+    saved: '社区设置已保存',
+    onSaved: () => {
       void client.invalidateQueries({ queryKey: ['private', 'persona-interactions'] });
       void client.invalidateQueries({ queryKey: ['private', 'comments'] });
       void client.invalidateQueries({ queryKey: ['public', 'comments'] });
     },
-    retry: false,
   });
   return (
-    <form
-      noValidate
-      onSubmit={form.handleSubmit((value) => mutation.mutate(value))}
-      className="flex flex-col gap-5"
-    >
+    <form noValidate onSubmit={form.handleSubmit(save)} className="flex flex-col gap-5">
       <fieldset
-        disabled={mutation.isPending}
+        disabled={busy}
         aria-label="社区互动设置表单"
         className="flex min-w-0 flex-col gap-5 border-0 p-0"
       >
@@ -250,48 +237,18 @@ function InteractionFields({
           </FieldGroup>
         </EditorSection>
       </fieldset>
-      <FormNotice error={mutation.error} />
-      {mutation.error instanceof ApiError && mutation.error.code === 'REVISION_CONFLICT' && (
-        <>
-          <Button
-            type="button"
-            variant="outline"
-            disabled={latest.isFetching}
-            onClick={() => {
-              void latest.refetch().then((result) => {
-                if (result.isSuccess) setRevision(result.data.meta.revision);
-              });
-            }}
-          >
-            {latest.isFetching ? '正在读取最新设置…' : '读取最新社区设置'}
-          </Button>
-          <FormNotice error={latest.error} />
-          {latest.data && (
-            <div className="flex flex-col gap-2 text-sm text-muted-foreground" role="status">
-              <p>
-                最新设置：新增点赞{latest.data.data.likesEnabled ? '开放' : '关闭'}，新增收藏
-                {latest.data.data.favoritesEnabled ? '开放' : '关闭'}
-              </p>
-              <p>当前选项已保留，确认后再次保存</p>
-              <p>
-                最新评论策略：{latest.data.data.commentsEnabled ? '允许提交' : '停止提交'}，
-                {latest.data.data.showExistingComments ? '展示历史评论' : '隐藏历史评论'}，
-                {latest.data.data.commentReviewMode === 'all' ? '全部审核' : '自动批准'}，最多{' '}
-                {latest.data.data.commentMaxLength} 字，每分钟 {latest.data.data.commentsPerMinute}{' '}
-                次
-              </p>
-            </div>
-          )}
-        </>
-      )}
-      <SubmitButton pending={mutation.isPending || latest.isFetching}>保存社区设置</SubmitButton>
+      <FormNotice message={message} error={error} />
+      <SubmitButton pending={busy} disabled={!canSave}>
+        保存社区设置
+      </SubmitButton>
     </form>
   );
 }
 export function InteractionSettingsForm() {
-  const [saved, setSaved] = useState(false);
+  const accountId = useQuery(authQuery).data?.data.account?.id ?? '';
   const query = useQuery({
-    queryKey: key,
+    queryKey: settingsKey(accountId),
+    enabled: Boolean(accountId),
     queryFn: ({ signal }) => readCommunity(signal),
     retry: false,
   });
@@ -303,14 +260,5 @@ export function InteractionSettingsForm() {
         <Button onClick={() => void query.refetch()}>重新读取社区设置</Button>
       </>
     );
-  return (
-    <>
-      <FormNotice message={saved ? '社区设置已保存' : undefined} />
-      <InteractionFields
-        key={query.data.meta.revision}
-        initial={query.data}
-        onSaved={() => setSaved(true)}
-      />
-    </>
-  );
+  return <InteractionFields key={accountId} accountId={accountId} initial={query.data} />;
 }

@@ -365,14 +365,7 @@ test('管理员浏览器 MFA 引导、一次性恢复码与品牌设置', async 
   if (await settingsMenu.isVisible()) await settingsMenu.click();
   await page.getByRole('link', { name: '注册与会话', exact: true }).click();
   await page.getByRole('switch', { name: '开放新用户注册', exact: true }).click();
-  await page.getByLabel('处理理由', { exact: true }).fill('关闭新注册以核对已有账号仍可使用');
   await page.getByRole('button', { name: '保存注册设置', exact: true }).click();
-  const accountConfirmation = page.getByRole('alertdialog', {
-    name: '确认保存注册设置',
-    exact: true,
-  });
-  await accountConfirmation.getByRole('button', { name: '确认并保存', exact: true }).click();
-  await expect(accountConfirmation).toBeHidden();
   await expect(
     page.getByText('注册设置已保存，新注册和之后创建的完整会话使用当前策略', { exact: true }),
   ).toBeVisible();
@@ -388,10 +381,7 @@ test('管理员浏览器 MFA 引导、一次性恢复码与品牌设置', async 
   await page.getByRole('button', { name: '恢复部署默认值', exact: true }).click();
   await page.getByRole('button', { name: '应用到表单', exact: true }).click();
   await expect(page.getByRole('alertdialog')).toBeHidden();
-  await page.getByLabel('处理理由', { exact: true }).fill('恢复部署注册策略的正常浏览器回归');
   await page.getByRole('button', { name: '保存注册设置', exact: true }).click();
-  await accountConfirmation.getByRole('button', { name: '确认并保存', exact: true }).click();
-  await expect(accountConfirmation).toBeHidden();
   await expect(
     page.getByText('注册设置已保存，新注册和之后创建的完整会话使用当前策略', { exact: true }),
   ).toBeVisible();

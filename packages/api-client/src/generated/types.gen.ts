@@ -248,7 +248,7 @@ export type UpdateMediaSettingsData = {
       maxConcurrentImports: number;
       sourceDomains: Array<string>;
     };
-    reason: string;
+    reason?: string;
   };
   headers: {
     /**
@@ -973,7 +973,7 @@ export type UpdateRankingSettingsData = {
       entryLimit: number;
       newcomerWindowDays: number;
     };
-    reason: string;
+    reason?: string;
   };
   headers: {
     /**
@@ -2060,7 +2060,7 @@ export type UpdateTransferSettingsData = {
       maxImportFileKiB: number;
       maxImportArchiveMiB: number;
     };
-    reason: string;
+    reason?: string;
   };
   headers: {
     /**
@@ -6767,7 +6767,7 @@ export type UpdateAccountSettingsData = {
             windowSeconds: number;
           };
         };
-        reason: string;
+        reason?: string;
       }
     | {
         registrationEnabled: boolean;
@@ -7499,7 +7499,7 @@ export type UpdateSystemSettingsData = {
       maintenanceEnabled: boolean;
       maintenanceMessage: string;
     };
-    reason: string;
+    reason?: string;
     confirmed: true;
   };
   headers: {
@@ -17743,7 +17743,7 @@ export type GetOwnSubmissionsResponse =
 export type CreateOwnReleaseData = {
   body: {
     version: string;
-    changelog: string;
+    changelog?: string;
     expectedDraftRevision: number;
     confirmed: true;
   };
@@ -35596,7 +35596,7 @@ export type UpdateHomeSettingsData = {
       announcementCount: number;
       navigation: Array<'rankings' | 'publish' | 'guides' | 'announcements'>;
     };
-    reason: string;
+    reason?: string;
   };
   headers: {
     /**
@@ -36375,7 +36375,7 @@ export type UpdateModelSuggestionsData = {
         enabled: boolean;
       }>;
     };
-    reason: string;
+    reason?: string;
   };
   headers: {
     /**
@@ -39405,7 +39405,7 @@ export type UpdatePolicyDraftData = {
     title: string;
     summary: string;
     bodyMarkdown: string;
-    reason: string;
+    reason?: string;
   };
   headers: {
     /**

@@ -100,16 +100,11 @@ async function changeHint(page: Page, pendingHint: string) {
   expect(response.status()).toBe(200);
   return CreationSettingsResponseSchema.parse(await response.json());
 }
-async function fill(page: Page, pendingHint: string, reason: string) {
+async function fill(page: Page, pendingHint: string) {
   await page.getByLabel('待审提示', { exact: true }).fill(pendingHint);
-  await page.getByLabel('处理理由', { exact: true }).fill(reason);
 }
 async function confirmSave(page: Page) {
   await page.getByRole('button', { name: '保存创作设置', exact: true }).click();
-  const dialog = page.getByRole('alertdialog', { name: '确认保存创作设置', exact: true });
-  await expect(dialog).toBeVisible();
-  await dialog.getByRole('button', { name: '确认并保存', exact: true }).click();
-  await expect(dialog).toBeHidden();
 }
 async function settingsNavigation(page: Page, name: string) {
   const selector = page.getByRole('button', { name: '选择设置分组', exact: true });
@@ -129,7 +124,6 @@ test('待审提示默认差异只列变化项，取消保留输入，冲突核�
   await page.goto('/admin/settings/creation');
   const maibot = page.getByRole('checkbox', { name: 'MaiBot', exact: true });
   const astrbot = page.getByRole('checkbox', { name: 'AstrBot', exact: true });
-  await page.getByLabel('处理理由', { exact: true }).fill('核对字段错误后恢复平台选择');
   await maibot.uncheck();
   await astrbot.uncheck();
   await page.getByRole('button', { name: '保存创作设置', exact: true }).click();
@@ -140,8 +134,7 @@ test('待审提示默认差异只列变化项，取消保留输入，冲突核�
   await astrbot.check();
   await expect(page.getByText('请至少选择一个投稿平台', { exact: true })).toHaveCount(0);
   const candidate = '**普通文本提示**\n保留待审期间的新输入 ' + randomUUID().slice(0, 8);
-  const reason = '核对自定义提示与默认差异';
-  await fill(page, candidate, reason);
+  await fill(page, candidate);
   await page.getByRole('button', { name: '恢复默认值', exact: true }).click();
   const defaults = page.getByRole('alertdialog', { name: '恢复创作默认值', exact: true });
   await expect(defaults.getByRole('region', { name: '创作默认值差异', exact: true })).toContainText(
@@ -150,34 +143,23 @@ test('待审提示默认差异只列变化项，取消保留输入，冲突核�
   await expect(defaults).toContainText(defaultSubmissionPendingHint);
   await defaults.getByRole('button', { name: '保留当前输入', exact: true }).click();
   await expect(page.getByLabel('待审提示', { exact: true })).toHaveValue(candidate);
-  await expect(page.getByLabel('处理理由', { exact: true })).toHaveValue(reason);
   await page.getByRole('button', { name: '恢复默认值', exact: true }).click();
   await defaults.getByRole('button', { name: '应用到表单', exact: true }).click();
   await expect(page.getByLabel('待审提示', { exact: true })).toHaveValue(
     defaultSubmissionPendingHint,
   );
-  await expect(page.getByLabel('处理理由', { exact: true })).toHaveValue(reason);
   await page.getByRole('button', { name: '恢复默认值', exact: true }).click();
   await expect(defaults).toContainText('当前输入已是默认值，没有需要替换的设置');
   await defaults.getByRole('button', { name: '保留当前输入', exact: true }).click();
-  await fill(page, candidate, reason);
+  await fill(page, candidate);
   await changeHint(page, '另一份真实请求已经更新提示');
   await confirmSave(page);
-  await expect(page.getByText('创作设置已被更新，请核对最新修订', { exact: true })).toBeVisible();
+  await expect(page.getByText(/其他管理员同时修改了相同设置/u)).toBeVisible();
   await expect(page.getByLabel('待审提示', { exact: true })).toHaveValue(candidate);
-  await expect(page.getByLabel('处理理由', { exact: true })).toHaveValue(reason);
-  await page.getByRole('button', { name: '核对最新创作设置', exact: true }).click();
-  await expect(page.getByText('另一份真实请求已经更新提示', { exact: true })).toBeVisible();
-  await page.getByRole('button', { name: '采用最新修订保留输入', exact: true }).click();
-  await page.getByRole('button', { name: '保存创作设置', exact: true }).click();
-  const confirmation = page.getByRole('alertdialog', { name: '确认保存创作设置', exact: true });
-  await confirmation.getByRole('button', { name: '返回核对', exact: true }).click();
-  await expect(page.getByRole('button', { name: '保存创作设置', exact: true })).toBeFocused();
   await confirmSave(page);
   await expect(
     page.getByText('创作设置已保存，待审版本在重新读取时使用当前提示', { exact: true }),
   ).toBeVisible();
-  await expect(page.getByRole('button', { name: '核对最新创作设置', exact: true })).toBeFocused();
   expect((await current(page)).data.submissions.pendingHint).toBe(candidate);
   await page.getByRole('button', { name: '查看投稿策略修改记录', exact: true }).click();
   await page.getByRole('button', { name: '查看投稿修改差异', exact: true }).first().click();
@@ -191,10 +173,10 @@ test('待审提示默认差异只列变化项，取消保留输入，冲突核�
     exact: true,
   });
   await expect(success).toBeVisible();
-  await fill(page, '成功后另一次尚未保存的候选', '核对新失败不会沿用上次成功反馈');
+  await fill(page, '成功后另一次尚未保存的候选');
   await changeHint(page, '另一个窗口在上次成功后写入的当前提示');
   await confirmSave(page);
-  await expect(page.getByText('创作设置已被更新，请核对最新修订', { exact: true })).toBeVisible();
+  await expect(page.getByText(/其他管理员同时修改了相同设置/u)).toBeVisible();
   await expect(success).toHaveCount(0);
   await expect(page.getByLabel('待审提示', { exact: true })).toHaveValue(
     '成功后另一次尚未保存的候选',
@@ -207,7 +189,7 @@ test('网络结果未知后跨设置页保留原请求和后续输入，显式�
   await page.goto('/admin/settings/creation');
   const original = '原提交待审提示 ' + randomUUID().slice(0, 8),
     later = '随后编辑的新提示 ' + randomUUID().slice(0, 8);
-  await fill(page, original, '第一份原处理理由');
+  await fill(page, original);
   let firstKey: string | undefined, replayKey: string | undefined;
   await page.route('**/api/v1/admin/settings/creation', async (route) => {
     if (route.request().method() !== 'PATCH') return route.continue();
@@ -217,13 +199,13 @@ test('网络结果未知后跨设置页保留原请求和后续输入，显式�
     await route.abort('failed');
   });
   await confirmSave(page);
-  await expect(page.getByRole('button', { name: '核对原提交结果', exact: true })).toBeVisible();
-  await fill(page, later, '后续输入的新理由');
+  await expect(
+    page.getByText('暂时无法确认保存结果，请再次点击保存。', { exact: true }),
+  ).toBeVisible();
+  await fill(page, later);
   await settingsNavigation(page, '站点品牌');
   await settingsNavigation(page, '创作与投稿');
   await expect(page.getByLabel('待审提示', { exact: true })).toHaveValue(later);
-  await expect(page.getByLabel('处理理由', { exact: true })).toHaveValue('后续输入的新理由');
-  await expect(page.getByText('原待审提示：' + original, { exact: true })).toBeVisible();
   const before = await current(page);
   await page.unroute('**/api/v1/admin/settings/creation');
   let blockReplay = true;
@@ -248,21 +230,18 @@ test('网络结果未知后跨设置页保留原请求和后续输入，显式�
     }
     await route.continue();
   });
-  await page.getByRole('button', { name: '核对原提交结果', exact: true }).click();
+  await page.getByRole('button', { name: '保存创作设置', exact: true }).click();
   await expect(page.getByText('隔离浏览器核对请求暂时受限', { exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: '核对原提交结果', exact: true })).toBeEnabled();
-  await expect(page.getByText('原待审提示：' + original, { exact: true })).toBeVisible();
-  await expect(page.getByLabel('处理理由', { exact: true })).toHaveValue('后续输入的新理由');
+  await expect(page.getByRole('button', { name: '保存创作设置', exact: true })).toBeEnabled();
   expect(replayKey).toBe(firstKey);
-  await page.getByRole('button', { name: '核对原提交结果', exact: true }).click();
+  await page.getByRole('button', { name: '保存创作设置', exact: true }).click();
   await expect(
-    page.getByText('原提交结果已核实，后续输入仍保留，请再次核对后保存', { exact: true }),
+    page.getByText('先前的保存已确认，新的修改已保留。再次点击保存即可提交。', { exact: true }),
   ).toBeVisible();
   expect(firstKey).toBeTruthy();
   expect(replayKey).toBe(firstKey);
   expect((await current(page)).meta).toEqual(before.meta);
   await expect(page.getByLabel('待审提示', { exact: true })).toHaveValue(later);
-  await expect(page.getByLabel('处理理由', { exact: true })).toHaveValue('后续输入的新理由');
   await confirmSave(page);
   expect((await current(page)).data.submissions.pendingHint).toBe(later);
 });
@@ -451,10 +430,7 @@ test('两平台真实PENDING才显示纯文本提示，空值隐藏说明，选�
   }
 });
 
-test('另一个标签页退出后，迟到的真实保存响应不恢复私有草稿或旧处理理由', async ({
-  page,
-  administrator,
-}) => {
+test('另一个标签页退出后，迟到的真实保存响应不恢复私有草稿', async ({ page, administrator }) => {
   await page.goto('/admin/settings/creation');
   const heapMarker = randomUUID();
   await page.evaluate((marker) => {
@@ -464,7 +440,7 @@ test('另一个标签页退出后，迟到的真实保存响应不恢复私有�
     });
   }, heapMarker);
   const reason = '会话结束前的原处理理由 ' + randomUUID().slice(0, 8);
-  await fill(page, '会话结束前已提交的真实提示', reason);
+  await fill(page, '会话结束前已提交的真实提示');
   let release = () => {},
     captured = () => {};
   const held = new Promise<void>((resolve) => {
@@ -484,10 +460,6 @@ test('另一个标签页退出后，迟到的真实保存响应不恢复私有�
   const control = await page.context().newPage();
   try {
     await page.getByRole('button', { name: '保存创作设置', exact: true }).click();
-    await page
-      .getByRole('alertdialog', { name: '确认保存创作设置', exact: true })
-      .getByRole('button', { name: '确认并保存', exact: true })
-      .click();
     await ready;
     await control.goto('/account');
     await logoutAccount(control);
@@ -513,7 +485,6 @@ test('另一个标签页退出后，迟到的真实保存响应不恢复私有�
     await expect(page.getByLabel('待审提示', { exact: true })).toHaveValue(
       '会话结束前已提交的真实提示',
     );
-    await expect(page.getByLabel('处理理由', { exact: true })).toHaveValue('');
     await expect(page.getByText(reason, { exact: true })).toHaveCount(0);
   } finally {
     release();

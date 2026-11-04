@@ -26,15 +26,10 @@ function Record({
   const [open, setOpen] = useState(false);
   return (
     <li className="flex min-w-0 flex-col gap-3 rounded-xl border p-4">
-      <p className="text-sm font-medium [overflow-wrap:anywhere]">
-        {record.actor} · 注册修订 {record.fromRevision} → {record.toRevision}
-      </p>
+      <p className="text-sm font-medium [overflow-wrap:anywhere]">{record.actor}</p>
       <time dateTime={record.createdAt} className="text-sm text-muted-foreground">
         {announcementDate(record.createdAt)}
       </time>
-      <p className="whitespace-pre-wrap text-sm leading-7 [overflow-wrap:anywhere]">
-        {record.reason}
-      </p>
       <Collapsible open={open} onOpenChange={setOpen}>
         <CollapsibleTrigger render={<Button type="button" variant="outline" />}>
           {open ? '收起注册修改差异' : '查看注册修改差异'}

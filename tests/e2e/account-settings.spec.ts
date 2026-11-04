@@ -86,10 +86,6 @@ async function advanced(page: Page) {
 }
 async function confirmSave(page: Page) {
   await page.getByRole('button', { name: '保存注册设置', exact: true }).click();
-  const dialog = page.getByRole('alertdialog', { name: '确认保存注册设置', exact: true });
-  await expect(dialog).toBeVisible();
-  await dialog.getByRole('button', { name: '确认并保存', exact: true }).click();
-  await expect(dialog).toBeHidden();
 }
 async function settingsNavigation(page: Page, name: string) {
   const selector = page.getByRole('button', { name: '选择设置分组', exact: true });
@@ -132,15 +128,11 @@ async function expire(username: string, method: 'mfa' | 'password') {
   }
 }
 
-test('注册策略渐进披露、默认差异和字段定位完整，真实成功后的412不残留旧成功且保留候选与理由', async ({
-  page,
-}) => {
-  const initial = await current(page),
-    reason = '核对部署默认与真实修订冲突';
+test('注册策略默认差异和字段定位完整，并发的独立字段一次保存', async ({ page }) => {
+  const initial = await current(page);
   await page.goto('/admin/settings/accounts');
   await expect(page.getByLabel('新会话有效期（秒）', { exact: true })).toBeHidden();
   await page.getByRole('button', { name: '登录后主动申请', exact: true }).click();
-  await page.getByLabel('处理理由', { exact: true }).fill(reason);
   await advanced(page);
   const ttl = initial.defaults.sessionTtlSeconds === 600 ? '1200' : '600';
   await page.getByLabel('新会话有效期（秒）', { exact: true }).fill(ttl);
@@ -150,11 +142,9 @@ test('注册策略渐进披露、默认差异和字段定位完整，真实成�
     '验证邮件发送时机',
   );
   await defaults.getByRole('button', { name: '保留当前输入', exact: true }).click();
-  await expect(page.getByLabel('处理理由', { exact: true })).toHaveValue(reason);
   await expect(page.getByLabel('新会话有效期（秒）', { exact: true })).toHaveValue(ttl);
   await page.getByRole('button', { name: '恢复部署默认值', exact: true }).click();
   await defaults.getByRole('button', { name: '应用到表单', exact: true }).click();
-  await expect(page.getByLabel('处理理由', { exact: true })).toHaveValue(reason);
   await expect(page.getByLabel('新会话有效期（秒）', { exact: true })).toHaveValue(
     String(initial.defaults.sessionTtlSeconds),
   );
@@ -167,47 +157,29 @@ test('注册策略渐进披露、默认差异和字段定位完整，真实成�
   await expect(page.getByLabel('注册业务窗口（秒）', { exact: true })).toBeFocused();
   await expect(page.locator('#registration-window-error')).toBeVisible();
   await expect(page.getByRole('alertdialog')).toHaveCount(0);
-  await page.getByLabel('注册业务窗口（秒）', { exact: true }).fill('3600');
+  await page.getByLabel('注册业务窗口（秒）', { exact: true }).fill('3500');
   await confirmSave(page);
   await expect(page.getByText(savedText, { exact: true })).toBeVisible();
   const previous = await current(page);
   await page.getByLabel('新会话有效期（秒）', { exact: true }).fill(ttl);
-  await page.getByLabel('处理理由', { exact: true }).fill('冲突后保留本地处理理由');
   await update(page, { ...previous.data, verificationEmailTiming: 'on_request' });
   await confirmSave(page);
-  await expect(page.getByText(savedText, { exact: true })).toHaveCount(0);
-  await expect(page.getByLabel('新会话有效期（秒）', { exact: true })).toHaveValue(ttl);
-  await expect(page.getByLabel('处理理由', { exact: true })).toHaveValue('冲突后保留本地处理理由');
-  await page.getByRole('button', { name: '核对最新注册设置', exact: true }).click();
-  await expect(page.getByText('已读取服务器最新设置', { exact: true })).toBeVisible();
-  await page.getByRole('button', { name: '采用最新修订保留输入', exact: true }).click();
-  await page.getByRole('button', { name: '保存注册设置', exact: true }).click();
-  await page
-    .getByRole('alertdialog', { name: '确认保存注册设置', exact: true })
-    .getByRole('button', { name: '返回核对', exact: true })
-    .click();
-  await expect(page.getByRole('button', { name: '保存注册设置', exact: true })).toBeFocused();
-  await confirmSave(page);
-  await expect(page.getByRole('button', { name: '核对最新注册设置', exact: true })).toBeFocused();
+  await expect(page.getByText(savedText, { exact: true })).toBeVisible();
   expect((await current(page)).data.sessionTtlSeconds).toBe(Number(ttl));
   await page.getByRole('button', { name: '查看注册策略修改记录', exact: true }).click();
   await page.getByRole('button', { name: '查看注册修改差异', exact: true }).first().click();
-  await expect(page.getByRole('region', { name: '注册策略修改记录', exact: true })).toContainText(
-    '冲突后保留本地处理理由',
-  );
   await expect(page.getByRole('region', { name: '注册策略修改记录', exact: true })).toContainText(
     '登录后主动申请',
   );
 });
 
-test('结果未知跨页保留原key和后续输入，429后仍可核对；退出后的迟到回执不恢复私有理由', async ({
+test('结果未知跨页保留原key和后续输入，429后仍能重试；退出后的迟到回执不恢复私有表单', async ({
   page,
   administrator,
 }) => {
   await page.goto('/admin/settings/accounts');
   await advanced(page);
   await page.getByLabel('新会话有效期（秒）', { exact: true }).fill('1800');
-  await page.getByLabel('处理理由', { exact: true }).fill('原请求的处理理由');
   let originalKey: string | undefined, replayKey: string | undefined;
   const pattern = '**/api/v1/admin/settings/accounts';
   await page.route(pattern, async (route) => {
@@ -218,15 +190,14 @@ test('结果未知跨页保留原key和后续输入，429后仍可核对；退�
     await route.abort('failed');
   });
   await confirmSave(page);
-  await expect(page.getByRole('button', { name: '核对原提交结果', exact: true })).toBeVisible();
+  await expect(
+    page.getByText('暂时无法确认保存结果，请再次点击保存。', { exact: true }),
+  ).toBeVisible();
   await page.getByLabel('新会话有效期（秒）', { exact: true }).fill('2400');
-  await page.getByLabel('处理理由', { exact: true }).fill('原请求之后的新理由');
   await settingsNavigation(page, '站点品牌');
   await settingsNavigation(page, '注册与会话');
   await advanced(page);
   await expect(page.getByLabel('新会话有效期（秒）', { exact: true })).toHaveValue('2400');
-  await expect(page.getByLabel('处理理由', { exact: true })).toHaveValue('原请求之后的新理由');
-  await expect(page.getByText('原处理理由：原请求的处理理由', { exact: true })).toBeVisible();
   const before = await current(page);
   await page.unroute(pattern);
   let block = true;
@@ -251,12 +222,12 @@ test('结果未知跨页保留原key和后续输入，429后仍可核对；退�
     }
     await route.continue();
   });
-  await page.getByRole('button', { name: '核对原提交结果', exact: true }).click();
+  await page.getByRole('button', { name: '保存注册设置', exact: true }).click();
   await expect(page.getByText('隔离浏览器暂时限制核对', { exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: '核对原提交结果', exact: true })).toBeEnabled();
-  await page.getByRole('button', { name: '核对原提交结果', exact: true }).click();
+  await expect(page.getByRole('button', { name: '保存注册设置', exact: true })).toBeEnabled();
+  await page.getByRole('button', { name: '保存注册设置', exact: true }).click();
   await expect(
-    page.getByText('原提交结果已核实，后续输入仍保留，请再次核对后保存', { exact: true }),
+    page.getByText('先前的保存已确认，新的修改已保留。再次点击保存即可提交。', { exact: true }),
   ).toBeVisible();
   expect(originalKey).toBeTruthy();
   expect(replayKey).toBe(originalKey);
@@ -271,7 +242,6 @@ test('结果未知跨页保留原key和后续输入，429后仍可核对；退�
       configurable: true,
     });
   });
-  await page.getByLabel('处理理由', { exact: true }).fill('退出前的私有未完成理由');
   await page.getByLabel('新会话有效期（秒）', { exact: true }).fill('3000');
   let release = () => {},
     captured = () => {};
@@ -292,20 +262,16 @@ test('结果未知跨页保留原key和后续输入，429后仍可核对；退�
   const control = await page.context().newPage();
   try {
     await page.getByRole('button', { name: '保存注册设置', exact: true }).click();
-    await page
-      .getByRole('alertdialog', { name: '确认保存注册设置', exact: true })
-      .getByRole('button', { name: '确认并保存', exact: true })
-      .click();
     await ready;
     await control.goto('/account');
     await logoutAccount(control);
-    await expect(page.getByLabel('处理理由', { exact: true })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: '保存注册设置', exact: true })).toHaveCount(0);
     const response = page.waitForResponse(
       (result) => result.url().endsWith(endpoint) && result.request().method() === 'PATCH',
     );
     release();
     expect((await response).status()).toBe(200);
-    await expect(page.getByLabel('处理理由', { exact: true })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: '保存注册设置', exact: true })).toHaveCount(0);
     await login(control, administrator.username, administrator.password);
     await expect(page.getByRole('button', { name: '打开账号菜单', exact: true })).toBeVisible();
     await test.step('重新登录后等待品牌页面，再打开注册与会话设置', async () => {
@@ -318,7 +284,6 @@ test('结果未知跨页保留原key和后续输入，429后仍可核对；退�
       'same-document-account-settings',
     );
     await expect(page.getByLabel('新会话有效期（秒）', { exact: true })).toHaveValue('3000');
-    await expect(page.getByLabel('处理理由', { exact: true })).toHaveValue('');
     await expect(page.getByText('退出前的私有未完成理由', { exact: true })).toHaveCount(0);
   } finally {
     release();
@@ -338,7 +303,6 @@ test('高危策略分别使用未绑定密码和实际MFA原地确认，验证�
   await advanced(page);
   await expect(page.getByRole('button', { name: '验证高危操作', exact: true })).toHaveCount(0);
   await page.getByLabel('新会话有效期（秒）', { exact: true }).fill('3600');
-  await page.getByLabel('处理理由', { exact: true }).fill('密码确认后明确更新');
   await confirmSave(page);
   await page.getByRole('button', { name: '验证高危操作', exact: true }).click();
   const passwordSheet = page.getByRole('dialog', { name: '验证高危操作', exact: true });
@@ -346,7 +310,6 @@ test('高危策略分别使用未绑定密码和实际MFA原地确认，验证�
   await passwordSheet.getByRole('button', { name: '确认身份', exact: true }).click();
   await expect(passwordSheet).toBeHidden();
   await expect(page.getByLabel('新会话有效期（秒）', { exact: true })).toHaveValue('3600');
-  await expect(page.getByLabel('处理理由', { exact: true })).toHaveValue('密码确认后明确更新');
   expect((await current(page)).meta).toEqual(before.meta);
   await confirmSave(page);
   expect((await current(page)).data.sessionTtlSeconds).toBe(3600);
@@ -358,7 +321,6 @@ test('高危策略分别使用未绑定密码和实际MFA原地确认，验证�
     await bound.goto('/admin/settings/accounts');
     const previous = await current(bound);
     await bound.getByRole('button', { name: '登录后主动申请', exact: true }).click();
-    await bound.getByLabel('处理理由', { exact: true }).fill('MFA确认后明确更新');
     await confirmSave(bound);
     await bound.getByRole('button', { name: '验证高危操作', exact: true }).click();
     const mfaSheet = bound.getByRole('dialog', { name: '验证高危操作', exact: true });
@@ -366,7 +328,6 @@ test('高危策略分别使用未绑定密码和实际MFA原地确认，验证�
     await mfaSheet.getByLabel('动态验证码或恢复码', { exact: true }).fill(admin.recoveryCode);
     await mfaSheet.getByRole('button', { name: '确认身份', exact: true }).click();
     await expect(mfaSheet).toBeHidden();
-    await expect(bound.getByLabel('处理理由', { exact: true })).toHaveValue('MFA确认后明确更新');
     expect((await current(bound)).meta).toEqual(previous.meta);
     await confirmSave(bound);
     expect((await current(bound)).data.verificationEmailTiming).toBe('on_request');

@@ -81,7 +81,7 @@ test('真实编辑器发版、审核差异与驳回重提、公开详情和作�
       const sheet = page.getByRole('dialog', { name: '确认本次发版', exact: true });
       await expect(sheet).toBeVisible();
       await sheet.getByLabel('版本号', { exact: true }).fill('1.0.0');
-      await sheet.getByLabel('更新日志', { exact: true }).fill('首次分享林间向导');
+      await expect(sheet.getByLabel('更新日志', { exact: true })).toHaveValue('');
       await sheet
         .getByRole('checkbox', {
           name: '我已核对公开内容、版本号及来源许可，确认提交审核',
@@ -95,6 +95,7 @@ test('真实编辑器发版、审核差异与驳回重提、公开详情和作�
       );
       const submission = submissions.data[0];
       if (!submission) throw new Error('缺少真实提交');
+      expect(submission.changelog).toBe('');
       expect((await page.request.get('/api/v1/personas/' + id)).status()).toBe(404);
       await admin.goto('/admin/moderation?submission=' + submission.id);
       await admin.getByRole('tab', { name: '版本差异', exact: true }).click();
@@ -216,13 +217,13 @@ test('真实编辑器发版、审核差异与驳回重提、公开详情和作�
       await page.goto('/dashboard/personas/' + id + '/releases');
       await page.getByRole('button', { name: '隐藏作品', exact: true }).click();
       const hide = page.getByRole('dialog', { name: '隐藏作品', exact: true });
-      await hide.getByLabel('操作理由', { exact: true }).fill('作者隐藏的真实浏览器验证');
+      await expect(hide.getByLabel('操作理由', { exact: true })).toHaveCount(0);
       await hide.getByRole('button', { name: '确认隐藏作品', exact: true }).click();
       await expect(hide).toBeHidden();
       expect((await page.request.get('/api/v1/personas/' + id)).status()).toBe(404);
       await page.getByRole('button', { name: '恢复展示', exact: true }).click();
       const restore = page.getByRole('dialog', { name: '恢复展示', exact: true });
-      await restore.getByLabel('操作理由', { exact: true }).fill('恢复公开阅读');
+      await expect(restore.getByLabel('操作理由', { exact: true })).toHaveCount(0);
       await restore.getByRole('button', { name: '确认恢复展示', exact: true }).click();
       await expect(restore).toBeHidden();
       expect((await page.request.get('/api/v1/personas/' + id)).status()).toBe(200);

@@ -47,7 +47,12 @@ export const homeSettingsApi = {
     })
       .then((result) => checkedResponse(result, HomeSettingsRecordsResponseSchema))
       .catch(failed),
-  write: (accountId: string, input: HomeSettingsWrite, revision: number, key: string) =>
+  write: (
+    accountId: string,
+    input: Omit<HomeSettingsWrite, 'reason'>,
+    revision: number,
+    key: string,
+  ) =>
     authenticatedWriteFor(
       accountId,
       (csrf) =>

@@ -46,13 +46,15 @@ export const defaultHomeSettings = {
 } satisfies HomeSettings;
 export const HomeSettingsWriteSchema = z.strictObject({
   data: HomeSettingsSchema,
-  reason: textSchema(1, 2000).refine(
-    (value) =>
-      Array.from(value).every(
-        (character) => !/\p{Cc}/u.test(character) || ['\t', '\r', '\n'].includes(character),
-      ),
-    '处理理由不能包含控制字符',
-  ),
+  reason: textSchema(1, 2000)
+    .refine(
+      (value) =>
+        Array.from(value).every(
+          (character) => !/\p{Cc}/u.test(character) || ['\t', '\r', '\n'].includes(character),
+        ),
+      '处理理由不能包含控制字符',
+    )
+    .default('更新站点设置'),
 });
 export type HomeSettingsWrite = z.infer<typeof HomeSettingsWriteSchema>;
 const positiveInteger = z.number().int().positive();

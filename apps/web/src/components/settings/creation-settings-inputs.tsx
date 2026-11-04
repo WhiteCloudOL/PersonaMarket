@@ -17,7 +17,7 @@ import { EditorSection } from '../personas/editor-section';
 import { AuthField } from '../auth/auth-fields';
 
 export function CreationSettingsInputs() {
-  const form = useFormContext<CreationSettingsWrite>();
+  const form = useFormContext<Pick<CreationSettingsWrite, 'data'>>();
   const errors = form.formState.errors;
   const limits = [
     ['maibotField', 'MaiBot 每段正文上限', 20000],
@@ -143,17 +143,6 @@ export function CreationSettingsInputs() {
           </FieldDescription>
         </FieldGroup>
       </EditorSection>
-      <Field data-invalid={Boolean(errors.reason)}>
-        <FieldLabel htmlFor="creation-settings-reason">处理理由</FieldLabel>
-        <Textarea
-          id="creation-settings-reason"
-          autoComplete="off"
-          {...form.register('reason')}
-          aria-invalid={Boolean(errors.reason)}
-          aria-describedby="creation-settings-reason-error"
-        />
-        <FieldError id="creation-settings-reason-error">{errors.reason?.message}</FieldError>
-      </Field>
     </>
   );
 }

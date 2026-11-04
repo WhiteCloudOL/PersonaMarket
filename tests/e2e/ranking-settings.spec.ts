@@ -49,39 +49,29 @@ async function navigate(page: Page, name: string) {
   await expect(page).toHaveURL(target);
   await expect(page.getByRole('dialog', { name: '网站设置', exact: true })).toBeHidden();
 }
-test('跨页保留输入、默认对照、确认与焦点恢复，保存后真实批次使用新权重', async ({ page }) => {
+test('跨页保留输入和默认对照，直接保存后真实批次使用新权重', async ({ page }) => {
   await loginBrowserAdmin(page);
   await page.goto('/admin/settings/rankings');
   await expect(
     page.getByRole('button', { name: '调整刷新和展示设置', exact: true }),
   ).toHaveAttribute('aria-expanded', 'false');
   await page.getByLabel('点赞权重', { exact: true }).fill('0.5');
-  await page.getByLabel('处理理由', { exact: true }).fill('双端核对冻结评分配置');
   page.once('dialog', (dialog) => dialog.accept());
   await navigate(page, '文件与图片');
   await expect(page.getByRole('heading', { name: '文件与图片', exact: true })).toBeVisible();
   await navigate(page, '排行与运营');
   await expect(page.getByLabel('点赞权重', { exact: true })).toHaveValue('0.5');
-  await expect(page.getByLabel('处理理由', { exact: true })).toHaveValue('双端核对冻结评分配置');
   await page.getByRole('button', { name: '预览默认设置', exact: true }).click();
   await expect(
-    page.getByRole('alertdialog', { name: '核对排行与运营默认设置', exact: true }),
+    page.getByRole('alertdialog', { name: '预览排行与运营默认设置', exact: true }),
   ).toBeVisible();
   await page.getByRole('button', { name: '保留当前输入', exact: true }).click();
   await page.getByRole('button', { name: '保存排行与运营设置', exact: true }).click();
-  const dialog = page.getByRole('alertdialog', { name: '确认调整榜单计算规则', exact: true });
-  await dialog.getByRole('button', { name: '返回核对', exact: true }).click();
-  await expect(page.getByRole('button', { name: '保存排行与运营设置', exact: true })).toBeFocused();
-  await page.getByRole('button', { name: '保存排行与运营设置', exact: true }).click();
-  await dialog.getByRole('button', { name: '确认并保存', exact: true }).click();
   await expect(
-    page.getByText('排行与运营设置已保存，已提交新批次计算请求，计算完成后更新榜单', {
+    page.getByText('排行与运营设置已保存，榜单在新批次计算完成后更新', {
       exact: true,
     }),
   ).toBeVisible();
-  await expect(
-    page.getByRole('button', { name: '核对最新排行与运营设置', exact: true }),
-  ).toBeFocused();
   const settings = RankingSettingsResponseSchema.parse(await (await page.request.get(path)).json());
   await expect
     .poll(async () => {
@@ -100,11 +90,10 @@ test('跨页保留输入、默认对照、确认与焦点恢复，保存后真�
     '设置修订 ' + settings.meta.revision,
   );
 });
-test('CAS冲突保留输入与理由，显式核对最新修订后再次确认，历史展示真实差异', async ({ page }) => {
+test('并发设置合并独立字段，历史展示真实差异', async ({ page }) => {
   await loginBrowserAdmin(page);
   await page.goto('/admin/settings/rankings');
   await page.getByLabel('点赞权重', { exact: true }).fill('0.75');
-  await page.getByLabel('处理理由', { exact: true }).fill('保留我的候选输入');
   const snapshot = RankingSettingsResponseSchema.parse(await (await page.request.get(path)).json());
   expect(
     (
@@ -121,24 +110,8 @@ test('CAS冲突保留输入与理由，显式核对最新修订后再次确认�
     ).status(),
   ).toBe(200);
   await page.getByRole('button', { name: '保存排行与运营设置', exact: true }).click();
-  await page
-    .getByRole('alertdialog')
-    .getByRole('button', { name: '确认并保存', exact: true })
-    .click();
   await expect(
-    page.getByText('排行与运营设置已变化，请核对最新修订', { exact: true }),
-  ).toBeVisible();
-  await expect(page.getByLabel('点赞权重', { exact: true })).toHaveValue('0.75');
-  await expect(page.getByLabel('处理理由', { exact: true })).toHaveValue('保留我的候选输入');
-  await page.getByRole('button', { name: '核对最新排行与运营设置', exact: true }).click();
-  await page.getByRole('button', { name: '采用最新修订继续核对', exact: true }).click();
-  await page.getByRole('button', { name: '保存排行与运营设置', exact: true }).click();
-  await page
-    .getByRole('alertdialog')
-    .getByRole('button', { name: '确认并保存', exact: true })
-    .click();
-  await expect(
-    page.getByText('排行与运营设置已保存，已提交新批次计算请求，计算完成后更新榜单', {
+    page.getByText('排行与运营设置已保存，榜单在新批次计算完成后更新', {
       exact: true,
     }),
   ).toBeVisible();
@@ -146,7 +119,9 @@ test('CAS冲突保留输入与理由，显式核对最新修订后再次确认�
   await expect(
     page.getByRole('heading', { name: '排行与运营修改记录', exact: true }),
   ).toBeVisible();
-  await expect(page.getByText('保留我的候选输入', { exact: true })).toBeVisible();
+  const merged = RankingSettingsResponseSchema.parse(await (await page.request.get(path)).json());
+  expect(merged.data.weights.likes).toBe(0.75);
+  expect(merged.data.entryLimit).toBe(900);
   await page.getByRole('button', { name: '查看修改差异', exact: true }).first().click();
   await expect(page.getByRole('heading', { name: '修改前', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: '修改后', exact: true })).toBeVisible();
@@ -155,7 +130,6 @@ test('无效权重和已折叠参数阻止提交并展开字段，修正后保�
   await loginBrowserAdmin(page);
   await page.goto('/admin/settings/rankings');
   await page.getByLabel('点赞权重', { exact: true }).fill('-1');
-  await page.getByLabel('处理理由', { exact: true }).fill('核对表单范围');
   await page.getByRole('button', { name: '保存排行与运营设置', exact: true }).click();
   await expect(page.getByLabel('点赞权重', { exact: true })).toHaveAttribute(
     'aria-invalid',
@@ -174,14 +148,12 @@ test('无效权重和已折叠参数阻止提交并展开字段，修正后保�
   );
   await expect(page.getByLabel('每榜展示上限', { exact: true })).toBeFocused();
   await expect(page.getByLabel('点赞权重', { exact: true })).toHaveValue('1.25');
-  await expect(page.getByLabel('处理理由', { exact: true })).toHaveValue('核对表单范围');
 });
 
 test('保存响应丢失后跨页恢复原请求，显式核对复用幂等标识且不增加第二个批次', async ({ page }) => {
   await loginBrowserAdmin(page);
   await page.goto('/admin/settings/rankings');
   await page.getByLabel('点赞权重', { exact: true }).fill('0.25');
-  await page.getByLabel('处理理由', { exact: true }).fill('核对网络结果未知后的原请求');
   let originalKey: string | undefined, replayKey: string | undefined;
   await page.route('**/api/v1/admin/settings/rankings', async (route) => {
     if (route.request().method() !== 'PATCH') {
@@ -194,11 +166,9 @@ test('保存响应丢失后跨页恢复原请求，显式核对复用幂等标�
     await route.abort('failed');
   });
   await page.getByRole('button', { name: '保存排行与运营设置', exact: true }).click();
-  await page
-    .getByRole('alertdialog')
-    .getByRole('button', { name: '确认并保存', exact: true })
-    .click();
-  await expect(page.getByRole('button', { name: '核对原提交结果', exact: true })).toBeVisible();
+  await expect(
+    page.getByText('暂时无法确认保存结果，请再次点击保存。', { exact: true }),
+  ).toBeVisible();
   await page.unroute('**/api/v1/admin/settings/rankings');
   const revision = RankingSettingsResponseSchema.parse(await (await page.request.get(path)).json())
     .meta.revision;
@@ -223,15 +193,14 @@ test('保存响应丢失后跨页恢复原请求，显式核对复用幂等标�
   await expect(page.getByRole('heading', { name: '文件与图片', exact: true })).toBeVisible();
   await navigate(page, '排行与运营');
   await expect(page.getByLabel('点赞权重', { exact: true })).toHaveValue('0.25');
-  await expect(page.getByLabel('处理理由', { exact: true })).toHaveValue(
-    '核对网络结果未知后的原请求',
-  );
   page.on('request', (request) => {
     if (request.url().endsWith(path) && request.method() === 'PATCH')
       replayKey = request.headers()['idempotency-key'];
   });
-  await page.getByRole('button', { name: '核对原提交结果', exact: true }).click();
-  await expect(page.getByText('原提交结果待核对', { exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: '保存排行与运营设置', exact: true }).click();
+  await expect(
+    page.getByText('排行与运营设置已保存，榜单在新批次计算完成后更新', { exact: true }),
+  ).toBeVisible();
   expect(originalKey).toBeTruthy();
   expect(replayKey).toBe(originalKey);
   expect(

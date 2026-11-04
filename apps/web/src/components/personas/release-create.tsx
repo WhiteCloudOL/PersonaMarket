@@ -20,7 +20,13 @@ import {
 } from '@personamarket/ui/components/sheet';
 import { Button } from '@personamarket/ui/components/button';
 import { Checkbox } from '@personamarket/ui/components/checkbox';
-import { Field, FieldLabel, FieldError, FieldGroup } from '@personamarket/ui/components/field';
+import {
+  Field,
+  FieldLabel,
+  FieldError,
+  FieldGroup,
+  FieldDescription,
+} from '@personamarket/ui/components/field';
 import { Textarea } from '@personamarket/ui/components/textarea';
 import { AuthField, FormNotice, SubmitButton } from '../auth/auth-fields';
 import { personasApi } from '@/lib/personas-api';
@@ -29,7 +35,8 @@ import { ApiError } from '@/lib/auth-api';
 import { SnapshotView, type Snapshot } from './snapshot-view';
 import { PendingSubmissionHint } from './pending-submission-hint';
 import { personaAvatarUploadKey } from './persona-avatar-field';
-const formSchema = CreateReleaseSchema.pick({ version: true, changelog: true }).extend({
+const formSchema = CreateReleaseSchema.pick({ version: true }).extend({
+  changelog: CreateReleaseSchema.shape.changelog.removeDefault(),
   confirmed: z.boolean().refine(Boolean, '请确认本次发版信息'),
 });
 export function ReleaseCreate({
@@ -168,6 +175,7 @@ export function ReleaseCreate({
                     {...form.register('changelog')}
                     aria-invalid={Boolean(form.formState.errors.changelog)}
                   />
+                  <FieldDescription>选填，可补充这次更新的内容</FieldDescription>
                   <FieldError>{form.formState.errors.changelog?.message}</FieldError>
                 </Field>
                 <div className="flex items-start gap-3">

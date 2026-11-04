@@ -104,7 +104,6 @@ test('通过双管理员真实表单保存、预览、送审与他审公开，�
   await page.getByLabel('规则标题', { exact: true }).fill(title);
   await page.getByLabel('简短介绍', { exact: true }).fill('仅用于独立隔离环境的实际表单验收');
   await page.getByLabel('规则正文', { exact: true }).fill(body);
-  await page.getByLabel('草稿修改理由', { exact: true }).fill('核对真实表单保存与预览');
   const preview = page.getByRole('tab', { name: '查看预览', exact: true });
   if (await preview.isVisible()) {
     await preview.click();
@@ -134,7 +133,6 @@ test('通过双管理员真实表单保存、预览、送审与他审公开，�
   expect(pending?.status).toBe('pending');
   if (!pending) throw Error('没有冻结快照');
   await page.getByLabel('规则正文', { exact: true }).fill(body + '\n\nNOT_IN_FROZEN_SNAPSHOT');
-  await page.getByLabel('草稿修改理由', { exact: true }).fill('送审后继续编辑但不改送审内容');
   await page.getByRole('button', { name: '保存规则草稿', exact: true }).click();
   await expect(
     page.getByText('草稿已保存，公开版和已送审快照保持各自内容', { exact: true }),
@@ -157,7 +155,7 @@ test('通过双管理员真实表单保存、预览、送审与他审公开，�
     await approval.getByRole('button', { name: '确认操作', exact: true }).click();
     await expect(approval).toBeHidden();
     expect((await read(reviewer, 'privacy')).published?.publicationId).toBe(pending.id);
-    await expect(reviewer.getByRole('button', { name: '核对最新规则', exact: true })).toBeFocused();
+    await expect(reviewer.getByRole('button', { name: '保存规则草稿', exact: true })).toBeVisible();
   } finally {
     await context.close();
   }
@@ -171,10 +169,8 @@ test('私有输入在切换规则和设置组后保留，未保存状态与移�
     await page.setViewportSize({ width: 1366, height: 768 });
   await login(page);
   await page.goto('/admin/settings/policies?document=terms');
-  const title = '尚未提交的规则 ' + randomUUID().slice(0, 8),
-    reason = '切换后继续核对原输入';
+  const title = '尚未提交的规则 ' + randomUUID().slice(0, 8);
   await page.getByLabel('规则标题', { exact: true }).fill(title);
-  await page.getByLabel('草稿修改理由', { exact: true }).fill(reason);
   await expect(
     page.getByText('有未保存输入或待核对操作，在当前账号的页面间暂存，刷新页面后不保留', {
       exact: true,
@@ -185,7 +181,6 @@ test('私有输入在切换规则和设置组后保留，未保存状态与移�
   await expect(page).toHaveURL(/document=privacy/);
   await nav.getByRole('link', { name: '服务条款', exact: true }).click();
   await expect(page.getByLabel('规则标题', { exact: true })).toHaveValue(title);
-  await expect(page.getByLabel('草稿修改理由', { exact: true })).toHaveValue(reason);
   page.once('dialog', (dialog) => dialog.accept());
   await navigateSettings(page, '排行与运营');
   await expect(page.getByRole('heading', { name: '排行与运营', exact: true })).toBeVisible();
@@ -198,7 +193,6 @@ test('私有输入在切换规则和设置组后保留，未保存状态与移�
     await expect(sidebar.getByRole('link', { name: '公共规则', exact: true })).toBeInViewport();
   }
   await expect(page.getByLabel('规则标题', { exact: true })).toHaveValue(title);
-  await expect(page.getByLabel('草稿修改理由', { exact: true })).toHaveValue(reason);
 });
 
 test('保存响应未知后保留原请求，换页和修改当前输入不改变幂等核对内容', async ({ page }) => {
@@ -213,7 +207,6 @@ test('保存响应未知后保留原请求，换页和修改当前输入不改�
   const title = '原请求保存 ' + randomUUID().slice(0, 8);
   await page.getByLabel('规则标题', { exact: true }).fill(title);
   await page.getByLabel('规则正文', { exact: true }).fill('## 核对原请求\n\n这段正文只提交一次');
-  await page.getByLabel('草稿修改理由', { exact: true }).fill('保存请求成功但浏览器尚未取得结果');
   let lost = false;
   await page.route('**' + endpoint('terms'), async (route) => {
     if (!lost && route.request().method() === 'PATCH') {
@@ -224,7 +217,9 @@ test('保存响应未知后保留原请求，换页和修改当前输入不改�
     } else await route.continue();
   });
   await page.getByRole('button', { name: '保存规则草稿', exact: true }).click();
-  await expect(page.getByText('原提交结果待核对', { exact: true })).toBeVisible();
+  await expect(
+    page.getByText('公共规则暂时无法读取或保存，请核对状态后重试', { exact: true }),
+  ).toBeVisible();
   const next = '核对期间继续输入 ' + randomUUID().slice(0, 8);
   await page.getByLabel('规则标题', { exact: true }).fill(next);
   await page
@@ -236,9 +231,9 @@ test('保存响应未知后保留原请求，换页和修改当前输入不改�
     .getByRole('link', { name: '服务条款', exact: true })
     .click();
   await expect(page.getByLabel('规则标题', { exact: true })).toHaveValue(next);
-  await page.getByRole('button', { name: '核对原提交结果', exact: true }).click();
+  await page.getByRole('button', { name: '保存规则草稿', exact: true }).click();
   await expect(
-    page.getByText('操作结果已核对，服务器已有后续草稿或当前输入已变化，请核对最新修订后继续', {
+    page.getByText('先前的保存已确认，新的修改已保留。再次点击保存即可提交。', {
       exact: true,
     }),
   ).toBeVisible();
@@ -353,8 +348,9 @@ test('未知操作核对后保留后来输入的下一次送审理由', async ({
     '/submissions/' + pending.latestSubmission.id + '/withdraw',
     { confirmed: true, reason: '撤回已核对送审，继续核对下一轮未提交理由' },
   );
-  await page.getByRole('button', { name: '核对最新规则', exact: true }).click();
-  await page.getByRole('button', { name: '采用最新修订继续核对', exact: true }).click();
+  const nav = page.getByRole('navigation', { name: '选择公共规则' });
+  await nav.getByRole('link', { name: '隐私说明', exact: true }).click();
+  await nav.getByRole('link', { name: '服务条款', exact: true }).click();
   await page.getByRole('button', { name: '提交规则审核', exact: true }).click();
   await expect(confirmation.getByLabel('处理理由', { exact: true })).toHaveValue(
     'R2 后来输入的下一轮理由',
@@ -380,17 +376,15 @@ test('采用最新送审状态后切换规则返回仍显示已采用修订', as
   await page.goto('/admin/settings/policies?document=terms');
   await expect(page.getByLabel('规则标题', { exact: true })).toHaveValue(value.title);
   await expect(page.getByRole('button', { name: '查看待审快照', exact: true })).toHaveCount(0);
-  const submitted = await mutate(page, 'terms', value.revision, '/submissions', {
+  await mutate(page, 'terms', value.revision, '/submissions', {
     confirmed: true,
     reason: '从另一请求创建同正文的新送审状态',
   });
-  await page.getByRole('button', { name: '核对最新规则', exact: true }).click();
-  await page.getByRole('button', { name: '采用最新修订继续核对', exact: true }).click();
+  await page.reload();
   await expect(page.getByRole('button', { name: '查看待审快照', exact: true })).toBeVisible();
   const nav = page.getByRole('navigation', { name: '选择公共规则', exact: true });
   await nav.getByRole('link', { name: '隐私说明', exact: true }).click();
   await expect(page).toHaveURL(/document=privacy/);
   await nav.getByRole('link', { name: '服务条款', exact: true }).click();
   await expect(page.getByRole('button', { name: '查看待审快照', exact: true })).toBeVisible();
-  await expect(page.getByText('当前核对修订 ' + submitted.revision, { exact: true })).toBeVisible();
 });

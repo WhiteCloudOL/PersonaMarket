@@ -13,7 +13,7 @@ import {
 import { EditorSection } from '../personas/editor-section';
 
 export function SystemSettingsInputs() {
-  const form = useFormContext<SystemSettingsWrite>();
+  const form = useFormContext<Pick<SystemSettingsWrite, 'data'>>();
   const errors = form.formState.errors;
   const message = useWatch({ control: form.control, name: 'data.maintenanceMessage' });
   return (
@@ -82,17 +82,6 @@ export function SystemSettingsInputs() {
           </details>
         </FieldGroup>
       </EditorSection>
-      <Field data-invalid={Boolean(errors.reason)}>
-        <FieldLabel htmlFor="system-settings-reason">处理理由</FieldLabel>
-        <Textarea
-          id="system-settings-reason"
-          autoComplete="off"
-          {...form.register('reason')}
-          aria-invalid={Boolean(errors.reason)}
-          aria-describedby="system-settings-reason-error"
-        />
-        <FieldError id="system-settings-reason-error">{errors.reason?.message}</FieldError>
-      </Field>
     </>
   );
 }

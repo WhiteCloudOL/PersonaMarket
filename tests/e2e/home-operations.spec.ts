@@ -112,7 +112,6 @@ test('首页运营设置可核对模块和导航，保存后由公开页面读�
     await page.getByRole('checkbox', { name: '发布作品', exact: true }).uncheck();
     await page.getByRole('checkbox', { name: '人设排行', exact: true }).uncheck();
     await page.getByRole('button', { name: '站点公告导航上移', exact: true }).click();
-    await page.getByLabel('处理理由', { exact: true }).fill('调整真实模块顺序、数量和导航');
     const endpoint = '**/api/v1/admin/settings/home';
     let blockedKey = '';
     await page.route(endpoint, (route) => {
@@ -186,7 +185,7 @@ test('首页运营设置可核对模块和导航，保存后由公开页面读�
     await reader.screenshot({ path: join(directory, 'updated-home.png') });
     const preview = page.getByRole('button', { name: '预览默认设置', exact: true });
     await preview.click();
-    const dialog = page.getByRole('alertdialog', { name: '核对首页默认设置', exact: true });
+    const dialog = page.getByRole('alertdialog', { name: '预览首页默认设置', exact: true });
     await expect(dialog.getByText('一起分享真实的角色灵感', { exact: true })).toBeVisible();
     await dialog.getByRole('button', { name: '保留当前输入', exact: true }).click();
     await expect(page.getByLabel('精选展示数量', { exact: true })).toHaveValue('1');
@@ -199,7 +198,6 @@ test('首页运营设置可核对模块和导航，保存后由公开页面读�
         await (await page.request.get('/api/v1/admin/settings/home')).json(),
       ).data.featuredCount,
     ).toBe(1);
-    await page.getByLabel('处理理由', { exact: true }).fill('预览差异后恢复默认展示');
     await expect(page.getByRole('button', { name: '保存首页设置', exact: true })).toBeEnabled();
     const restored = page.waitForResponse(
       (response) =>
@@ -221,7 +219,7 @@ test('首页运营设置可核对模块和导航，保存后由公开页面读�
   }
 });
 
-test('首页设置冲突需手动核对，停留六分钟后返回仍保留当前账号输入', async ({ page }) => {
+test('首页同字段冲突保留输入后可重新保存，停留六分钟后返回仍保留当前账号输入', async ({ page }) => {
   await loginBrowserAdmin(page);
   await page.goto('/admin/settings/home');
   await page.getByLabel('首页短提示', { exact: true }).waitFor();
@@ -230,7 +228,6 @@ test('首页设置冲突需手动核对，停留六分钟后返回仍保留当�
   );
   await page.clock.install();
   await page.getByLabel('首页短提示', { exact: true }).fill('当前窗口保留的创作文字');
-  await page.getByLabel('处理理由', { exact: true }).fill('并发冲突后继续人工核对');
   expect(
     (
       await browserWrite(
@@ -254,15 +251,11 @@ test('首页设置冲突需手动核对，停留六分钟后返回仍保留当�
   await expect(page.getByLabel('首页短提示', { exact: true })).toHaveValue(
     '当前窗口保留的创作文字',
   );
-  await page.getByRole('button', { name: '核对最新首页设置', exact: true }).click();
-  await expect(page.getByText('另一窗口先保存的首页文字', { exact: true })).toBeVisible();
-  await page.getByRole('button', { name: '采用最新修订继续核对', exact: true }).click();
+  await expect(page.getByText(/其他管理员同时修改了相同设置/u)).toBeVisible();
   await expect(page.getByLabel('首页短提示', { exact: true })).toHaveValue(
     '当前窗口保留的创作文字',
   );
-  await expect(page.getByLabel('公告展示数量', { exact: true })).toHaveValue(
-    String(current.data.announcementCount),
-  );
+  await expect(page.getByLabel('公告展示数量', { exact: true })).toHaveValue('2');
   const saved = page.waitForResponse(
     (response) =>
       response.url().endsWith('/admin/settings/home') && response.request().method() === 'PATCH',
@@ -270,7 +263,6 @@ test('首页设置冲突需手动核对，停留六分钟后返回仍保留当�
   await page.getByRole('button', { name: '保存首页设置', exact: true }).click();
   expect((await saved).status()).toBe(200);
   await page.getByLabel('首页短提示', { exact: true }).fill('浏览器返回后仍保留的文字');
-  await page.getByLabel('处理理由', { exact: true }).fill('离开页面后回到本次输入');
   await expect(page.getByText('有未保存的首页设置', { exact: true })).toBeVisible();
   await page.clock.fastForward('06:00');
   if (await page.getByRole('button', { name: '选择设置分组', exact: true }).isVisible())
@@ -282,23 +274,21 @@ test('首页设置冲突需手动核对，停留六分钟后返回仍保留当�
   await expect(page.getByLabel('首页短提示', { exact: true })).toHaveValue(
     '浏览器返回后仍保留的文字',
   );
-  await expect(page.getByLabel('处理理由', { exact: true })).toHaveValue('离开页面后回到本次输入');
 });
 
-test('最新配置读取失败后保存真实修改，成功状态清理先前的读取错误', async ({ page }) => {
+test('网络保存失败后可重新保存，成功状态清理先前的错误', async ({ page }) => {
   await loginBrowserAdmin(page);
   await page.goto('/admin/settings/home');
   await page.getByLabel('首页短提示', { exact: true }).waitFor();
   const endpoint = '**/api/v1/admin/settings/home';
   await page.route(endpoint, (route) =>
-    route.request().method() === 'GET' ? route.abort('failed') : route.continue(),
+    route.request().method() === 'PATCH' ? route.abort('failed') : route.continue(),
   );
-  await page.getByRole('button', { name: '核对最新首页设置', exact: true }).click();
-  const group = page.getByRole('group', { name: '首页展示设置表单', exact: true });
-  await expect(group.getByRole('alert')).toContainText('暂时');
+  await page.getByLabel('首页短提示', { exact: true }).fill('保存失败后保留的输入');
+  await page.getByRole('button', { name: '保存首页设置', exact: true }).click();
+  const failure = page.getByText('暂时无法确认保存结果，请再次点击保存。', { exact: true });
+  await expect(failure).toBeVisible();
   await page.unroute(endpoint);
-  await page.getByLabel('首页短提示', { exact: true }).fill('读取失败后仍可明确核对保存');
-  await page.getByLabel('处理理由', { exact: true }).fill('确认服务恢复后的真实修改');
   const saved = page.waitForResponse(
     (response) =>
       response.url().endsWith('/admin/settings/home') && response.request().method() === 'PATCH',
@@ -308,5 +298,5 @@ test('最新配置读取失败后保存真实修改，成功状态清理先前�
   await expect(
     page.getByText('首页设置已保存，公开页面将在重新加载时使用新配置', { exact: true }),
   ).toBeVisible();
-  await expect(group.getByRole('alert')).toHaveCount(0);
+  await expect(failure).toHaveCount(0);
 });

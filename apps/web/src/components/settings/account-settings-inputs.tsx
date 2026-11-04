@@ -16,7 +16,6 @@ import {
   FieldDescription,
   FieldError,
 } from '@personamarket/ui/components/field';
-import { Textarea } from '@personamarket/ui/components/textarea';
 import { EditorSection } from '../personas/editor-section';
 import { AuthField } from '../auth/auth-fields';
 
@@ -27,7 +26,7 @@ export function AccountSettingsInputs({
   advancedOpen: boolean;
   onAdvancedOpenChange: (value: boolean) => void;
 }) {
-  const form = useFormContext<AccountSettingsWrite>();
+  const form = useFormContext<Pick<AccountSettingsWrite, 'data'>>();
   const errors = form.formState.errors;
   return (
     <>
@@ -154,17 +153,6 @@ export function AccountSettingsInputs({
           </EditorSection>
         </CollapsibleContent>
       </Collapsible>
-      <Field data-invalid={Boolean(errors.reason)}>
-        <FieldLabel htmlFor="account-settings-reason">处理理由</FieldLabel>
-        <Textarea
-          id="account-settings-reason"
-          autoComplete="off"
-          {...form.register('reason')}
-          aria-invalid={Boolean(errors.reason)}
-          aria-describedby="account-settings-reason-error"
-        />
-        <FieldError id="account-settings-reason-error">{errors.reason?.message}</FieldError>
-      </Field>
     </>
   );
 }

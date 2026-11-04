@@ -48,7 +48,7 @@ export const creationSettingsApi = {
       .catch(failed),
   write: (
     accountId: string,
-    input: CreationSettingsWrite,
+    input: Omit<CreationSettingsWrite, 'reason'>,
     expected: CreationSettingsResponse['meta'],
     key: string,
   ) =>

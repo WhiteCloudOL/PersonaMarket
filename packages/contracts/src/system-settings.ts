@@ -24,7 +24,7 @@ export const defaultSystemSettings: SystemSettings = {
 };
 export const SystemSettingsWriteSchema = z.strictObject({
   data: SystemSettingsSchema,
-  reason: controlledText(1, 2000),
+  reason: controlledText(1, 2000).default('更新维护设置'),
   confirmed: z.literal(true),
 });
 export type SystemSettingsWrite = z.infer<typeof SystemSettingsWriteSchema>;

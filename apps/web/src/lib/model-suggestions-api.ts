@@ -49,7 +49,12 @@ export const modelSuggestionsApi = {
     })
       .then((result) => checkedResponse(result, ModelSuggestionsRecordsResponseSchema))
       .catch(failed),
-  write: (accountId: string, input: ModelSuggestionsWrite, revision: number, key: string) =>
+  write: (
+    accountId: string,
+    input: Omit<ModelSuggestionsWrite, 'reason'>,
+    revision: number,
+    key: string,
+  ) =>
     authenticatedWriteFor(
       accountId,
       (csrf) =>

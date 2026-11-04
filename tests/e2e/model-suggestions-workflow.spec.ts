@@ -23,8 +23,7 @@ async function settingLink(page: Page, name: string) {
   await expect(page).toHaveURL((url) => url.pathname === href);
   await expect(page.getByRole('heading', { level: 1, name, exact: true })).toBeVisible();
 }
-async function save(page: Page, reason: string) {
-  await page.getByLabel('处理理由', { exact: true }).fill(reason);
+async function save(page: Page) {
   const response = page.waitForResponse(
     (response) => response.url().endsWith(path) && response.request().method() === 'PATCH',
   );
@@ -58,7 +57,7 @@ test('管理员排序停用和移除建议，作者主动选择并真实保存�
   await page.getByLabel('建议 2 · 模型标识', { exact: true }).fill('fixture/disabled-model');
   await page.getByLabel('建议 2 · 备注', { exact: true }).fill('停用项不公开');
   await page.getByRole('switch', { name: '启用模型建议 2', exact: true }).click();
-  const first = await save(page, '核对建议列表和停用范围');
+  const first = await save(page);
   expect(first.data.entries).toHaveLength(2);
   const readPublic = async () =>
     PublicModelSuggestionsResponseSchema.parse(
@@ -104,10 +103,10 @@ test('管理员排序停用和移除建议，作者主动选择并真实保存�
       'fixture/disabled-model',
     );
     await page.getByRole('switch', { name: '启用模型建议 2', exact: true }).click();
-    await save(page, '调整顺序并停用当前建议');
+    await save(page);
     expect((await readPublic()).data).toEqual([]);
     await page.getByRole('button', { name: '移除模型建议 2', exact: true }).click();
-    await save(page, '移除建议不改写作者内容');
+    await save(page);
     const retained = DraftResponseSchema.parse(await (await author.request.get(draftPath)).json());
     expect(retained).toEqual(saved);
     await author.reload();
@@ -137,7 +136,6 @@ test('模型设置失败复用幂等标识，冲突核对保留输入，离页�
   });
   await page.goto(route);
   await page.getByLabel('建议 1 · 备注', { exact: true }).fill('本地保留的备注');
-  await page.getByLabel('处理理由', { exact: true }).fill('失败后手动重试');
   const keys: string[] = [];
   let failed = false;
   await page.route('**' + path, async (route) => {
@@ -151,15 +149,14 @@ test('模型设置失败复用幂等标识，冲突核对保留输入，离页�
   });
   await page.getByRole('button', { name: '保存模型建议', exact: true }).click();
   await expect(
-    page.getByRole('group', { name: '模型建议表单', exact: true }).getByRole('alert'),
+    page.getByText('暂时无法确认保存结果，请再次点击保存。', { exact: true }),
   ).toBeVisible();
-  await save(page, '失败后手动重试');
+  await save(page);
   expect(keys).toHaveLength(2);
   expect(keys[0]).toBeTruthy();
   expect(keys[1]).toBe(keys[0]);
   await page.unroute('**' + path);
   await page.getByLabel('建议 1 · 备注', { exact: true }).fill('冲突时保留我的输入');
-  await page.getByLabel('处理理由', { exact: true }).fill('比较另一页面的修订');
   await replace(page, {
     entries: [
       {
@@ -176,10 +173,9 @@ test('模型设置失败复用幂等标识，冲突核对保留输入，离页�
   );
   await page.getByRole('button', { name: '保存模型建议', exact: true }).click();
   expect((await conflict).status()).toBe(412);
-  await page.getByRole('button', { name: '核对最新模型建议', exact: true }).click();
-  await page.getByRole('button', { name: '采用最新修订继续核对', exact: true }).click();
+  await expect(page.getByText(/其他管理员同时修改了相同设置/u)).toBeVisible();
   await expect(page.getByLabel('建议 1 · 备注', { exact: true })).toHaveValue('冲突时保留我的输入');
-  await save(page, '比较另一页面的修订');
+  await save(page);
   await page.getByLabel('建议 1 · 备注', { exact: true }).fill('跨页面仍保留');
   page.once('dialog', (dialog) => dialog.accept());
   await settingLink(page, '首页展示');

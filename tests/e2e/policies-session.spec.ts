@@ -64,7 +64,7 @@ test('管理员角色被真实撤销后核对规则刷新身份并隐藏私有�
     expect(targetAccount.role).toBe('admin');
     await page.goto('/admin/settings/policies?document=privacy');
     await expect(page.getByLabel('规则标题', { exact: true })).toBeVisible();
-    await expect(page.getByRole('button', { name: '核对最新规则', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: '保存规则草稿', exact: true })).toBeVisible();
 
     const detailResponse = await manager.request.get('/api/v1/admin/users/' + targetAccount.id);
     expect(detailResponse.status()).toBe(200);
@@ -89,7 +89,10 @@ test('管理员角色被真实撤销后核对规则刷新身份并隐藏私有�
 
     let deniedSeen = false;
     const denied = page.waitForResponse((response) => {
-      if (new URL(response.url()).pathname !== policyPath || response.request().method() !== 'GET')
+      if (
+        new URL(response.url()).pathname !== policyPath ||
+        response.request().method() !== 'PATCH'
+      )
         return false;
       deniedSeen = true;
       return true;
@@ -100,7 +103,8 @@ test('管理员角色被真实撤销后核对规则刷新身份并隐藏私有�
         new URL(response.url()).pathname === '/api/v1/auth/context' &&
         response.request().method() === 'GET',
     );
-    await page.getByRole('button', { name: '核对最新规则', exact: true }).click();
+    await page.getByLabel('规则标题', { exact: true }).fill('权限撤销后的输入');
+    await page.getByRole('button', { name: '保存规则草稿', exact: true }).click();
     const rejected = await denied;
     expect([401, 403]).toContain(rejected.status());
     expect(ErrorResponseSchema.parse(await rejected.json()).error.code).toBe(

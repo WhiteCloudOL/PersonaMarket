@@ -63,7 +63,7 @@ const accountReason = textSchema(1, 2000).refine(
 );
 export const AccountSettingsWriteSchema = z.strictObject({
   data: AccountSettingsSchema,
-  reason: accountReason,
+  reason: accountReason.default('更新注册与账户设置'),
 });
 export type AccountSettingsWrite = z.infer<typeof AccountSettingsWriteSchema>;
 // 旧flat载荷只保留省略的新字段，不能在契约层补默认覆盖管理员当前策略。

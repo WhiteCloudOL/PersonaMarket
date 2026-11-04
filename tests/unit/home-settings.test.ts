@@ -37,8 +37,8 @@ it('首页设置保持当前默认布局，模块和导航只能从固定目录�
   ).toEqual([]);
 });
 
-it('保存需要具体理由，公开设置不会包含管理员资料或任意秘密', () => {
-  expect(HomeSettingsWriteSchema.safeParse({ data: defaultHomeSettings }).success).toBe(false);
+it('保存可以省略理由，公开设置不会包含管理员资料或任意秘密', () => {
+  expect(HomeSettingsWriteSchema.parse({ data: defaultHomeSettings }).reason).toBe('更新站点设置');
   expect(
     HomeSettingsWriteSchema.safeParse({ data: defaultHomeSettings, reason: ' ' }).success,
   ).toBe(false);

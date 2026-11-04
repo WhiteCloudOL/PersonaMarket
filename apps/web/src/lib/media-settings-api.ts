@@ -49,7 +49,12 @@ export const mediaSettingsApi = {
     })
       .then((result) => checkedResponse(result, MediaSettingsRecordsResponseSchema))
       .catch(failed),
-  write: (accountId: string, input: MediaSettingsWrite, revision: number, key: string) =>
+  write: (
+    accountId: string,
+    input: Omit<MediaSettingsWrite, 'reason'>,
+    revision: number,
+    key: string,
+  ) =>
     authenticatedWriteFor(
       accountId,
       (csrf) =>

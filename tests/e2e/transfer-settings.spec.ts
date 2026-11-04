@@ -41,7 +41,7 @@ test.afterEach(async ({ page }) => {
     ).toBe(200);
 });
 
-test('设置表单保留未保存内容，收紧确认、修订冲突和修改记录正常', async ({ page }) => {
+test('导入导出默认预览、收紧配置、并发合并和修改记录正常', async ({ page }) => {
   await loginBrowserAdmin(page);
   await page.goto('/admin/settings/transfer');
   await expect(
@@ -53,30 +53,21 @@ test('设置表单保留未保存内容，收紧确认、修订冲突和修改�
   );
   await page.getByRole('button', { name: '调整文件大小限制', exact: true }).click();
   await page.getByLabel('文本和 JSON 上限（KiB）', { exact: true }).fill('512');
-  await page.getByLabel('处理理由', { exact: true }).fill('核对表单保存和历史差异');
   await expect(page.getByText('有未保存的导入导出设置', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: '预览默认设置', exact: true }).click();
   await expect(
-    page.getByRole('alertdialog', { name: '核对导入导出默认设置', exact: true }),
+    page.getByRole('alertdialog', { name: '预览导入导出默认设置', exact: true }),
   ).toBeVisible();
   await page.getByRole('button', { name: '保留当前输入', exact: true }).click();
   await expect(page.getByLabel('文本和 JSON 上限（KiB）', { exact: true })).toHaveValue('512');
   await page.getByRole('button', { name: '保存导入导出设置', exact: true }).click();
-  const confirm = page.getByRole('alertdialog', { name: '确认收紧导入导出限制', exact: true });
-  await expect(confirm).toBeVisible();
-  await confirm.getByRole('button', { name: '返回核对', exact: true }).click();
-  await expect(page.getByRole('button', { name: '保存导入导出设置', exact: true })).toBeFocused();
-  await expect(page.getByLabel('文本和 JSON 上限（KiB）', { exact: true })).toHaveValue('512');
-  await page.getByRole('button', { name: '保存导入导出设置', exact: true }).click();
-  await confirm.getByRole('button', { name: '确认并保存', exact: true }).click();
   await expect(
     page.getByText('导入导出设置已保存，新请求立即使用当前配置', { exact: true }),
   ).toBeVisible();
-  await expect(
-    page.getByRole('button', { name: '核对最新导入导出设置', exact: true }),
-  ).toBeFocused();
   await page.getByRole('button', { name: '查看修改记录', exact: true }).click();
-  await expect(page.getByText('核对表单保存和历史差异', { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: '查看修改差异', exact: true }).first(),
+  ).toBeVisible();
   const original = TransferSettingsResponseSchema.parse(
     await (await page.request.get(path)).json(),
   );
@@ -94,33 +85,21 @@ test('设置表单保留未保存内容，收紧确认、修订冲突和修改�
       )
     ).status(),
   ).toBe(200);
-  await page.getByLabel('处理理由', { exact: true }).fill('保留这份本地修改');
   await page.getByLabel('文本和 JSON 上限（KiB）', { exact: true }).fill('256');
   await page.getByRole('button', { name: '保存导入导出设置', exact: true }).click();
-  await confirm.getByRole('button', { name: '确认并保存', exact: true }).click();
-  await expect(page.getByText('导入导出设置已变化，请核对最新修订', { exact: true })).toBeVisible();
-  await expect(page.getByLabel('处理理由', { exact: true })).toHaveValue('保留这份本地修改');
-  await page.getByRole('button', { name: '核对最新导入导出设置', exact: true }).click();
-  await page.getByRole('button', { name: '采用最新修订继续核对', exact: true }).click();
-  await expect(page.getByLabel('文本和 JSON 上限（KiB）', { exact: true })).toHaveValue('256');
-  await page.getByRole('button', { name: '保存导入导出设置', exact: true }).click();
-  await confirm.getByRole('button', { name: '确认并保存', exact: true }).click();
   await expect(
     page.getByText('导入导出设置已保存，新请求立即使用当前配置', { exact: true }),
   ).toBeVisible();
   await expect(
-    page.getByRole('button', { name: '核对最新导入导出设置', exact: true }),
-  ).toBeFocused();
-  await page.getByLabel('处理理由', { exact: true }).fill('放宽文本限制的普通保存保留焦点');
+    page.getByRole('switch', { name: '允许未登录访客导出', exact: true }),
+  ).toHaveAttribute('aria-checked', 'false');
+  await expect(page.getByLabel('文本和 JSON 上限（KiB）', { exact: true })).toHaveValue('256');
   await page.getByLabel('文本和 JSON 上限（KiB）', { exact: true }).fill('1024');
   await page.getByRole('button', { name: '保存导入导出设置', exact: true }).click();
-  await expect(confirm).toHaveCount(0);
+  await expect(page.getByRole('alertdialog')).toHaveCount(0);
   await expect(
     page.getByText('导入导出设置已保存，新请求立即使用当前配置', { exact: true }),
   ).toBeVisible();
-  await expect(
-    page.getByRole('button', { name: '核对最新导入导出设置', exact: true }),
-  ).toBeFocused();
 });
 
 test('真实公开版本按访客和格式设置展示导出，导入入口展示当前限制', async ({ page, browser }) => {

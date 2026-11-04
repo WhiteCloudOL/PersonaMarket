@@ -35,12 +35,7 @@ test('管理员不绑定 MFA 即可使用后台，过期高危操作就地确认
     );
     await page.getByRole('button', { name: '展开频率与会话设置', exact: true }).click();
     await page.getByLabel('新会话有效期（秒）', { exact: true }).fill('3600');
-    await page.getByLabel('处理理由', { exact: true }).fill('验证未绑定MFA管理员的会话策略维护');
     await page.getByRole('button', { name: '保存注册设置', exact: true }).click();
-    await page
-      .getByRole('alertdialog', { name: '确认保存注册设置', exact: true })
-      .getByRole('button', { name: '确认并保存', exact: true })
-      .click();
     await page.getByRole('button', { name: '验证高危操作', exact: true }).click();
     const modal = page.getByRole('dialog', { name: '验证高危操作', exact: true });
     await modal.getByLabel('当前登录密码', { exact: true }).fill(password);
@@ -53,10 +48,6 @@ test('管理员不绑定 MFA 即可使用后台，过期高危操作就地确认
     );
     expect(unchanged.meta.revision).toBe(previous.meta.revision);
     await page.getByRole('button', { name: '保存注册设置', exact: true }).click();
-    await page
-      .getByRole('alertdialog', { name: '确认保存注册设置', exact: true })
-      .getByRole('button', { name: '确认并保存', exact: true })
-      .click();
     await expect(
       page.getByText('注册设置已保存，新注册和之后创建的完整会话使用当前策略', { exact: true }),
     ).toBeVisible();

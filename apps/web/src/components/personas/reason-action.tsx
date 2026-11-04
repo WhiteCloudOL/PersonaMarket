@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -17,24 +17,27 @@ import { Textarea } from '@personamarket/ui/components/textarea';
 import { Field, FieldLabel, FieldError, FieldGroup } from '@personamarket/ui/components/field';
 import { FormNotice, SubmitButton } from '../auth/auth-fields';
 const schema = z.strictObject({ reason: textSchema(1, 5000) });
-/** 每项状态变更都展示具体影响，并将理由交给真实 API。 */
+/** 状态变更先展示影响。需要说明审核决定时才显示理由输入。 */
 export function ReasonAction({
   label,
   description,
   action,
   onSuccess,
   destructive = false,
+  auditDescription,
 }: {
   label: string;
   description: string;
   action: (reason: string) => Promise<unknown>;
   onSuccess: () => void;
   destructive?: boolean;
+  auditDescription?: string;
 }) {
   const [open, setOpen] = useState(false);
+  const reasonId = useId();
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
-    defaultValues: { reason: '' },
+    defaultValues: { reason: auditDescription ?? '' },
   });
   const mutation = useMutation({
     mutationFn: () => action(form.getValues('reason')),
@@ -74,15 +77,17 @@ export function ReasonAction({
             noValidate
           >
             <FieldGroup>
-              <Field>
-                <FieldLabel htmlFor={'reason-' + label}>操作理由</FieldLabel>
-                <Textarea
-                  id={'reason-' + label}
-                  {...form.register('reason')}
-                  aria-invalid={Boolean(form.formState.errors.reason)}
-                />
-                <FieldError>{form.formState.errors.reason?.message}</FieldError>
-              </Field>
+              {auditDescription === undefined && (
+                <Field>
+                  <FieldLabel htmlFor={reasonId}>操作理由</FieldLabel>
+                  <Textarea
+                    id={reasonId}
+                    {...form.register('reason')}
+                    aria-invalid={Boolean(form.formState.errors.reason)}
+                  />
+                  <FieldError>{form.formState.errors.reason?.message}</FieldError>
+                </Field>
+              )}
               <FormNotice error={mutation.error} />
               <SubmitButton
                 pending={mutation.isPending}

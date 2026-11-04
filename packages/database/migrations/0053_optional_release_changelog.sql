@@ -1,0 +1,2 @@
+ALTER TABLE "release_submissions" DROP CONSTRAINT "submission_bounds";--> statement-breakpoint
+ALTER TABLE "release_submissions" ADD CONSTRAINT "submission_bounds" CHECK ("release_submissions"."attempt_number">0 AND "release_submissions"."revision">0 AND octet_length("release_submissions"."snapshot"::text)<=4194304 AND char_length("release_submissions"."changelog") <= 5000);

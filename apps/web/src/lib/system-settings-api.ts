@@ -68,7 +68,7 @@ export const systemSettingsApi = {
       .catch(failed),
   write: (
     accountId: string,
-    input: SystemSettingsWrite,
+    input: Omit<SystemSettingsWrite, 'reason'>,
     expected: SystemSettingsResponse['meta'],
     key: string,
   ) =>

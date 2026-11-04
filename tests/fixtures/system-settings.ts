@@ -97,10 +97,6 @@ export async function openSystem(page: Page) {
 }
 export async function confirmSystemSave(page: Page) {
   await page.getByRole('button', { name: '保存维护设置', exact: true }).click();
-  const dialog = page.getByRole('alertdialog', { name: '确认保存维护设置', exact: true });
-  await expect(dialog).toBeVisible();
-  await dialog.getByRole('button', { name: '确认并保存', exact: true }).click();
-  await expect(dialog).toBeHidden();
 }
 export async function navigateSystemSettings(page: Page, name: string) {
   const selector = page.getByRole('button', { name: '选择设置分组', exact: true });

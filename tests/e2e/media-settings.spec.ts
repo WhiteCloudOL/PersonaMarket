@@ -43,7 +43,7 @@ async function navigate(page: Page, label: string) {
   await page.getByRole('link', { name: label, exact: true }).click();
 }
 
-test('媒体表单按需展开，跨设置页保留输入，确认与普通保存均恢复焦点', async ({ page }) => {
+test('媒体表单按需展开，跨设置页保留输入，收紧和放宽均直接保存', async ({ page }) => {
   await loginBrowserAdmin(page);
   await page.goto('/admin/settings/media');
   await expect(page.getByRole('button', { name: '调整容量与数量', exact: true })).toHaveAttribute(
@@ -52,46 +52,31 @@ test('媒体表单按需展开，跨设置页保留输入，确认与普通保�
   );
   await page.getByRole('button', { name: '调整容量与数量', exact: true }).click();
   await page.getByLabel('单张原图上限（KiB）', { exact: true }).fill('256');
-  await page.getByLabel('处理理由', { exact: true }).fill('跨页面保留这份未保存输入');
   page.once('dialog', (dialog) => dialog.accept());
   await navigate(page, '导入导出');
   await expect(page.getByRole('heading', { name: '导入导出', exact: true })).toBeVisible();
   await navigate(page, '文件与图片');
-  await expect(page.getByLabel('处理理由', { exact: true })).toHaveValue(
-    '跨页面保留这份未保存输入',
-  );
   await page.getByRole('button', { name: '调整容量与数量', exact: true }).click();
   await expect(page.getByLabel('单张原图上限（KiB）', { exact: true })).toHaveValue('256');
   await page.getByRole('button', { name: '保存文件与图片设置', exact: true }).click();
-  const confirm = page.getByRole('alertdialog', { name: '确认收紧文件与图片限制', exact: true });
-  await confirm.getByRole('button', { name: '返回核对', exact: true }).click();
-  await expect(page.getByRole('button', { name: '保存文件与图片设置', exact: true })).toBeFocused();
-  await page.getByRole('button', { name: '保存文件与图片设置', exact: true }).click();
-  await confirm.getByRole('button', { name: '确认并保存', exact: true }).click();
   await expect(
     page.getByText('文件与图片设置已保存，新请求立即使用当前配置', { exact: true }),
   ).toBeVisible();
-  await expect(
-    page.getByRole('button', { name: '核对最新文件与图片设置', exact: true }),
-  ).toBeFocused();
   await page.getByLabel('单张原图上限（KiB）', { exact: true }).fill('512');
-  await page.getByLabel('处理理由', { exact: true }).fill('放宽原图预算，直接核对保存');
   await page.getByRole('button', { name: '保存文件与图片设置', exact: true }).click();
-  await expect(confirm).toHaveCount(0);
-  await expect(
-    page.getByRole('button', { name: '核对最新文件与图片设置', exact: true }),
-  ).toBeFocused();
+  await expect(page.getByRole('alertdialog')).toHaveCount(0);
   await page.getByRole('button', { name: '查看修改记录', exact: true }).click();
-  await expect(page.getByText('放宽原图预算，直接核对保存', { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: '查看修改差异', exact: true }).first(),
+  ).toBeVisible();
 });
 
-test('域名校验保留原输入，收紧确认和修订冲突后由用户重新核对', async ({ page }) => {
+test('域名校验保留原输入，并发的独立预算字段同时保留', async ({ page }) => {
   await loginBrowserAdmin(page);
   await page.goto('/admin/settings/media');
   await page.getByRole('button', { name: '调整来源域限制', exact: true }).click();
   const domains = page.getByLabel('允许的图片来源域', { exact: true });
   await domains.fill('EXAMPLE.COM\n\nexample.com.');
-  await page.getByLabel('处理理由', { exact: true }).fill('检查域名规范和并发冲突');
   await page.getByRole('button', { name: '保存文件与图片设置', exact: true }).click();
   await expect(
     page.getByText('来源域不能重复，大小写、尾点与国际化域名视为同一域', { exact: true }),
@@ -111,23 +96,14 @@ test('域名校验保留原输入，收紧确认和修订冲突后由用户重�
     ).status(),
   ).toBe(200);
   await page.getByRole('button', { name: '保存文件与图片设置', exact: true }).click();
-  const confirm = page.getByRole('alertdialog', { name: '确认收紧文件与图片限制', exact: true });
-  await confirm.getByRole('button', { name: '返回核对', exact: true }).click();
-  await expect(domains).toHaveValue(raw);
-  await page.getByRole('button', { name: '保存文件与图片设置', exact: true }).click();
-  await confirm.getByRole('button', { name: '确认并保存', exact: true }).click();
-  await expect(
-    page.getByText('文件与图片设置已变化，请核对最新修订', { exact: true }),
-  ).toBeVisible();
-  await expect(domains).toHaveValue(raw);
-  await page.getByRole('button', { name: '核对最新文件与图片设置', exact: true }).click();
-  await page.getByRole('button', { name: '采用最新修订继续核对', exact: true }).click();
-  await page.getByRole('button', { name: '保存文件与图片设置', exact: true }).click();
-  await confirm.getByRole('button', { name: '确认并保存', exact: true }).click();
   await expect(
     page.getByText('文件与图片设置已保存，新请求立即使用当前配置', { exact: true }),
   ).toBeVisible();
   await expect(domains).toHaveValue('images.example.com\n例子.中国');
+  expect(
+    MediaSettingsResponseSchema.parse(await (await page.request.get(path)).json()).data
+      .maxImagesPerAccount,
+  ).toBe(90);
 });
 
 test('关闭上传和在线导入后入口提示当前策略，旧素材仍可引用并保存草稿', async ({

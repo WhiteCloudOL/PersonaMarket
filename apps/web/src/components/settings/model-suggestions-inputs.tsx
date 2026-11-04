@@ -19,7 +19,7 @@ export function ModelSuggestionsInputs({
   form,
   disabled,
 }: {
-  form: UseFormReturn<ModelSuggestionsWrite>;
+  form: UseFormReturn<Pick<ModelSuggestionsWrite, 'data'>>;
   disabled: boolean;
 }) {
   const entries = useFieldArray({ control: form.control, name: 'data.entries' });

@@ -373,7 +373,7 @@ for (const platform of ['maibot', 'astrbot'] as const) {
           await author.goto('/dashboard/personas/' + id + '/releases');
           await author.getByRole('button', { name: '隐藏作品', exact: true }).click();
           const hidden = author.getByRole('dialog', { name: '隐藏作品', exact: true });
-          await hidden.getByLabel('操作理由', { exact: true }).fill('完整分发旅程的真实隐藏验证');
+          await expect(hidden.getByLabel('操作理由', { exact: true })).toHaveCount(0);
           await hidden.getByRole('button', { name: '确认隐藏作品', exact: true }).click();
           await expect(hidden).toBeHidden();
           await guest.goto(sharedSearch);

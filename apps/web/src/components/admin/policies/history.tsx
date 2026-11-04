@@ -171,8 +171,7 @@ export function PolicySubmissionDetails({
                 <p className="text-sm text-muted-foreground">{item.snapshot.summary}</p>
               )}
               <p className="text-sm text-muted-foreground">
-                来源修订 {item.sourceRevision} · 送审人 {item.submittedBy.username} ·{' '}
-                {announcementDate(item.submittedAt)}
+                送审人 {item.submittedBy.username} · {announcementDate(item.submittedAt)}
               </p>
               {item.reviewedBy && (
                 <p className="text-sm text-muted-foreground">
@@ -292,12 +291,8 @@ function PolicyRecordDetails({
                 {policyActions[record.action]} · {record.actor.username}
               </p>
               <p className="text-sm text-muted-foreground">
-                {announcementDate(record.createdAt)} · 修订 {record.before.revision} →{' '}
-                {record.after.revision}
+                {announcementDate(record.createdAt)}
                 {record.selfReview ? ' · 管理员自审' : ''}
-              </p>
-              <p className="whitespace-pre-wrap text-sm">
-                处理理由：{record.reason || '未填写补充理由'}
               </p>
               <Tabs defaultValue="after" className="min-w-0">
                 <TabsList aria-label="处理前后记录" className="h-auto min-h-12 w-full flex-wrap">
@@ -419,7 +414,6 @@ function SubmissionHistory({
                   <div className="flex min-w-0 flex-col gap-2">
                     <div className="flex flex-wrap items-center gap-2">
                       <Badge variant="secondary">{policyStatuses[item.status]}</Badge>
-                      <span className="text-sm">来源修订 {item.sourceRevision}</span>
                       {item.id === snapshot.published?.publicationId && (
                         <Badge variant="outline">当前公开</Badge>
                       )}
@@ -505,9 +499,7 @@ function RecordHistory({ accountId, slug }: { accountId: string; slug: PolicySlu
                   className="flex min-w-0 flex-wrap items-center justify-between gap-3 py-4"
                 >
                   <div className="flex min-w-0 flex-col gap-1">
-                    <p className="font-medium">
-                      {policyActions[item.action]} · 修订 {item.fromRevision} → {item.toRevision}
-                    </p>
+                    <p className="font-medium">{policyActions[item.action]}</p>
                     <p className="text-sm text-muted-foreground [overflow-wrap:anywhere]">
                       {item.actor.username} · {announcementDate(item.createdAt)}
                       {item.selfReview ? ' · 管理员自审' : ''}

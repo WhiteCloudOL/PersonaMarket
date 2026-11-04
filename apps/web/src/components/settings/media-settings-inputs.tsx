@@ -26,7 +26,7 @@ export function MediaSettingsInputs({
   form,
   disabled,
 }: {
-  form: UseFormReturn<MediaSettingsWrite>;
+  form: UseFormReturn<Pick<MediaSettingsWrite, 'data'>>;
   disabled: boolean;
 }) {
   const id = useId();

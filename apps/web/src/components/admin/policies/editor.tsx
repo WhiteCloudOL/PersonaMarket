@@ -2,19 +2,11 @@
 import Link from 'next/link';
 import { useRef, useState } from 'react';
 import { FormProvider } from 'react-hook-form';
-import { RefreshCwIcon } from 'lucide-react';
 import { PolicyFieldsSchema, type ManagedPolicy } from '@personamarket/contracts';
 import { Button, buttonVariants } from '@personamarket/ui/components/button';
 import { Badge } from '@personamarket/ui/components/badge';
 import { Spinner } from '@personamarket/ui/components/spinner';
-import { Textarea } from '@personamarket/ui/components/textarea';
-import {
-  Field,
-  FieldGroup,
-  FieldLabel,
-  FieldError,
-  FieldDescription,
-} from '@personamarket/ui/components/field';
+import { FieldGroup } from '@personamarket/ui/components/field';
 import { Alert, AlertTitle, AlertDescription } from '@personamarket/ui/components/alert';
 import {
   Collapsible,
@@ -23,7 +15,6 @@ import {
 } from '@personamarket/ui/components/collapsible';
 import { FormNotice } from '@/components/auth/auth-fields';
 import { EditorSection } from '@/components/personas/editor-section';
-import { GuideBody } from '@/components/guides/guide-body';
 import { announcementDate } from '@/components/announcements/announcement-content';
 import { PolicyEditorFields } from './editor-fields';
 import { PolicyConfirmation } from './confirmation';
@@ -47,14 +38,11 @@ export function PolicyEditor({
   const {
     form,
     snapshot,
-    candidate,
     values,
     changed,
     dirty,
     busy,
-    reading,
     message,
-    readError,
     mutation,
     intent,
     setIntent,
@@ -62,8 +50,6 @@ export function PolicyEditor({
     originalRequest,
     actionValues,
     stableButton,
-    readLatest,
-    adoptLatest,
     prepareIntent,
     submit,
     replayOriginal,
@@ -85,26 +71,6 @@ export function PolicyEditor({
         <Badge variant={snapshot.published ? 'secondary' : 'outline'}>
           {snapshot.published ? '已有公开版' : '尚未公开'}
         </Badge>
-        <span className="text-sm text-muted-foreground">当前核对修订 {snapshot.revision}</span>
-        <Button
-          ref={stableButton}
-          type="button"
-          variant="outline"
-          size="icon"
-          className="size-11 shrink-0"
-          aria-label="核对最新规则"
-          title="核对最新规则"
-          aria-disabled={busy}
-          onClick={() => {
-            if (!busy) void readLatest();
-          }}
-        >
-          {reading ? (
-            <Spinner aria-hidden className="motion-reduce:animate-none" />
-          ) : (
-            <RefreshCwIcon aria-hidden />
-          )}
-        </Button>
         {pending && (
           <Button
             type="button"
@@ -122,10 +88,10 @@ export function PolicyEditor({
         <form
           noValidate
           onSubmit={form.handleSubmit(
-            (input) => submit({ kind: 'write', input }, snapshot.revision),
+            (input) => submit({ kind: 'write', input: input }, snapshot.revision),
             (errors) => {
               setTab('edit');
-              const name = (['title', 'summary', 'bodyMarkdown', 'reason'] as const).find((key) =>
+              const name = (['title', 'summary', 'bodyMarkdown'] as const).find((key) =>
                 Boolean(errors[key]),
               );
               if (name) requestAnimationFrame(() => form.setFocus(name));
@@ -148,24 +114,6 @@ export function PolicyEditor({
             >
               <FieldGroup>
                 <PolicyEditorFields values={values} tab={tab} setTab={setTab} />
-                <Field data-invalid={Boolean(form.formState.errors.reason)}>
-                  <FieldLabel htmlFor="policy-edit-reason">草稿修改理由</FieldLabel>
-                  <Textarea
-                    id="policy-edit-reason"
-                    rows={3}
-                    autoComplete="off"
-                    aria-invalid={Boolean(form.formState.errors.reason)}
-                    aria-describedby="policy-edit-reason-help policy-edit-reason-error"
-                    {...form.register('reason')}
-                  />
-                  <FieldDescription id="policy-edit-reason-help">
-                    说明本次草稿修改的依据，最多 2,000 字，仅管理员可见
-                  </FieldDescription>
-                  <FieldError
-                    id="policy-edit-reason-error"
-                    errors={[form.formState.errors.reason]}
-                  />
-                </Field>
                 <div
                   className="flex flex-wrap items-center gap-3"
                   role="group"
@@ -173,7 +121,10 @@ export function PolicyEditor({
                 >
                   <Button
                     type="submit"
-                    disabled={busy || unresolved || !changed}
+                    ref={stableButton}
+                    disabled={
+                      busy || (unresolved ? originalRequest?.command.kind !== 'write' : !changed)
+                    }
                     className={buttonClass}
                   >
                     {mutation.isPending && (
@@ -216,7 +167,7 @@ export function PolicyEditor({
         <CollapsibleTrigger
           render={<Button type="button" variant="outline" className={buttonClass} />}
         >
-          查看核对依据与公开入口
+          查看修改信息与公开入口
         </CollapsibleTrigger>
         <CollapsibleContent className="flex min-w-0 flex-col items-start gap-3 pt-4 text-sm text-muted-foreground">
           <p className="[overflow-wrap:anywhere]">
@@ -225,7 +176,7 @@ export function PolicyEditor({
           </p>
           {pending && (
             <p className="[overflow-wrap:anywhere]">
-              待审来源修订 {pending.sourceRevision} · 送审人 {pending.submittedBy.username}
+              送审人 {pending.submittedBy.username}
               ，送审后的编辑不改变这份快照
             </p>
           )}
@@ -239,32 +190,27 @@ export function PolicyEditor({
           )}
         </CollapsibleContent>
       </Collapsible>
-      <FormNotice error={intent ? readError : (mutation.error ?? readError)} />
-      {unresolved && originalRequest && (
+      <FormNotice error={intent ? undefined : mutation.error} />
+      {unresolved && originalRequest && originalRequest.command.kind !== 'write' && (
         <Alert role="status">
           <AlertTitle>原提交结果待核对</AlertTitle>
           <AlertDescription className="flex min-w-0 flex-col items-start gap-3">
             <p>
               {policyLabels[snapshot.slug]} ·{' '}
-              {originalRequest.command.kind === 'write'
-                ? '保存草稿'
-                : originalRequest.command.kind === 'review'
-                  ? originalRequest.command.input.decision === 'approve'
-                    ? '批准快照'
-                    : '驳回快照'
-                  : originalRequest.command.kind === 'submit'
-                    ? '提交审核'
-                    : originalRequest.command.kind === 'withdraw'
-                      ? '撤回送审'
-                      : originalRequest.command.kind === 'activate'
-                        ? '激活批准版'
-                        : '下线公开版'}{' '}
-              · 原核对修订 {originalRequest.revision}
+              {originalRequest.command.kind === 'review'
+                ? originalRequest.command.input.decision === 'approve'
+                  ? '批准快照'
+                  : '驳回快照'
+                : originalRequest.command.kind === 'submit'
+                  ? '提交审核'
+                  : originalRequest.command.kind === 'withdraw'
+                    ? '撤回送审'
+                    : originalRequest.command.kind === 'activate'
+                      ? '激活批准版'
+                      : '下线公开版'}{' '}
             </p>
             {originalRequest.targetTitle && (
-              <p className="[overflow-wrap:anywhere]">
-                原快照：{originalRequest.targetTitle} · 来源修订 {originalRequest.sourceRevision}
-              </p>
+              <p className="[overflow-wrap:anywhere]">原快照：{originalRequest.targetTitle}</p>
             )}
             <p>核对使用暂存的原请求和幂等标识，当前输入不会替代原请求</p>
             <Collapsible>
@@ -274,24 +220,6 @@ export function PolicyEditor({
                 查看原提交依据
               </CollapsibleTrigger>
               <CollapsibleContent className="flex min-w-0 flex-col gap-3 pt-3">
-                <p className="whitespace-pre-wrap [overflow-wrap:anywhere]">
-                  处理理由：{originalRequest.command.input.reason || '未填写补充理由'}
-                </p>
-                {originalRequest.command.kind === 'write' && (
-                  <>
-                    <p className="[overflow-wrap:anywhere]">
-                      原草稿标题：{originalRequest.command.input.title || '空白标题'}
-                    </p>
-                    <div
-                      role="region"
-                      aria-label="原提交草稿正文"
-                      tabIndex={0}
-                      className="max-h-64 min-w-0 overflow-y-auto rounded-lg border p-3 focus-visible:outline-2 focus-visible:outline-ring"
-                    >
-                      <GuideBody text={originalRequest.command.input.bodyMarkdown} />
-                    </div>
-                  </>
-                )}
                 {'id' in originalRequest.command && (
                   <p className="break-all text-sm">送审快照：{originalRequest.command.id}</p>
                 )}
@@ -310,44 +238,6 @@ export function PolicyEditor({
               onClick={replayOriginal}
             >
               核对原提交结果
-            </Button>
-          </AlertDescription>
-        </Alert>
-      )}
-      {candidate && (
-        <Alert role="status">
-          <AlertTitle>服务器最新规则 · 修订 {candidate.revision}</AlertTitle>
-          <AlertDescription className="flex min-w-0 flex-col items-start gap-3">
-            <p className="[overflow-wrap:anywhere]">
-              {candidate.title || '空白草稿'} · {candidate.published ? '已有公开版' : '尚未公开'} ·{' '}
-              {candidate.latestSubmission?.status === 'pending' ? '有待审快照' : '暂无待审快照'}
-            </p>
-            <Collapsible className="w-full min-w-0">
-              <CollapsibleTrigger
-                render={<Button type="button" variant="outline" className={buttonClass} />}
-              >
-                查看最新草稿正文
-              </CollapsibleTrigger>
-              <CollapsibleContent className="pt-3">
-                <div
-                  role="region"
-                  aria-label="最新草稿正文"
-                  tabIndex={0}
-                  className="max-h-72 min-w-0 overflow-y-auto rounded-lg border p-3 focus-visible:outline-2 focus-visible:outline-ring"
-                >
-                  <GuideBody text={candidate.bodyMarkdown} />
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
-            <p>采用最新修订会保留当前输入与处理理由，请再次核对后手动确认操作</p>
-            <Button
-              type="button"
-              variant="outline"
-              disabled={busy || unresolved}
-              className={buttonClass}
-              onClick={adoptLatest}
-            >
-              采用最新修订继续核对
             </Button>
           </AlertDescription>
         </Alert>

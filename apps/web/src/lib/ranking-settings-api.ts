@@ -57,7 +57,12 @@ export const rankingSettingsApi = {
     })
       .then((result) => checkedResponse(result, RankingSettingsRecordsResponseSchema))
       .catch(failed),
-  write: (accountId: string, input: RankingSettingsWrite, revision: number, key: string) =>
+  write: (
+    accountId: string,
+    input: Omit<RankingSettingsWrite, 'reason'>,
+    revision: number,
+    key: string,
+  ) =>
     authenticatedWriteFor(
       accountId,
       (csrf) =>

@@ -52,7 +52,7 @@ export function RankingRuntime({
   if (!query.data)
     return (
       <p role="status" className="text-sm text-muted-foreground">
-        正在核对实际榜单批次…
+        正在读取实际榜单批次…
       </p>
     );
   const { latestCompleted: completed, latestRequest: requested } = query.data.data;
@@ -61,12 +61,12 @@ export function RankingRuntime({
     revision === expectedRevision && completed?.definition?.settingsRevision === expectedRevision;
   const summary =
     revision > expectedRevision
-      ? `服务器配置已到修订 ${revision}，请核对当前表单修订 ${expectedRevision}`
+      ? '榜单配置已在其他窗口更新'
       : current
-        ? `公开榜单已采用修订 ${expectedRevision}`
+        ? '公开榜单已使用当前配置'
         : requested?.status === 'failed'
           ? '最近计算失败，公开榜单保留上次成功结果'
-          : `公开榜单尚未采用修订 ${expectedRevision}`;
+          : '公开榜单等待按当前配置计算';
   return (
     <Collapsible open={open} onOpenChange={setOpen} className="min-w-0">
       <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2">
@@ -92,9 +92,8 @@ export function RankingRuntime({
         >
           <h2 className="font-semibold text-foreground">实际榜单批次</h2>
           <p>
-            服务器配置修订 {revision} ·{' '}
             {completed
-              ? `最近成功：${completed.algorithm}${completed.definition ? ' / 修订 ' + completed.definition.settingsRevision : ' / 历史固定参数'}`
+              ? `最近成功：${completed.algorithm}${completed.definition ? '' : ' / 历史固定参数'}`
               : '尚无成功批次'}
           </p>
           {requested && (

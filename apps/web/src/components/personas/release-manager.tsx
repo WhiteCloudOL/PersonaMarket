@@ -86,6 +86,11 @@ export function ReleaseManager({ id }: { id: string }) {
                     <ReasonAction
                       label={draft.data.data.ownerVisibility === 'listed' ? '隐藏作品' : '恢复展示'}
                       description="隐藏后所有公开版本、图片和下载入口同步受限，恢复展示仍受审核与管理员处置约束"
+                      auditDescription={
+                        draft.data.data.ownerVisibility === 'listed'
+                          ? '作者隐藏作品'
+                          : '作者恢复展示'
+                      }
                       action={(reason) =>
                         releasesApi.visibility(
                           id,
@@ -154,7 +159,9 @@ export function ReleaseManager({ id }: { id: string }) {
                     查看快照
                   </Link>
                 </div>
-                <p className="whitespace-pre-wrap text-sm leading-7">{item.changelog}</p>
+                {item.changelog && (
+                  <p className="whitespace-pre-wrap text-sm leading-7">{item.changelog}</p>
+                )}
                 {item.reason && (
                   <p className="whitespace-pre-wrap rounded-lg bg-muted p-3 text-sm">
                     审核或操作意见：{item.reason}
@@ -164,6 +171,7 @@ export function ReleaseManager({ id }: { id: string }) {
                   {item.status === 'PENDING' && (
                     <ReasonAction
                       label="撤回审核"
+                      auditDescription="作者撤回审核"
                       description="撤回后这次快照保留记录，可以继续修改草稿后重新提交"
                       action={(reason) => releasesApi.withdraw(item.id, item.revision, reason)}
                       onSuccess={refresh}
@@ -176,6 +184,7 @@ export function ReleaseManager({ id }: { id: string }) {
                       {!item.current && (
                         <ReasonAction
                           label="设为当前公开版本"
+                          auditDescription="作者切换公开版本"
                           description="切换当前指针，版本正文和历史最高版本号保持不变"
                           action={(reason) => releasesApi.rollback(id, item.releaseId, reason)}
                           onSuccess={refresh}
@@ -183,6 +192,7 @@ export function ReleaseManager({ id }: { id: string }) {
                       )}
                       <ReasonAction
                         label="撤销已发布版本"
+                        auditDescription="作者撤销已发布版本"
                         description="此版本将无法访问，当前指针失效时不会自动切回旧版本"
                         action={(reason) =>
                           releasesApi.state(id, item.releaseId, 'withdraw', reason)

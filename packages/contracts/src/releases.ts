@@ -80,7 +80,7 @@ export const ReleaseVersionSchema = z
   );
 export const CreateReleaseSchema = z.strictObject({
   version: ReleaseVersionSchema,
-  changelog: textSchema(1, 5000),
+  changelog: textSchema(0, 5000).default(''),
   expectedDraftRevision: z.number().int().positive(),
   confirmed: z.literal(true, { error: '请确认公开信息与来源许可后再提交' }),
 });

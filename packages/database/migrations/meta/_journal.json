@@ -372,6 +372,13 @@
       "when": 1793772343498,
       "tag": "0052_persona_custom_tags",
       "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "7",
+      "when": 1793779750696,
+      "tag": "0053_optional_release_changelog",
+      "breakpoints": true
     }
   ]
 }
