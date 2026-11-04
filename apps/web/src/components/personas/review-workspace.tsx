@@ -5,7 +5,7 @@ import { useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ReviewRequestSchema, canonicalJson } from '@personamarket/contracts';
 import type { z } from 'zod';
 import { Button, buttonVariants } from '@personamarket/ui/components/button';
@@ -80,6 +80,7 @@ function SnapshotDiff({ previous, next }: { previous: Snapshot | null; next: Sna
   );
 }
 function ReviewDetail({ id, refreshed }: { id: string; refreshed: () => void }) {
+  const client = useQueryClient();
   const detail = useQuery({
     queryKey: ['private', 'review', id],
     queryFn: () => releasesApi.detail(id),
@@ -109,6 +110,7 @@ function ReviewDetail({ id, refreshed }: { id: string; refreshed: () => void }) 
       return releasesApi.review(id, body, operation.current.key);
     },
     onSuccess: () => {
+      void client.invalidateQueries({ queryKey: ['private', 'review-indicators'] });
       void detail.refetch();
       refreshed();
     },

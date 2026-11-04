@@ -1,3 +1,4 @@
+import { publicPublication } from '../releases/public-author.js';
 import { Inject, Injectable } from '@nestjs/common';
 import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
 import {
@@ -34,7 +35,7 @@ function visibleEntries(reader: Reader, input: RankingQuery, generationId: strin
       releaseId: sql<string>`${personaReleases.id}`.as('release_id'),
       version: personaReleases.version,
       snapshot: publicCardSnapshot,
-      publication: releaseSubmissions.publication,
+      publication: publicPublication.as('publication'),
       publishedAt: personaReleases.publishedAt,
       firstPublishedAt: personas.firstPublishedAt,
       position: sql<number>`row_number() OVER (ORDER BY ${rankingEntries.position})::integer`.as(

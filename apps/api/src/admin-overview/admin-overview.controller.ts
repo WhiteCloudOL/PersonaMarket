@@ -1,7 +1,11 @@
 import { Controller, Get, Inject, Req, SerializeOptions, UseGuards } from '@nestjs/common';
 import { ApiHeader, ApiOkResponse, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
-import { AdminOverviewResponseSchema, ErrorResponseSchema } from '@personamarket/contracts';
+import {
+  AdminOverviewResponseSchema,
+  ErrorResponseSchema,
+  ReviewIndicatorsResponseSchema,
+} from '@personamarket/contracts';
 import { AuthGuard } from '../auth/auth.guard.js';
 import { AdminOverviewService } from './admin-overview.service.js';
 
@@ -16,6 +20,13 @@ import { AdminOverviewService } from './admin-overview.service.js';
 @ApiResponse({ status: 503, standardSchema: ErrorResponseSchema })
 export class AdminOverviewController {
   constructor(@Inject(AdminOverviewService) readonly service: AdminOverviewService) {}
+  @Get('review-indicators')
+  @ApiOperation({ operationId: 'getReviewIndicators', summary: '读取当前角色可处理的审核待办标记' })
+  @ApiOkResponse({ standardSchema: ReviewIndicatorsResponseSchema })
+  @SerializeOptions({ schema: ReviewIndicatorsResponseSchema })
+  indicators(@Req() request: Request) {
+    return this.service.indicators(request);
+  }
   @Get()
   @ApiOperation({
     operationId: 'getAdminOverview',

@@ -187,6 +187,7 @@ function AuthorizedWorkspace({ accountId, role }: { accountId: string; role: str
   async function changed() {
     await Promise.all([
       client.invalidateQueries({ queryKey: moderationCommentsKey(accountId) }),
+      client.invalidateQueries({ queryKey: ['private', 'review-indicators', accountId] }),
       client.invalidateQueries({ queryKey: ['public', 'comments'] }),
       client.invalidateQueries({ queryKey: ['private', 'comments'] }),
     ]);

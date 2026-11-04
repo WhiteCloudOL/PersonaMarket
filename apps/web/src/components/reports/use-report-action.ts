@@ -69,6 +69,7 @@ export function useReportAction(accountId: string, initial: AdminReport) {
       nonce.current = undefined;
       client.setQueryData([...reportsKey(accountId, true), 'detail', snapshot.id], result);
       void client.invalidateQueries({ queryKey: [...reportsKey(accountId, true), 'list'] });
+      void client.invalidateQueries({ queryKey: ['private', 'review-indicators', accountId] });
       void client.invalidateQueries({
         queryKey: [...reportsKey(accountId, true), 'records', snapshot.id],
       });

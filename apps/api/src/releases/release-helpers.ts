@@ -1,3 +1,4 @@
+import { publicPublication } from './public-author.js';
 import { and, eq, sql, isNull } from 'drizzle-orm';
 import { buildPublicSearchProjection } from '@personamarket/persona-adapters';
 import {
@@ -49,7 +50,7 @@ export async function lockPersona(tx: Transaction, id: string, ownerId?: string)
     .from(personas)
     .where(ownerId ? and(eq(personas.id, id), eq(personas.ownerId, ownerId)) : eq(personas.id, id))
     .for('update');
-  if (!persona) throw new BusinessError('NOT_FOUND', '人设不存在或不可访问');
+  if (!persona || persona.deletedAt) throw new BusinessError('NOT_FOUND', '人设不存在或不可访问');
   return persona;
 }
 export async function lockSubmission(tx: Transaction, id: string) {
@@ -170,8 +171,9 @@ export async function updateProjection(
     return;
   }
   const [row] = await tx
-    .select({ snapshot: releaseSubmissions.snapshot, publication: releaseSubmissions.publication })
+    .select({ snapshot: releaseSubmissions.snapshot, publication: publicPublication })
     .from(personaReleases)
+    .innerJoin(personas, eq(personas.id, personaReleases.personaId))
     .innerJoin(releaseSubmissions, eq(personaReleases.approvedSubmissionId, releaseSubmissions.id))
     .where(
       and(

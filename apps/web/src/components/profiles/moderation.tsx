@@ -119,6 +119,7 @@ function ReviewPanel({
       });
       setNotice('处理结果已保存');
       void client.invalidateQueries({ queryKey: [...profilesKey(accountId, true), 'list'] });
+      void client.invalidateQueries({ queryKey: ['private', 'review-indicators', accountId] });
       void client.invalidateQueries({ queryKey: [...profilesKey(accountId, true), 'records'] });
     },
     onError: () => setConfirmation(undefined),

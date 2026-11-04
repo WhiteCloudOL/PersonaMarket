@@ -23,9 +23,12 @@ export async function backfillPublicSearch(client: PoolClient) {
         release_id: string;
         snapshot: unknown;
         publication: unknown;
-      }>(`SELECT p.persona_id,p.release_id,s.snapshot,s.publication
+      }>(`SELECT p.persona_id,p.release_id,s.snapshot,
+        CASE WHEN u.deleted_at IS NOT NULL THEN jsonb_set(s.publication,'{publisher}','"已删除用户"'::jsonb)
+          ELSE s.publication END AS publication
         FROM persona_public_projection p JOIN persona_releases r ON r.id=p.release_id AND r.persona_id=p.persona_id
         JOIN release_submissions s ON s.id=r.approved_submission_id AND s.persona_id=p.persona_id AND s.release_id=r.id
+        JOIN personas person ON person.id=p.persona_id JOIN users u ON u.id=person.owner_id
         WHERE p.search_release_id IS DISTINCT FROM p.release_id AND s.status='APPROVED' AND r.published_at IS NOT NULL
         ORDER BY p.persona_id LIMIT 100 FOR UPDATE OF p`);
       for (const row of pending.rows) {

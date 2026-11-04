@@ -16,6 +16,7 @@ import {
 import { ApiHeader, ApiOkResponse, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
   AdminPersonaIdSchema,
+  DeleteAdminPersonaSchema,
   AdminPersonaResponseSchema,
   AdminPersonasQuerySchema,
   AdminPersonasResponseSchema,
@@ -93,6 +94,21 @@ export class AdminPersonasController {
     @Body({ schema: SetPersonaCurationSchema }) input: z.infer<typeof SetPersonaCurationSchema>,
   ) {
     return this.service.curate(request, response, id, input);
+  }
+  @Post(':id/delete')
+  @HttpCode(200)
+  @ApiHeader({ name: 'X-CSRF-Token', required: true })
+  @ApiHeader({ name: 'Idempotency-Key', required: true })
+  @ApiOperation({ operationId: 'deleteAdminPersona', summary: '核对修订后永久移除人设' })
+  @ApiOkResponse({ standardSchema: AuthNoticeResponseSchema })
+  @SerializeOptions({ schema: AuthNoticeResponseSchema })
+  delete(
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+    @Param({ schema: AdminPersonaIdSchema }) { id }: z.infer<typeof AdminPersonaIdSchema>,
+    @Body({ schema: DeleteAdminPersonaSchema }) input: z.infer<typeof DeleteAdminPersonaSchema>,
+  ) {
+    return this.service.delete(request, response, id, input);
   }
   @Post(':id/moderation')
   @HttpCode(200)

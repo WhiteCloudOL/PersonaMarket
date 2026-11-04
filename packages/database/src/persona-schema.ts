@@ -69,6 +69,7 @@ export const personas = pgTable(
       .notNull(),
     publishedReleaseId: uuid('published_release_id'),
     firstPublishedAt: timestamp('first_published_at', { withTimezone: true }),
+    deletedAt: timestamp('deleted_at', { withTimezone: true }),
     revision: integer('revision').default(1).notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
@@ -77,6 +78,10 @@ export const personas = pgTable(
     check('persona_platform_valid', sql`${t.platform} IN ('maibot','astrbot')`),
     check('persona_visibility_valid', sql`${t.ownerVisibility} IN ('listed','hidden')`),
     check('persona_moderation_valid', sql`${t.moderationState} IN ('normal','blocked')`),
+    check(
+      'persona_deleted_blocked',
+      sql`${t.deletedAt} IS NULL OR (${t.moderationState}='blocked' AND ${t.publishedReleaseId} IS NULL)`,
+    ),
     index('personas_owner_updated_idx').on(t.ownerId, t.updatedAt),
     index('personas_first_published_idx').on(t.firstPublishedAt.desc(), t.id.desc()),
     uniqueIndex('personas_id_owner_unique').on(t.id, t.ownerId),

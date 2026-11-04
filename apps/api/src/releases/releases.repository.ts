@@ -69,7 +69,7 @@ export class ReleasesRepository {
     const persona = await this.database.db.query.personas.findFirst({
       where: and(eq(personas.id, id), eq(personas.ownerId, actor.account.id)),
     });
-    if (!persona) throw new BusinessError('NOT_FOUND', '人设不存在或不可访问');
+    if (!persona || persona.deletedAt) throw new BusinessError('NOT_FOUND', '人设不存在或不可访问');
     const rows = await this.database.db
       .select({ submission: releaseSubmissions, release: personaReleases })
       .from(releaseSubmissions)

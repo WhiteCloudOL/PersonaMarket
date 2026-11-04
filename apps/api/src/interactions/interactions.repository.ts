@@ -1,3 +1,4 @@
+import { publicPublication } from '../releases/public-author.js';
 import { Inject, Injectable } from '@nestjs/common';
 import { and, asc, desc, eq, ilike, inArray, sql } from 'drizzle-orm';
 import {
@@ -178,7 +179,7 @@ export class InteractionsRepository {
               releaseId: personaReleases.id,
               version: personaReleases.version,
               snapshot: publicCardSnapshot,
-              publication: releaseSubmissions.publication,
+              publication: publicPublication,
               publishedAt: personaReleases.publishedAt,
               firstPublishedAt: personas.firstPublishedAt,
               interactionCounts: interactionCountsSql(sql`${personas.id}`).as('interaction_counts'),

@@ -1,3 +1,4 @@
+import { publicPublication } from './public-author.js';
 import { Inject, Injectable } from '@nestjs/common';
 import { and, eq, desc, asc, inArray, sql } from 'drizzle-orm';
 import {
@@ -28,7 +29,7 @@ export class PublicationsRepository {
     releaseId: personaReleases.id,
     version: personaReleases.version,
     snapshot: releaseSubmissions.snapshot,
-    publication: releaseSubmissions.publication,
+    publication: publicPublication,
     changelog: releaseSubmissions.changelog,
     publishedAt: personaReleases.publishedAt,
   };

@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, eq, desc, asc, sql, count } from 'drizzle-orm';
+import { and, eq, desc, asc, sql, count, isNull } from 'drizzle-orm';
 import {
   categories,
   tags,
@@ -34,7 +34,13 @@ export class PersonasRepository {
     const [persona] = await transaction
       .select()
       .from(personas)
-      .where(and(eq(personas.id, id), eq(personas.ownerId, actor.account.id)))
+      .where(
+        and(
+          eq(personas.id, id),
+          eq(personas.ownerId, actor.account.id),
+          isNull(personas.deletedAt),
+        ),
+      )
       .for('update');
     if (!persona) throw new BusinessError('NOT_FOUND', '人设不存在或不可访问');
     return persona;
@@ -63,7 +69,7 @@ export class PersonasRepository {
     const [total] = await tx
       .select({ value: count() })
       .from(personas)
-      .where(eq(personas.ownerId, actor.account.id));
+      .where(and(eq(personas.ownerId, actor.account.id), isNull(personas.deletedAt)));
     if ((total?.value ?? 0) >= 100)
       throw new BusinessError('CONFLICT', '已达到每个账号 100 个人设的上限');
     const [row] = await tx
@@ -89,7 +95,13 @@ export class PersonasRepository {
       .select({ persona: personas, draft: personaDrafts })
       .from(personas)
       .innerJoin(personaDrafts, eq(personas.id, personaDrafts.personaId))
-      .where(and(eq(personas.id, id), eq(personas.ownerId, actor.account.id)));
+      .where(
+        and(
+          eq(personas.id, id),
+          eq(personas.ownerId, actor.account.id),
+          isNull(personas.deletedAt),
+        ),
+      );
     if (!row) throw new BusinessError('NOT_FOUND', '人设不存在或不可访问');
     return {
       data: {
@@ -151,14 +163,14 @@ export class PersonasRepository {
       })
       .from(personas)
       .innerJoin(personaDrafts, eq(personas.id, personaDrafts.personaId))
-      .where(eq(personas.ownerId, actor.account.id))
+      .where(and(eq(personas.ownerId, actor.account.id), isNull(personas.deletedAt)))
       .orderBy(desc(personas.updatedAt), desc(personas.id))
       .limit(pageSize)
       .offset((page - 1) * pageSize);
     const [total] = await this.database.db
       .select({ value: count() })
       .from(personas)
-      .where(eq(personas.ownerId, actor.account.id));
+      .where(and(eq(personas.ownerId, actor.account.id), isNull(personas.deletedAt)));
     return {
       data: rows.map(({ persona, payload, latestSubmissionStatus }) => ({
         id: persona.id,

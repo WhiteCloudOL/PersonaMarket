@@ -3,6 +3,14 @@ import { TimestampSchema } from './common.js';
 
 const amount = z.number().int().min(0).max(Number.MAX_SAFE_INTEGER);
 const queues = z.strictObject({ releases: amount, comments: amount, profiles: amount });
+export const ReviewIndicatorsResponseSchema = z.strictObject({
+  data: z.strictObject({
+    releases: z.boolean(),
+    comments: z.boolean(),
+    profiles: z.boolean(),
+    reports: z.boolean(),
+  }),
+});
 export const StorageObservationSchema = z.discriminatedUnion('status', [
   z.strictObject({
     status: z.literal('ready'),

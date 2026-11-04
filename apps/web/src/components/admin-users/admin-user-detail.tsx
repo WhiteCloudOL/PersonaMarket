@@ -34,6 +34,7 @@ import { ActionSchema, FormSchema } from './admin-user-form-schema';
 import { useAdminUserDrafts } from './admin-user-drafts';
 import { AdminDeactivationHistory } from './admin-deactivation-history';
 import { AdminUserContentTabs } from './admin-user-content-tabs';
+import { AdminDeleteDialog } from '../admin/admin-delete-dialog';
 
 type Snapshot = z.infer<typeof AdminUserDetailSchema>;
 const actionLabels = {
@@ -473,6 +474,23 @@ function UserDetailForm({
                 </div>
               </FieldGroup>
             </form>
+            {snapshot.id !== accountId && (
+              <AdminDeleteDialog
+                accountId={accountId}
+                target={{
+                  kind: 'user',
+                  id: snapshot.id,
+                  label: snapshot.username,
+                  revision: snapshot.securityVersion,
+                }}
+                disabled={busy || dirty}
+                deleted={() => {
+                  drafts.clear(accountId, snapshot.id);
+                  onDirty(false);
+                  close();
+                }}
+              />
+            )}
             <AdminDeactivationHistory requests={snapshot.deactivationRequests} />
             <section aria-label="管理记录" className="flex min-w-0 flex-col gap-4">
               <h2 className="text-lg font-semibold">最近管理记录</h2>

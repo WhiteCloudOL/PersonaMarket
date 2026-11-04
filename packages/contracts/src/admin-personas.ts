@@ -1,4 +1,9 @@
 import { z } from 'zod';
+
+export const DeleteAdminPersonaSchema = z.strictObject({
+  expectedRevision: z.number().int().positive(),
+  confirmed: z.literal(true),
+});
 import { AccountStatusSchema, UsernameSchema } from './auth.js';
 import {
   ErrorCodeSchema,

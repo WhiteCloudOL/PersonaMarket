@@ -27,6 +27,7 @@ import { lockIdentity } from '../auth/locked-identity.js';
 import type { Identity } from '../auth/auth.service.js';
 import { ReleasesRepository } from './releases.repository.js';
 import { administrationTransaction } from '../admin/administration-transaction.js';
+import { removePersonas } from '../admin/delete-personas.js';
 import {
   lockPersona,
   lockSubmission,
@@ -297,6 +298,30 @@ export class ModerationRepository {
             : '作品封禁已解除，作者隐藏状态保持原样',
       },
     };
+  }
+  async deletePersona(
+    actor: Identity,
+    id: string,
+    expectedRevision: number,
+    key: string,
+    requestId: string,
+  ) {
+    await administrationTransaction(
+      this.database,
+      async (tx) => {
+        await lockIdentity(tx, actor, true, false);
+        const operation = 'persona.delete';
+        const command = { id, expectedRevision };
+        if (await idempotentResult(tx, actor, operation, key, command)) return;
+        const persona = await lockPersona(tx, id);
+        if (persona.revision !== expectedRevision)
+          throw new BusinessError('REVISION_CONFLICT', '人设状态已变化，请重新核对');
+        await removePersonas(tx, actor, sql`id=${id}`, requestId);
+        await rememberResult(tx, actor, operation, key, command, id);
+      },
+      { area: 'personas', serializeWrites: true },
+    );
+    return { data: { message: '人设已删除' } };
   }
   async releaseAction(
     actor: Identity,

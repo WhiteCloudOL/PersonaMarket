@@ -3,6 +3,7 @@ import {
   IdSchema,
   type AdminPersonasQuery,
   type PersonaModerationSchema,
+  type DeleteAdminPersonaSchema,
   type SetPersonaCuration,
   type AdminPersonaBulkRequest,
   AdminPersonaBulkResponseSchema,
@@ -45,6 +46,23 @@ export class AdminPersonasService {
   }
   async list(request: Request, input: AdminPersonasQuery) {
     return this.repository.list(await this.actor(request), input);
+  }
+  async delete(
+    request: Request,
+    response: Response,
+    id: string,
+    input: z.infer<typeof DeleteAdminPersonaSchema>,
+  ) {
+    const actor = await this.actor(request, true);
+    const key = IdSchema.safeParse(request.get('idempotency-key'));
+    if (!key.success) throw new BusinessError('INVALID_INPUT', '请提供有效的操作幂等标识');
+    return this.moderation.deletePersona(
+      actor,
+      id,
+      input.expectedRevision,
+      key.data,
+      this.auth.requestId(response),
+    );
   }
   async detail(request: Request, id: string) {
     return this.repository.detail(await this.actor(request), id);

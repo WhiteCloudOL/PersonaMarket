@@ -28,10 +28,10 @@ const view = sql`jsonb_build_object(
   'createdAt',personas.created_at,'updatedAt',personas.updated_at
 )`;
 export function adminPersonaDetailQuery(id: string) {
-  return sql`SELECT ${view} AS data ${base} WHERE personas.id=${id}`;
+  return sql`SELECT ${view} AS data ${base} WHERE personas.id=${id} AND personas.deleted_at IS NULL`;
 }
 export function adminPersonaListQueries(input: AdminPersonasQuery) {
-  const conditions = [sql`true`];
+  const conditions = [sql`personas.deleted_at IS NULL`];
   if (input.q) {
     const pattern = '%' + input.q.replace(/[\\%_]/g, '\\$&') + '%';
     conditions.push(

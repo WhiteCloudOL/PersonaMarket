@@ -16,6 +16,8 @@ import {
 import { ApiHeader, ApiOkResponse, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
   AdminUserIdSchema,
+  DeleteAdminUserSchema,
+  AuthNoticeResponseSchema,
   AdminUserContentQuerySchema,
   AdminUserPublicPersonasResponseSchema,
   AdminUserReviewRecordsQuerySchema,
@@ -53,6 +55,21 @@ import { AdminUsersService } from './admin-users.service.js';
 @ApiResponse({ status: 503, standardSchema: ErrorResponseSchema })
 export class AdminUsersController {
   constructor(@Inject(AdminUsersService) readonly service: AdminUsersService) {}
+  @Post(':id/delete')
+  @HttpCode(200)
+  @ApiOperation({ operationId: 'deleteAdminUser', summary: '核对账号并执行永久删除' })
+  @ApiHeader({ name: 'X-CSRF-Token', required: true })
+  @ApiHeader({ name: 'Idempotency-Key', required: true })
+  @ApiOkResponse({ standardSchema: AuthNoticeResponseSchema })
+  @SerializeOptions({ schema: AuthNoticeResponseSchema })
+  delete(
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+    @Param({ schema: AdminUserIdSchema }) { id }: z.infer<typeof AdminUserIdSchema>,
+    @Body({ schema: DeleteAdminUserSchema }) input: z.infer<typeof DeleteAdminUserSchema>,
+  ) {
+    return this.service.delete(request, response, id, input);
+  }
   @Post(':id/deactivation-requests/:requestId/review')
   @HttpCode(200)
   @ApiOperation({

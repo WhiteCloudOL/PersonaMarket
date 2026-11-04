@@ -56,12 +56,13 @@ export async function applyUserAdministration(
       id: users.id,
       role: users.role,
       status: users.status,
+      deletedAt: users.deletedAt,
       securityVersion: users.securityVersion,
     })
     .from(users)
     .where(eq(users.id, id))
     .for('no key update');
-  if (!target) throw new BusinessError('NOT_FOUND', '用户不存在或不可访问');
+  if (!target || target.deletedAt) throw new BusinessError('NOT_FOUND', '用户不存在或不可访问');
   if (target.securityVersion !== command.input.expectedSecurityVersion)
     throw new BusinessError(
       'REVISION_CONFLICT',

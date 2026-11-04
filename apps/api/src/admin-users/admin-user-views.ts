@@ -7,7 +7,7 @@ import { adminDeactivationHistory } from './admin-deactivation-views.js';
 const summary = sql`jsonb_build_object(
   'id',u.id,'username',u.username,'role',u.role,'status',u.status,
   'emailVerified',u.email_verified_at IS NOT NULL,'securityVersion',u.security_version,
-  'personaCount',(SELECT count(*)::int FROM personas p WHERE p.owner_id=u.id),
+  'personaCount',(SELECT count(*)::int FROM personas p WHERE p.owner_id=u.id AND p.deleted_at IS NULL),
   'pendingDeactivation',EXISTS(SELECT 1 FROM deactivation_requests d WHERE d.user_id=u.id AND d.status='pending'),
   'activeSessionCount',(SELECT count(*)::int FROM auth_sessions s
     WHERE s.user_id=u.id AND s.revoked_at IS NULL AND s.expires_at>clock_timestamp()
@@ -18,7 +18,7 @@ const summary = sql`jsonb_build_object(
 export function adminUserQueries(input: AdminUsersQuery) {
   const needle = '%' + input.q.replace(/[\\%_]/g, '\\$&') + '%';
   const condition = sql`
-    (${input.role}='all' OR u.role=${input.role})
+    u.deleted_at IS NULL AND (${input.role}='all' OR u.role=${input.role})
     AND (${input.status}='all' OR u.status=${input.status})
     AND (${input.deactivation}='all' OR EXISTS(SELECT 1 FROM deactivation_requests d WHERE d.user_id=u.id AND d.status='pending'))
     AND (${input.q}='' OR u.username ILIKE ${needle} OR u.email ILIKE ${needle} OR u.id::text=${input.q.toLowerCase()})
@@ -59,7 +59,7 @@ export async function adminUserView(tx: Transaction, id: string) {
           FROM user_management_records r JOIN users a ON a.id=r.actor_id
           WHERE r.target_id=u.id ORDER BY r.created_at DESC,r.id DESC LIMIT 100
         ) record),'[]'::jsonb)
-    ) AS data FROM users u WHERE u.id=${id}
+    ) AS data FROM users u WHERE u.id=${id} AND u.deleted_at IS NULL
   `);
   const row = result.rows[0];
   if (!row) throw new BusinessError('NOT_FOUND', '用户不存在或不可访问');

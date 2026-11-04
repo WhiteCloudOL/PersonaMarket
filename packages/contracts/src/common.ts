@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+export const DELETED_AUTHOR_LABEL = '已删除用户';
+
 export const PlatformSchema = z.enum(['maibot', 'astrbot']);
 export type Platform = z.infer<typeof PlatformSchema>;
 export const IdSchema = z.uuid();

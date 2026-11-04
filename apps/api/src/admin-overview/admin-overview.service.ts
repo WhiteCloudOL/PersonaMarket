@@ -39,7 +39,7 @@ export class AdminOverviewService {
     }
     return this.observations.pending;
   }
-  async read(request: Request) {
+  private async actor(request: Request) {
     const actor = await this.auth.identity(request);
     const expected = request.get('x-expected-account');
     if (
@@ -48,6 +48,13 @@ export class AdminOverviewService {
     )
       throw new BusinessError('CONFLICT', '登录账号已变化，请重新读取管理概览');
     await this.auth.rate.take('admin-overview-read', actor.account.id, 60, 60);
+    return actor;
+  }
+  async indicators(request: Request) {
+    return this.repository.indicators(await this.actor(request));
+  }
+  async read(request: Request) {
+    const actor = await this.actor(request);
     const role = await this.repository.authorize(actor);
     const observations = role === 'admin' ? await this.observe() : undefined;
     // 文件/Redis观测不持有DB身份行锁；返回敏感统计前再次核对真实会话及角色

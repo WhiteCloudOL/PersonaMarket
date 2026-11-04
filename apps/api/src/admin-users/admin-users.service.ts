@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import {
   IdSchema,
   type AdminUsersQuery,
+  type DeleteAdminUserSchema,
   type AdminUserContentQuery,
   type AdminUserReviewRecordsQuery,
   type ReviewDeactivationRequestSchema,
@@ -45,6 +46,20 @@ export class AdminUsersService {
     const parsed = IdSchema.safeParse(request.get('idempotency-key'));
     if (!parsed.success) throw new BusinessError('INVALID_INPUT', '请提供有效的操作幂等标识');
     return parsed.data;
+  }
+  async delete(
+    request: Request,
+    response: Response,
+    id: string,
+    input: z.infer<typeof DeleteAdminUserSchema>,
+  ) {
+    return this.writes.delete(
+      await this.actor(request, true),
+      id,
+      input,
+      this.key(request),
+      this.auth.requestId(response),
+    );
   }
   async reviewDeactivation(
     request: Request,

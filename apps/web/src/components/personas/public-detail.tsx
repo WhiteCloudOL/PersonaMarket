@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { DELETED_AUTHOR_LABEL } from '@personamarket/contracts';
 import { ReadmeDocument } from './readme-document';
 import { Suspense } from 'react';
 import {
@@ -57,12 +58,18 @@ export async function PublicDetail({ id, releaseId }: { id: string; releaseId?: 
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-muted-foreground sm:text-sm">
             <span className="flex min-w-0 items-center gap-2">
               <UserRoundIcon className="size-4 shrink-0" aria-hidden />
-              <Link
-                href={'/users/' + encodeURIComponent(item.publication.publisher)}
-                className="flex min-h-11 items-center break-all font-medium text-foreground underline-offset-4 hover:underline"
-              >
-                {item.publication.publisher}
-              </Link>
+              {item.publication.publisher === DELETED_AUTHOR_LABEL ? (
+                <span className="flex min-h-11 items-center font-medium text-foreground">
+                  {DELETED_AUTHOR_LABEL}
+                </span>
+              ) : (
+                <Link
+                  href={'/users/' + encodeURIComponent(item.publication.publisher)}
+                  className="flex min-h-11 items-center break-all font-medium text-foreground underline-offset-4 hover:underline"
+                >
+                  {item.publication.publisher}
+                </Link>
+              )}
             </span>
             <span className="flex items-center gap-2">
               <CalendarDaysIcon className="size-4" aria-hidden />

@@ -1,4 +1,10 @@
 import { z } from 'zod';
+
+export const DeleteAdminUserSchema = z.strictObject({
+  expectedSecurityVersion: z.number().int().positive(),
+  mode: z.enum(['keep_anonymous', 'remove_content']),
+  username: z.string().min(3).max(32),
+});
 import {
   AccountStatusSchema,
   DeactivationStatusSchema,

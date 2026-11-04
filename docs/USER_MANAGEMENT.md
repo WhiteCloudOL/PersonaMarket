@@ -28,6 +28,17 @@
 
 当前页面可以短期保留最多五个未提交表单，同账号会话恢复后可继续；暂存最长三十分钟，刷新或离开页面、主动退出及换号会清除。表单不进入浏览器持久化存储，长时间离开前请先提交。
 
+## 删除账号
+
+打开目标用户的详情，选择「删除账号」，选择内容处理方式并输入原用户名。操作要求近期身份验证。管理员不能删除正在使用的账号，数据库继续保护最后一个有效管理员。
+
+- 「匿名保留」保留原本可公开的作品和评论，公开署名显示「已删除用户」，待审内容撤回。用户自行写入作品或评论正文的信息会随原文保留。
+- 「一并移除」移除该账号的作品、历史公开版本和评论。作品草稿会清除，已冻结的版本、评论修订与审计记录保留供内部核查。
+
+两种方式都会移除账号的登录能力、原用户名和邮箱、会话、令牌及身份验证器凭据。原用户名和邮箱可重新注册，新账号拥有独立身份。内部保留不可登录的关联记录，避免破坏已有引用和审计。删除不可通过普通恢复操作撤销。
+
+部署前应用迁移 `0055_admin_deletion`，并一同升级公开读取 API。执行过匿名保留后，回退镜像须继续支持匿名署名，否则旧的公开读取代码会显示冻结版本中的原署名。
+
 ## 处理停用申请
 
 将「停用申请」筛选为「待处理申请」，选择用户后进入「处理停用申请」。先核对申请人提交的原文，选择批准或驳回，填写独立的处理理由并确认影响范围。批准会停用账号并撤销其全部会话；驳回保持账号状态和会话，本人可以重新申请。两种决定都要求近期身份验证。
@@ -47,6 +58,7 @@
 | `PUT /api/v1/admin/users/:id/role`                                     | 调整角色                       |
 | `PUT /api/v1/admin/users/:id/status`                                   | 按明确范围封禁或恢复账号       |
 | `PUT /api/v1/admin/users/:id/sessions`                                 | 撤销全部会话                   |
+| `POST /api/v1/admin/users/:id/delete`                                  | 按选定方式永久删除账号         |
 | `POST /api/v1/admin/users/:id/deactivation-requests/:requestId/review` | 批准或驳回具体停用申请         |
 
 查询支持 `q`、`role=all|user|moderator|admin`、`status=all|active|banned|deactivated`、`deactivation=all|pending`、`sort=newest|oldest|username`、`page` 和 `pageSize`，最多 2500 页。搜索按字面匹配，`%` 和 `_` 不作为通配符。
@@ -56,6 +68,8 @@
 写入提供 `expectedSecurityVersion`、非空 `reason`、`X-CSRF-Token` 与 UUID `Idempotency-Key`。同一幂等键对应相同请求时不会重复保存管理记录；绑定不同内容返回冲突。账号状态操作使用 `status=banned|active` 与 `scope=account_only|account_and_personas`，恢复账号只允许 `account_only`。
 
 停用审核提供 `decision=approve|reject`、`expectedSecurityVersion` 和独立 `reason`。错误申请归属返回 404，申请已撤回或处理返回 409，账号版本过期返回 412。申请状态、决定、账号与会话变化、安全审计和幂等记录在同一事务中保存；原始申请和终态决定不可改写。
+
+删除账号提交 `expectedSecurityVersion`、原 `username` 和 `mode=keep_anonymous|remove_content`，仍需 CSRF 令牌和 UUID 幂等键。相同请求可以安全重试，状态或用户名已变化会返回 412。
 
 可选 `X-Expected-Account` 只与实际会话核对，不能指定身份或授予权限。所有响应禁止公共缓存，不返回密码哈希、身份验证器密钥、会话令牌或恢复码。读取按账号每分钟最多 120 次，写入最多 30 次；数据库语句有三秒预算，繁忙时返回安全的 503 与 `Retry-After`，未完成事务不会记录为成功。
 

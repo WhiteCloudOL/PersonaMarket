@@ -4896,6 +4896,50 @@ export interface ApiPaths {
       };
     };
   };
+  '/api/v1/admin/users/{id}/delete': {
+    post: {
+      parameters: Params<Models.DeleteAdminUserData>;
+      requestBody: { content: { 'application/json': Models.DeleteAdminUserData['body'] } };
+      responses: {
+        200: {
+          headers: Record<string, unknown>;
+          content: { 'application/json': Models.DeleteAdminUserResponses[200] };
+        };
+        400: {
+          headers: Record<string, unknown>;
+          content: { 'application/json': Models.DeleteAdminUserErrors[400] };
+        };
+        401: {
+          headers: Record<string, unknown>;
+          content: { 'application/json': Models.DeleteAdminUserErrors[401] };
+        };
+        403: {
+          headers: Record<string, unknown>;
+          content: { 'application/json': Models.DeleteAdminUserErrors[403] };
+        };
+        404: {
+          headers: Record<string, unknown>;
+          content: { 'application/json': Models.DeleteAdminUserErrors[404] };
+        };
+        409: {
+          headers: Record<string, unknown>;
+          content: { 'application/json': Models.DeleteAdminUserErrors[409] };
+        };
+        412: {
+          headers: Record<string, unknown>;
+          content: { 'application/json': Models.DeleteAdminUserErrors[412] };
+        };
+        429: {
+          headers: Record<string, unknown>;
+          content: { 'application/json': Models.DeleteAdminUserErrors[429] };
+        };
+        503: {
+          headers: Record<string, unknown>;
+          content: { 'application/json': Models.DeleteAdminUserErrors[503] };
+        };
+      };
+    };
+  };
   '/api/v1/admin/users/{id}/deactivation-requests/{requestId}/review': {
     post: {
       parameters: Params<Models.ReviewDeactivationRequestData>;
@@ -5378,6 +5422,50 @@ export interface ApiPaths {
         503: {
           headers: Record<string, unknown>;
           content: { 'application/json': Models.SetPersonaCurationErrors[503] };
+        };
+      };
+    };
+  };
+  '/api/v1/admin/personas/{id}/delete': {
+    post: {
+      parameters: Params<Models.DeleteAdminPersonaData>;
+      requestBody: { content: { 'application/json': Models.DeleteAdminPersonaData['body'] } };
+      responses: {
+        200: {
+          headers: Record<string, unknown>;
+          content: { 'application/json': Models.DeleteAdminPersonaResponses[200] };
+        };
+        400: {
+          headers: Record<string, unknown>;
+          content: { 'application/json': Models.DeleteAdminPersonaErrors[400] };
+        };
+        401: {
+          headers: Record<string, unknown>;
+          content: { 'application/json': Models.DeleteAdminPersonaErrors[401] };
+        };
+        403: {
+          headers: Record<string, unknown>;
+          content: { 'application/json': Models.DeleteAdminPersonaErrors[403] };
+        };
+        404: {
+          headers: Record<string, unknown>;
+          content: { 'application/json': Models.DeleteAdminPersonaErrors[404] };
+        };
+        409: {
+          headers: Record<string, unknown>;
+          content: { 'application/json': Models.DeleteAdminPersonaErrors[409] };
+        };
+        412: {
+          headers: Record<string, unknown>;
+          content: { 'application/json': Models.DeleteAdminPersonaErrors[412] };
+        };
+        429: {
+          headers: Record<string, unknown>;
+          content: { 'application/json': Models.DeleteAdminPersonaErrors[429] };
+        };
+        503: {
+          headers: Record<string, unknown>;
+          content: { 'application/json': Models.DeleteAdminPersonaErrors[503] };
         };
       };
     };
@@ -9290,6 +9378,38 @@ export interface ApiPaths {
       };
     };
   };
+  '/api/v1/admin/overview/review-indicators': {
+    get: {
+      parameters: Params<Models.GetReviewIndicatorsData>;
+      requestBody?: never;
+      responses: {
+        200: {
+          headers: Record<string, unknown>;
+          content: { 'application/json': Models.GetReviewIndicatorsResponses[200] };
+        };
+        401: {
+          headers: Record<string, unknown>;
+          content: { 'application/json': Models.GetReviewIndicatorsErrors[401] };
+        };
+        403: {
+          headers: Record<string, unknown>;
+          content: { 'application/json': Models.GetReviewIndicatorsErrors[403] };
+        };
+        409: {
+          headers: Record<string, unknown>;
+          content: { 'application/json': Models.GetReviewIndicatorsErrors[409] };
+        };
+        429: {
+          headers: Record<string, unknown>;
+          content: { 'application/json': Models.GetReviewIndicatorsErrors[429] };
+        };
+        503: {
+          headers: Record<string, unknown>;
+          content: { 'application/json': Models.GetReviewIndicatorsErrors[503] };
+        };
+      };
+    };
+  };
   '/api/v1/admin/overview': {
     get: {
       parameters: Params<Models.GetAdminOverviewData>;
@@ -10594,6 +10714,12 @@ export function setCommentVisibility({
 }: FetchOptions<ApiPaths['/api/v1/admin/comments/{id}/visibility']['put']> & { baseUrl?: string }) {
   return createClient<ApiPaths>({ baseUrl }).PUT('/api/v1/admin/comments/{id}/visibility', options);
 }
+export function deleteAdminUser({
+  baseUrl = '',
+  ...options
+}: FetchOptions<ApiPaths['/api/v1/admin/users/{id}/delete']['post']> & { baseUrl?: string }) {
+  return createClient<ApiPaths>({ baseUrl }).POST('/api/v1/admin/users/{id}/delete', options);
+}
 export function reviewDeactivationRequest({
   baseUrl = '',
   ...options
@@ -10674,6 +10800,12 @@ export function setPersonaCuration({
   ...options
 }: FetchOptions<ApiPaths['/api/v1/admin/personas/{id}/curation']['put']> & { baseUrl?: string }) {
   return createClient<ApiPaths>({ baseUrl }).PUT('/api/v1/admin/personas/{id}/curation', options);
+}
+export function deleteAdminPersona({
+  baseUrl = '',
+  ...options
+}: FetchOptions<ApiPaths['/api/v1/admin/personas/{id}/delete']['post']> & { baseUrl?: string }) {
+  return createClient<ApiPaths>({ baseUrl }).POST('/api/v1/admin/personas/{id}/delete', options);
 }
 export function moderatePersona({
   baseUrl = '',
@@ -11407,6 +11539,17 @@ export function restoreAdminTag({
   ...options
 }: FetchOptions<ApiPaths['/api/v1/admin/tags/{id}/restore']['post']> & { baseUrl?: string }) {
   return createClient<ApiPaths>({ baseUrl }).POST('/api/v1/admin/tags/{id}/restore', options);
+}
+export function getReviewIndicators({
+  baseUrl = '',
+  ...options
+}: FetchOptions<ApiPaths['/api/v1/admin/overview/review-indicators']['get']> & {
+  baseUrl?: string;
+} = {}) {
+  return createClient<ApiPaths>({ baseUrl }).GET(
+    '/api/v1/admin/overview/review-indicators',
+    options,
+  );
 }
 export function getAdminOverview({
   baseUrl = '',

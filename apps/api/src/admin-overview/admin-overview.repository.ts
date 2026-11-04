@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
 import type { Database } from '@personamarket/database';
-import { AdminOverviewDataSchema } from '@personamarket/contracts';
+import { AdminOverviewDataSchema, ReviewIndicatorsResponseSchema } from '@personamarket/contracts';
 import { BusinessError } from '@personamarket/server';
 import type { Identity } from '../auth/auth.service.js';
 import { lockIdentity } from '../auth/locked-identity.js';
@@ -14,6 +14,29 @@ const administratorSchema = AdminOverviewDataSchema.options[1].omit({ observatio
 @Injectable()
 export class AdminOverviewRepository {
   constructor(@Inject(DATABASE) readonly database: Database) {}
+  indicators(actor: Identity) {
+    return administrationTransaction(
+      this.database,
+      async (tx) => {
+        const { account } = await lockIdentity(tx, actor, false, false);
+        if (account.role !== 'admin' && account.role !== 'moderator')
+          throw new BusinessError('FORBIDDEN', '此操作需要审核权限');
+        const rows = await tx.execute(sql`SELECT
+        EXISTS(SELECT 1 FROM release_submissions s JOIN personas p ON p.id=s.persona_id
+          WHERE s.status='PENDING' AND p.moderation_state='normal'
+          AND (${account.role}='admin' OR p.owner_id<>${account.id})) AS releases,
+        EXISTS(SELECT 1 FROM comments c JOIN users u ON u.id=c.author_id JOIN personas p ON p.id=c.persona_id
+          WHERE c.visibility='normal' AND c.pending_revision_id IS NOT NULL AND u.status='active' AND p.deleted_at IS NULL
+          AND (${account.role}='admin' OR c.author_id<>${account.id})) AS comments,
+        EXISTS(SELECT 1 FROM profile_submissions s JOIN users u ON u.id=s.user_id
+          WHERE s.status='PENDING' AND u.status='active'
+          AND (${account.role}='admin' OR s.user_id<>${account.id})) AS profiles,
+        CASE WHEN ${account.role}='admin' THEN EXISTS(SELECT 1 FROM reports WHERE status IN ('pending','processing')) ELSE false END AS reports`);
+        return ReviewIndicatorsResponseSchema.parse({ data: rows.rows[0] });
+      },
+      { area: 'content' },
+    );
+  }
   authorize(actor: Identity) {
     return administrationTransaction(
       this.database,

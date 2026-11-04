@@ -17,6 +17,7 @@ import { adminPersonasApi, adminPersonasKey } from '@/lib/admin-personas-api';
 import { AdminPersonaRecords } from './admin-persona-records';
 import { CurationForm } from './curation-form';
 import { PersonaModerationForm } from './persona-moderation-form';
+import { AdminDeleteDialog } from '../admin/admin-delete-dialog';
 import { useUnsavedDraft } from '../personas/use-unsaved-draft';
 import { retainsPersonaPanelDraft } from '@/lib/admin-personas-state';
 export function AdminPersonaDetail({
@@ -157,6 +158,15 @@ export function AdminPersonaDetail({
                   }
                 />
                 <Separator />
+                <AdminDeleteDialog
+                  accountId={accountId}
+                  target={{ kind: 'persona', id, label: item.title, revision: item.revision }}
+                  disabled={busy || dirty}
+                  deleted={() => {
+                    onDirty(false);
+                    close();
+                  }}
+                />
                 <AdminPersonaRecords accountId={accountId} id={id} />
                 <Button variant="outline" type="button" onClick={requestClose} disabled={busy}>
                   关闭管理面板

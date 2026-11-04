@@ -42,6 +42,7 @@ export const users = pgTable(
       .default('active')
       .notNull(),
     emailVerifiedAt: timestamp('email_verified_at', { withTimezone: true }),
+    deletedAt: timestamp('deleted_at', { withTimezone: true }),
     securityVersion: integer('security_version').default(1).notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
@@ -67,6 +68,10 @@ export const users = pgTable(
     ),
     check('users_role_valid', sql`${table.role} in ('user', 'moderator', 'admin')`),
     check('users_status_valid', sql`${table.status} in ('active', 'banned', 'deactivated')`),
+    check(
+      'users_deleted_inactive',
+      sql`${table.deletedAt} IS NULL OR (${table.status}='deactivated' AND ${table.role}='user' AND ${table.emailVerifiedAt} IS NULL)`,
+    ),
     check('users_security_version_positive', sql`${table.securityVersion} > 0`),
   ],
 );

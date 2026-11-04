@@ -1,3 +1,4 @@
+import { publicPublication } from './public-author.js';
 import { and, eq, sql, type SQL } from 'drizzle-orm';
 import {
   personas,
@@ -24,7 +25,7 @@ export function publicPersonaCardQuery(
       releaseId: personaReleases.id,
       version: personaReleases.version,
       snapshot: publicCardSnapshot,
-      publication: releaseSubmissions.publication,
+      publication: publicPublication,
       publishedAt: personaReleases.publishedAt,
       firstPublishedAt: personas.firstPublishedAt,
       metricCount: (metric ?? sql<number>`0`).as('metric_count'),

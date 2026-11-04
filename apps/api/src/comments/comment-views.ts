@@ -1,13 +1,19 @@
 import { sql, type SQL } from 'drizzle-orm';
-import { AdminCommentSchema, OwnCommentSchema } from '@personamarket/contracts';
+import {
+  AdminCommentSchema,
+  DELETED_AUTHOR_LABEL,
+  OwnCommentSchema,
+} from '@personamarket/contracts';
 import { BusinessError } from '@personamarket/server';
 import type { Transaction } from '../auth/locked-identity.js';
 
 // 别名只由模块内静态SQL传入，不接受用户提供的标识符
 export function publishedComment(alias: SQL, author: SQL) {
   return sql`${alias}.visibility='normal' AND ${alias}.public_revision_id IS NOT NULL
-    AND ${author}.status='active' AND ${author}.email_verified_at IS NOT NULL`;
+    AND ((${author}.status='active' AND ${author}.email_verified_at IS NOT NULL) OR ${author}.deleted_at IS NOT NULL)`;
 }
+const publicUsername = (author: SQL) =>
+  sql`CASE WHEN ${author}.deleted_at IS NOT NULL THEN ${DELETED_AUTHOR_LABEL} ELSE ${author}.username END`;
 const releaseReference = sql`(
   SELECT jsonb_build_object('id',v.id,'version',v.version)
   FROM persona_releases v JOIN release_submissions vs
@@ -15,7 +21,7 @@ const releaseReference = sql`(
   WHERE v.id=c.release_id AND v.persona_id=c.persona_id AND v.lifecycle='PUBLISHED' AND vs.status='APPROVED'
 )`;
 const replyReference = sql`(
-  SELECT jsonb_build_object('id',rt.id,'username',ru.username)
+  SELECT jsonb_build_object('id',rt.id,'username',${publicUsername(sql`ru`)})
   FROM comments rt JOIN users ru ON ru.id=rt.author_id
   WHERE rt.id=c.reply_to_id AND ${publishedComment(sql`rt`, sql`ru`)}
 )`;
@@ -43,7 +49,7 @@ const publicLocation = sql`jsonb_build_object(
 export const publicCommentJson = sql`${publicLocation} || CASE
   WHEN ${publishedComment(sql`c`, sql`cu`)} THEN jsonb_build_object(
     'status','published','body',p.body,'publishedRevisionId',p.id,
-    'author',jsonb_build_object('id',cu.id,'username',cu.username),
+    'author',jsonb_build_object('id',CASE WHEN cu.deleted_at IS NOT NULL THEN c.id ELSE cu.id END,'username',${publicUsername(sql`cu`)}),
     'editedAt',CASE WHEN p.number>1 THEN p.created_at ELSE NULL END
   )
   ELSE jsonb_build_object('status',CASE WHEN c.visibility='deleted' THEN 'deleted'

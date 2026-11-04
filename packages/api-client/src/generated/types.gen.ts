@@ -29615,6 +29615,250 @@ export type SetCommentVisibilityResponses = {
 export type SetCommentVisibilityResponse =
   SetCommentVisibilityResponses[keyof SetCommentVisibilityResponses];
 
+export type DeleteAdminUserData = {
+  body: {
+    expectedSecurityVersion: number;
+    mode: 'keep_anonymous' | 'remove_content';
+    username: string;
+  };
+  headers: {
+    /**
+     * 仅与实际会话核对，不授予身份或权限
+     */
+    'X-Expected-Account'?: string;
+    'Idempotency-Key': string;
+    'X-CSRF-Token': string;
+  };
+  path: {
+    id: string;
+  };
+  query?: never;
+  url: '/api/v1/admin/users/{id}/delete';
+};
+
+export type DeleteAdminUserErrors = {
+  400: {
+    error: {
+      code:
+        | 'INVALID_INPUT'
+        | 'VALIDATION_FAILED'
+        | 'UNAUTHENTICATED'
+        | 'FORBIDDEN'
+        | 'MFA_REQUIRED'
+        | 'REAUTH_REQUIRED'
+        | 'NOT_FOUND'
+        | 'CONFLICT'
+        | 'REVISION_CONFLICT'
+        | 'RATE_LIMITED'
+        | 'MAINTENANCE_MODE'
+        | 'SERVICE_UNAVAILABLE'
+        | 'INVALID_RESPONSE'
+        | 'INTERNAL_ERROR'
+        | 'UNSUPPORTED_FORMAT';
+      message: string;
+      fieldErrors: Array<{
+        path: string;
+        message: string;
+      }>;
+      requestId: string;
+    };
+  };
+  401: {
+    error: {
+      code:
+        | 'INVALID_INPUT'
+        | 'VALIDATION_FAILED'
+        | 'UNAUTHENTICATED'
+        | 'FORBIDDEN'
+        | 'MFA_REQUIRED'
+        | 'REAUTH_REQUIRED'
+        | 'NOT_FOUND'
+        | 'CONFLICT'
+        | 'REVISION_CONFLICT'
+        | 'RATE_LIMITED'
+        | 'MAINTENANCE_MODE'
+        | 'SERVICE_UNAVAILABLE'
+        | 'INVALID_RESPONSE'
+        | 'INTERNAL_ERROR'
+        | 'UNSUPPORTED_FORMAT';
+      message: string;
+      fieldErrors: Array<{
+        path: string;
+        message: string;
+      }>;
+      requestId: string;
+    };
+  };
+  403: {
+    error: {
+      code:
+        | 'INVALID_INPUT'
+        | 'VALIDATION_FAILED'
+        | 'UNAUTHENTICATED'
+        | 'FORBIDDEN'
+        | 'MFA_REQUIRED'
+        | 'REAUTH_REQUIRED'
+        | 'NOT_FOUND'
+        | 'CONFLICT'
+        | 'REVISION_CONFLICT'
+        | 'RATE_LIMITED'
+        | 'MAINTENANCE_MODE'
+        | 'SERVICE_UNAVAILABLE'
+        | 'INVALID_RESPONSE'
+        | 'INTERNAL_ERROR'
+        | 'UNSUPPORTED_FORMAT';
+      message: string;
+      fieldErrors: Array<{
+        path: string;
+        message: string;
+      }>;
+      requestId: string;
+    };
+  };
+  404: {
+    error: {
+      code:
+        | 'INVALID_INPUT'
+        | 'VALIDATION_FAILED'
+        | 'UNAUTHENTICATED'
+        | 'FORBIDDEN'
+        | 'MFA_REQUIRED'
+        | 'REAUTH_REQUIRED'
+        | 'NOT_FOUND'
+        | 'CONFLICT'
+        | 'REVISION_CONFLICT'
+        | 'RATE_LIMITED'
+        | 'MAINTENANCE_MODE'
+        | 'SERVICE_UNAVAILABLE'
+        | 'INVALID_RESPONSE'
+        | 'INTERNAL_ERROR'
+        | 'UNSUPPORTED_FORMAT';
+      message: string;
+      fieldErrors: Array<{
+        path: string;
+        message: string;
+      }>;
+      requestId: string;
+    };
+  };
+  409: {
+    error: {
+      code:
+        | 'INVALID_INPUT'
+        | 'VALIDATION_FAILED'
+        | 'UNAUTHENTICATED'
+        | 'FORBIDDEN'
+        | 'MFA_REQUIRED'
+        | 'REAUTH_REQUIRED'
+        | 'NOT_FOUND'
+        | 'CONFLICT'
+        | 'REVISION_CONFLICT'
+        | 'RATE_LIMITED'
+        | 'MAINTENANCE_MODE'
+        | 'SERVICE_UNAVAILABLE'
+        | 'INVALID_RESPONSE'
+        | 'INTERNAL_ERROR'
+        | 'UNSUPPORTED_FORMAT';
+      message: string;
+      fieldErrors: Array<{
+        path: string;
+        message: string;
+      }>;
+      requestId: string;
+    };
+  };
+  412: {
+    error: {
+      code:
+        | 'INVALID_INPUT'
+        | 'VALIDATION_FAILED'
+        | 'UNAUTHENTICATED'
+        | 'FORBIDDEN'
+        | 'MFA_REQUIRED'
+        | 'REAUTH_REQUIRED'
+        | 'NOT_FOUND'
+        | 'CONFLICT'
+        | 'REVISION_CONFLICT'
+        | 'RATE_LIMITED'
+        | 'MAINTENANCE_MODE'
+        | 'SERVICE_UNAVAILABLE'
+        | 'INVALID_RESPONSE'
+        | 'INTERNAL_ERROR'
+        | 'UNSUPPORTED_FORMAT';
+      message: string;
+      fieldErrors: Array<{
+        path: string;
+        message: string;
+      }>;
+      requestId: string;
+    };
+  };
+  429: {
+    error: {
+      code:
+        | 'INVALID_INPUT'
+        | 'VALIDATION_FAILED'
+        | 'UNAUTHENTICATED'
+        | 'FORBIDDEN'
+        | 'MFA_REQUIRED'
+        | 'REAUTH_REQUIRED'
+        | 'NOT_FOUND'
+        | 'CONFLICT'
+        | 'REVISION_CONFLICT'
+        | 'RATE_LIMITED'
+        | 'MAINTENANCE_MODE'
+        | 'SERVICE_UNAVAILABLE'
+        | 'INVALID_RESPONSE'
+        | 'INTERNAL_ERROR'
+        | 'UNSUPPORTED_FORMAT';
+      message: string;
+      fieldErrors: Array<{
+        path: string;
+        message: string;
+      }>;
+      requestId: string;
+    };
+  };
+  503: {
+    error: {
+      code:
+        | 'INVALID_INPUT'
+        | 'VALIDATION_FAILED'
+        | 'UNAUTHENTICATED'
+        | 'FORBIDDEN'
+        | 'MFA_REQUIRED'
+        | 'REAUTH_REQUIRED'
+        | 'NOT_FOUND'
+        | 'CONFLICT'
+        | 'REVISION_CONFLICT'
+        | 'RATE_LIMITED'
+        | 'MAINTENANCE_MODE'
+        | 'SERVICE_UNAVAILABLE'
+        | 'INVALID_RESPONSE'
+        | 'INTERNAL_ERROR'
+        | 'UNSUPPORTED_FORMAT';
+      message: string;
+      fieldErrors: Array<{
+        path: string;
+        message: string;
+      }>;
+      requestId: string;
+    };
+  };
+};
+
+export type DeleteAdminUserError = DeleteAdminUserErrors[keyof DeleteAdminUserErrors];
+
+export type DeleteAdminUserResponses = {
+  200: {
+    data: {
+      message: string;
+    };
+  };
+};
+
+export type DeleteAdminUserResponse = DeleteAdminUserResponses[keyof DeleteAdminUserResponses];
+
 export type ReviewDeactivationRequestData = {
   body: {
     expectedSecurityVersion: number;
@@ -32729,6 +32973,250 @@ export type SetPersonaCurationResponses = {
 
 export type SetPersonaCurationResponse =
   SetPersonaCurationResponses[keyof SetPersonaCurationResponses];
+
+export type DeleteAdminPersonaData = {
+  body: {
+    expectedRevision: number;
+    confirmed: true;
+  };
+  headers: {
+    /**
+     * 仅核对实际会话，不授予身份或权限
+     */
+    'X-Expected-Account'?: string;
+    'Idempotency-Key': string;
+    'X-CSRF-Token': string;
+  };
+  path: {
+    id: string;
+  };
+  query?: never;
+  url: '/api/v1/admin/personas/{id}/delete';
+};
+
+export type DeleteAdminPersonaErrors = {
+  400: {
+    error: {
+      code:
+        | 'INVALID_INPUT'
+        | 'VALIDATION_FAILED'
+        | 'UNAUTHENTICATED'
+        | 'FORBIDDEN'
+        | 'MFA_REQUIRED'
+        | 'REAUTH_REQUIRED'
+        | 'NOT_FOUND'
+        | 'CONFLICT'
+        | 'REVISION_CONFLICT'
+        | 'RATE_LIMITED'
+        | 'MAINTENANCE_MODE'
+        | 'SERVICE_UNAVAILABLE'
+        | 'INVALID_RESPONSE'
+        | 'INTERNAL_ERROR'
+        | 'UNSUPPORTED_FORMAT';
+      message: string;
+      fieldErrors: Array<{
+        path: string;
+        message: string;
+      }>;
+      requestId: string;
+    };
+  };
+  401: {
+    error: {
+      code:
+        | 'INVALID_INPUT'
+        | 'VALIDATION_FAILED'
+        | 'UNAUTHENTICATED'
+        | 'FORBIDDEN'
+        | 'MFA_REQUIRED'
+        | 'REAUTH_REQUIRED'
+        | 'NOT_FOUND'
+        | 'CONFLICT'
+        | 'REVISION_CONFLICT'
+        | 'RATE_LIMITED'
+        | 'MAINTENANCE_MODE'
+        | 'SERVICE_UNAVAILABLE'
+        | 'INVALID_RESPONSE'
+        | 'INTERNAL_ERROR'
+        | 'UNSUPPORTED_FORMAT';
+      message: string;
+      fieldErrors: Array<{
+        path: string;
+        message: string;
+      }>;
+      requestId: string;
+    };
+  };
+  403: {
+    error: {
+      code:
+        | 'INVALID_INPUT'
+        | 'VALIDATION_FAILED'
+        | 'UNAUTHENTICATED'
+        | 'FORBIDDEN'
+        | 'MFA_REQUIRED'
+        | 'REAUTH_REQUIRED'
+        | 'NOT_FOUND'
+        | 'CONFLICT'
+        | 'REVISION_CONFLICT'
+        | 'RATE_LIMITED'
+        | 'MAINTENANCE_MODE'
+        | 'SERVICE_UNAVAILABLE'
+        | 'INVALID_RESPONSE'
+        | 'INTERNAL_ERROR'
+        | 'UNSUPPORTED_FORMAT';
+      message: string;
+      fieldErrors: Array<{
+        path: string;
+        message: string;
+      }>;
+      requestId: string;
+    };
+  };
+  404: {
+    error: {
+      code:
+        | 'INVALID_INPUT'
+        | 'VALIDATION_FAILED'
+        | 'UNAUTHENTICATED'
+        | 'FORBIDDEN'
+        | 'MFA_REQUIRED'
+        | 'REAUTH_REQUIRED'
+        | 'NOT_FOUND'
+        | 'CONFLICT'
+        | 'REVISION_CONFLICT'
+        | 'RATE_LIMITED'
+        | 'MAINTENANCE_MODE'
+        | 'SERVICE_UNAVAILABLE'
+        | 'INVALID_RESPONSE'
+        | 'INTERNAL_ERROR'
+        | 'UNSUPPORTED_FORMAT';
+      message: string;
+      fieldErrors: Array<{
+        path: string;
+        message: string;
+      }>;
+      requestId: string;
+    };
+  };
+  409: {
+    error: {
+      code:
+        | 'INVALID_INPUT'
+        | 'VALIDATION_FAILED'
+        | 'UNAUTHENTICATED'
+        | 'FORBIDDEN'
+        | 'MFA_REQUIRED'
+        | 'REAUTH_REQUIRED'
+        | 'NOT_FOUND'
+        | 'CONFLICT'
+        | 'REVISION_CONFLICT'
+        | 'RATE_LIMITED'
+        | 'MAINTENANCE_MODE'
+        | 'SERVICE_UNAVAILABLE'
+        | 'INVALID_RESPONSE'
+        | 'INTERNAL_ERROR'
+        | 'UNSUPPORTED_FORMAT';
+      message: string;
+      fieldErrors: Array<{
+        path: string;
+        message: string;
+      }>;
+      requestId: string;
+    };
+  };
+  412: {
+    error: {
+      code:
+        | 'INVALID_INPUT'
+        | 'VALIDATION_FAILED'
+        | 'UNAUTHENTICATED'
+        | 'FORBIDDEN'
+        | 'MFA_REQUIRED'
+        | 'REAUTH_REQUIRED'
+        | 'NOT_FOUND'
+        | 'CONFLICT'
+        | 'REVISION_CONFLICT'
+        | 'RATE_LIMITED'
+        | 'MAINTENANCE_MODE'
+        | 'SERVICE_UNAVAILABLE'
+        | 'INVALID_RESPONSE'
+        | 'INTERNAL_ERROR'
+        | 'UNSUPPORTED_FORMAT';
+      message: string;
+      fieldErrors: Array<{
+        path: string;
+        message: string;
+      }>;
+      requestId: string;
+    };
+  };
+  429: {
+    error: {
+      code:
+        | 'INVALID_INPUT'
+        | 'VALIDATION_FAILED'
+        | 'UNAUTHENTICATED'
+        | 'FORBIDDEN'
+        | 'MFA_REQUIRED'
+        | 'REAUTH_REQUIRED'
+        | 'NOT_FOUND'
+        | 'CONFLICT'
+        | 'REVISION_CONFLICT'
+        | 'RATE_LIMITED'
+        | 'MAINTENANCE_MODE'
+        | 'SERVICE_UNAVAILABLE'
+        | 'INVALID_RESPONSE'
+        | 'INTERNAL_ERROR'
+        | 'UNSUPPORTED_FORMAT';
+      message: string;
+      fieldErrors: Array<{
+        path: string;
+        message: string;
+      }>;
+      requestId: string;
+    };
+  };
+  503: {
+    error: {
+      code:
+        | 'INVALID_INPUT'
+        | 'VALIDATION_FAILED'
+        | 'UNAUTHENTICATED'
+        | 'FORBIDDEN'
+        | 'MFA_REQUIRED'
+        | 'REAUTH_REQUIRED'
+        | 'NOT_FOUND'
+        | 'CONFLICT'
+        | 'REVISION_CONFLICT'
+        | 'RATE_LIMITED'
+        | 'MAINTENANCE_MODE'
+        | 'SERVICE_UNAVAILABLE'
+        | 'INVALID_RESPONSE'
+        | 'INTERNAL_ERROR'
+        | 'UNSUPPORTED_FORMAT';
+      message: string;
+      fieldErrors: Array<{
+        path: string;
+        message: string;
+      }>;
+      requestId: string;
+    };
+  };
+};
+
+export type DeleteAdminPersonaError = DeleteAdminPersonaErrors[keyof DeleteAdminPersonaErrors];
+
+export type DeleteAdminPersonaResponses = {
+  200: {
+    data: {
+      message: string;
+    };
+  };
+};
+
+export type DeleteAdminPersonaResponse =
+  DeleteAdminPersonaResponses[keyof DeleteAdminPersonaResponses];
 
 export type ModeratePersonaData = {
   body: {
@@ -56086,6 +56574,165 @@ export type RestoreAdminTagResponses = {
 };
 
 export type RestoreAdminTagResponse = RestoreAdminTagResponses[keyof RestoreAdminTagResponses];
+
+export type GetReviewIndicatorsData = {
+  body?: never;
+  headers?: {
+    'X-Expected-Account'?: string;
+  };
+  path?: never;
+  query?: never;
+  url: '/api/v1/admin/overview/review-indicators';
+};
+
+export type GetReviewIndicatorsErrors = {
+  401: {
+    error: {
+      code:
+        | 'INVALID_INPUT'
+        | 'VALIDATION_FAILED'
+        | 'UNAUTHENTICATED'
+        | 'FORBIDDEN'
+        | 'MFA_REQUIRED'
+        | 'REAUTH_REQUIRED'
+        | 'NOT_FOUND'
+        | 'CONFLICT'
+        | 'REVISION_CONFLICT'
+        | 'RATE_LIMITED'
+        | 'MAINTENANCE_MODE'
+        | 'SERVICE_UNAVAILABLE'
+        | 'INVALID_RESPONSE'
+        | 'INTERNAL_ERROR'
+        | 'UNSUPPORTED_FORMAT';
+      message: string;
+      fieldErrors: Array<{
+        path: string;
+        message: string;
+      }>;
+      requestId: string;
+    };
+  };
+  403: {
+    error: {
+      code:
+        | 'INVALID_INPUT'
+        | 'VALIDATION_FAILED'
+        | 'UNAUTHENTICATED'
+        | 'FORBIDDEN'
+        | 'MFA_REQUIRED'
+        | 'REAUTH_REQUIRED'
+        | 'NOT_FOUND'
+        | 'CONFLICT'
+        | 'REVISION_CONFLICT'
+        | 'RATE_LIMITED'
+        | 'MAINTENANCE_MODE'
+        | 'SERVICE_UNAVAILABLE'
+        | 'INVALID_RESPONSE'
+        | 'INTERNAL_ERROR'
+        | 'UNSUPPORTED_FORMAT';
+      message: string;
+      fieldErrors: Array<{
+        path: string;
+        message: string;
+      }>;
+      requestId: string;
+    };
+  };
+  409: {
+    error: {
+      code:
+        | 'INVALID_INPUT'
+        | 'VALIDATION_FAILED'
+        | 'UNAUTHENTICATED'
+        | 'FORBIDDEN'
+        | 'MFA_REQUIRED'
+        | 'REAUTH_REQUIRED'
+        | 'NOT_FOUND'
+        | 'CONFLICT'
+        | 'REVISION_CONFLICT'
+        | 'RATE_LIMITED'
+        | 'MAINTENANCE_MODE'
+        | 'SERVICE_UNAVAILABLE'
+        | 'INVALID_RESPONSE'
+        | 'INTERNAL_ERROR'
+        | 'UNSUPPORTED_FORMAT';
+      message: string;
+      fieldErrors: Array<{
+        path: string;
+        message: string;
+      }>;
+      requestId: string;
+    };
+  };
+  429: {
+    error: {
+      code:
+        | 'INVALID_INPUT'
+        | 'VALIDATION_FAILED'
+        | 'UNAUTHENTICATED'
+        | 'FORBIDDEN'
+        | 'MFA_REQUIRED'
+        | 'REAUTH_REQUIRED'
+        | 'NOT_FOUND'
+        | 'CONFLICT'
+        | 'REVISION_CONFLICT'
+        | 'RATE_LIMITED'
+        | 'MAINTENANCE_MODE'
+        | 'SERVICE_UNAVAILABLE'
+        | 'INVALID_RESPONSE'
+        | 'INTERNAL_ERROR'
+        | 'UNSUPPORTED_FORMAT';
+      message: string;
+      fieldErrors: Array<{
+        path: string;
+        message: string;
+      }>;
+      requestId: string;
+    };
+  };
+  503: {
+    error: {
+      code:
+        | 'INVALID_INPUT'
+        | 'VALIDATION_FAILED'
+        | 'UNAUTHENTICATED'
+        | 'FORBIDDEN'
+        | 'MFA_REQUIRED'
+        | 'REAUTH_REQUIRED'
+        | 'NOT_FOUND'
+        | 'CONFLICT'
+        | 'REVISION_CONFLICT'
+        | 'RATE_LIMITED'
+        | 'MAINTENANCE_MODE'
+        | 'SERVICE_UNAVAILABLE'
+        | 'INVALID_RESPONSE'
+        | 'INTERNAL_ERROR'
+        | 'UNSUPPORTED_FORMAT';
+      message: string;
+      fieldErrors: Array<{
+        path: string;
+        message: string;
+      }>;
+      requestId: string;
+    };
+  };
+};
+
+export type GetReviewIndicatorsError = GetReviewIndicatorsErrors[keyof GetReviewIndicatorsErrors];
+
+export type GetReviewIndicatorsResponses = {
+  200: {
+    data: {
+      releases: boolean;
+      comments: boolean;
+      profiles: boolean;
+      reports: boolean;
+    };
+  };
+};
+
+export type GetReviewIndicatorsResponse =
+  GetReviewIndicatorsResponses[keyof GetReviewIndicatorsResponses];
 
 export type GetAdminOverviewData = {
   body?: never;
