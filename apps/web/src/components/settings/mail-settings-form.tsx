@@ -167,9 +167,9 @@ function MailFields({ initial }: { initial: MailSettingsResponse }) {
                 </ToggleGroup>
                 <FieldDescription>
                   {data.mode === 'custom' && mode !== 'custom'
-                    ? '保存后会移除已存的自定义 SMTP 配置与密码。'
-                    : '选择配置来源后，点击保存生效。'}
-                  {mode === 'disabled' && ' 停用邮件也会关闭注册入口。'}
+                    ? '保存后会移除已存的自定义 SMTP 配置与密码'
+                    : '选择配置来源后，点击保存生效'}
+                  {mode === 'disabled' && '，停用邮件也会关闭注册入口'}
                 </FieldDescription>
               </div>
               {mode === 'custom' ? (
@@ -285,10 +285,10 @@ function MailFields({ initial }: { initial: MailSettingsResponse }) {
                           </div>
                           <FieldDescription id="smtp-password-help">
                             {clearing
-                              ? '保存时清除已存密码。停用 SMTP 认证时请同时清空用户名。'
+                              ? '保存时清除已存密码，停用 SMTP 认证时请同时清空用户名'
                               : hasStoredPassword
-                                ? '密码已配置。留空会保留，输入新密码会在保存时替换。'
-                                : '自定义 SMTP 密码尚未配置。使用 SMTP 认证时请填写密码。'}
+                                ? '密码已配置，留空保留，输入新密码后保存即可替换'
+                                : '使用 SMTP 认证时请填写密码'}
                           </FieldDescription>
                           {error && (
                             <FieldError id="smtp-password-error">{error.message}</FieldError>
@@ -335,11 +335,10 @@ function MailFields({ initial }: { initial: MailSettingsResponse }) {
           <FieldLegend>真实测试邮件</FieldLegend>
           <FieldDescription>
             {dirty
-              ? '请先保存邮件设置。'
+              ? '请先保存邮件设置'
               : !data.configured
-                ? '请先配置可用的邮件服务。'
-                : '测试使用已保存的配置。'}
-            仅发送到当前管理员已验证邮箱。
+                ? '请先配置可用的邮件服务'
+                : '使用已保存的配置向当前管理员的已验证邮箱发送测试邮件'}
           </FieldDescription>
           <Button
             variant="outline"
