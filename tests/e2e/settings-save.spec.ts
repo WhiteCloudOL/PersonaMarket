@@ -1,5 +1,5 @@
 import { mkdir } from 'node:fs/promises';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 import { loginBrowserAdmin } from '../fixtures/browser-admin.js';
 import { browserWrite } from '../fixtures/browser-account.js';
 
@@ -15,16 +15,28 @@ async function navigate(page: Page, name: string, route: string) {
   await expect(page).toHaveURL(new RegExp('/admin/settings/' + route + '$'));
 }
 
+async function checkLayout(page: Page, save: Locator, route: string, project: string) {
+  await expect(save).toBeVisible();
+  expect((await save.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  if (process.env['SETTINGS_CAPTURE']) {
+    const directory = 'data/tests/settings-save';
+    await mkdir(directory, { recursive: true });
+    await page.screenshot({
+      path: directory + '/' + route + '-after-' + project + '.png',
+      animations: 'disabled',
+      fullPage: true,
+    });
+  }
+}
+
 test('注册设置直接保存，切换分组无提示，刷新后保留', async ({ page }, info) => {
   await loginBrowserAdmin(page);
   await page.goto('/admin/settings/accounts');
   const registration = page.getByRole('switch', { name: '开放新用户注册' });
   await expect(registration).toBeVisible();
-  if (process.env['SETTINGS_CAPTURE']) {
-    const directory = 'data/tests/settings-save';
-    await mkdir(directory, { recursive: true });
-    await page.screenshot({ path: directory + '/accounts-after-' + info.project.name + '.png' });
-  }
+  const save = page.getByRole('button', { name: '保存注册设置', exact: true });
+  await checkLayout(page, save, 'accounts', info.project.name);
   const dialogs: string[] = [];
   page.on('dialog', (dialog) => {
     dialogs.push(dialog.message());
@@ -32,7 +44,7 @@ test('注册设置直接保存，切换分组无提示，刷新后保留', async
   });
   await registration.click();
   const enabled = await registration.getAttribute('aria-checked');
-  await page.getByRole('button', { name: '保存注册设置', exact: true }).click();
+  await save.click();
   await expect(page.getByText('注册设置已保存', { exact: false })).toBeVisible();
   await navigate(page, '邮件服务 SMTP', 'mail');
   expect(dialogs).toEqual([]);
@@ -41,12 +53,16 @@ test('注册设置直接保存，切换分组无提示，刷新后保留', async
   await registration.click();
   const groups = page.getByRole('button', { name: '选择设置分组' });
   if (await groups.isVisible()) await groups.click();
+  await page.getByRole('link', { name: '注册与会话', exact: true }).click();
+  await expect(page).toHaveURL(/\/admin\/settings\/accounts$/);
+  expect(dialogs).toEqual([]);
+  if (await groups.isVisible()) await groups.click();
   await page.getByRole('link', { name: '邮件服务 SMTP', exact: true }).click();
   await expect(page).toHaveURL(/\/admin\/settings\/accounts$/);
   expect(dialogs).toEqual(['有未保存的设置，确定离开吗']);
 });
 
-test('其他十一组设置保存后可直接离开，重新加载显示持久化值', async ({ page }) => {
+test('其他十一组设置保存后可直接离开，重新加载显示持久化值', async ({ page }, info) => {
   test.setTimeout(120_000);
   await loginBrowserAdmin(page);
   const dialogs: string[] = [];
@@ -105,7 +121,7 @@ test('其他十一组设置保存后可直接离开，重新加载显示持久�
     await test.step(route, async () => {
       await page.goto('/admin/settings/' + route);
       const save = page.getByRole('button', { name: action, exact: true });
-      await expect(save).toBeVisible();
+      await checkLayout(page, save, route, info.project.name);
       const persisted = await edit();
       await expect(
         page.getByText(/草稿修改理由|处理理由|核对最新|已读取修订|当前核对修订/u),

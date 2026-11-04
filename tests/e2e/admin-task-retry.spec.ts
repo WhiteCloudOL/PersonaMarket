@@ -186,7 +186,7 @@ test('MFA过期时原地验证保留原因和确认，不自动重发，真实Wo
   );
   await activate(admin, '创建重试请求');
   expect((await rejected).status()).toBe(403);
-  await activate(admin, '验证高危操作');
+
   const verification = admin.getByRole('dialog', { name: '验证高危操作', exact: true });
   await verification.getByLabel('动态验证码或恢复码').fill(credentials.recoveryCode);
   await verification.getByRole('button', { name: '确认身份', exact: true }).click();
@@ -425,7 +425,7 @@ test('未绑定MFA的管理员使用当前密码原地确认，旋转会话后�
     const response = await rejected;
     expect(response.status()).toBe(403);
     expect(await response.json()).toMatchObject({ error: { code: 'REAUTH_REQUIRED' } });
-    await activate(page, '验证高危操作');
+
     const verification = page.getByRole('dialog', { name: '验证高危操作', exact: true });
     await verification.getByLabel('当前登录密码').fill(password);
     await verification.getByRole('button', { name: '确认身份', exact: true }).click();

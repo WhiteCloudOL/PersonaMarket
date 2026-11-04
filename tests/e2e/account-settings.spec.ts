@@ -302,10 +302,10 @@ test('高危策略分别使用未绑定密码和实际MFA原地确认，验证�
   await page.goto('/admin/settings/accounts');
   const before = await current(page);
   await advanced(page);
-  await expect(page.getByRole('button', { name: '验证高危操作', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('dialog', { name: '验证高危操作', exact: true })).toHaveCount(0);
   await page.getByLabel('新会话有效期（秒）', { exact: true }).fill('3600');
   await confirmSave(page);
-  await page.getByRole('button', { name: '验证高危操作', exact: true }).click();
+
   const passwordSheet = page.getByRole('dialog', { name: '验证高危操作', exact: true });
   await passwordSheet.getByLabel('当前登录密码', { exact: true }).fill(administrator.password);
   await passwordSheet.getByRole('button', { name: '确认身份', exact: true }).click();
@@ -324,7 +324,7 @@ test('高危策略分别使用未绑定密码和实际MFA原地确认，验证�
     const previous = await current(bound);
     await bound.getByRole('button', { name: '登录后主动申请', exact: true }).click();
     await confirmSave(bound);
-    await bound.getByRole('button', { name: '验证高危操作', exact: true }).click();
+
     const mfaSheet = bound.getByRole('dialog', { name: '验证高危操作', exact: true });
     await expect(mfaSheet.getByLabel('当前登录密码', { exact: true })).toHaveCount(0);
     await mfaSheet.getByLabel('动态验证码或恢复码', { exact: true }).fill(admin.recoveryCode);

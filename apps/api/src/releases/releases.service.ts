@@ -150,7 +150,7 @@ export class ReleasesService {
     const actor =
       action === 'withdraw'
         ? await this.auth.identity(request)
-        : await this.auth.administrator(request);
+        : await this.auth.administrator(request, 'session');
     return this.moderation.releaseAction(
       actor,
       id,

@@ -111,7 +111,7 @@ test('待处理申请真实筛选，原文安全展示，近期验证保留决�
       [username],
     );
     await panel.getByRole('button', { name: '确认执行', exact: true }).click();
-    await panel.getByRole('button', { name: '验证高危操作', exact: true }).click();
+
     const verification = page.getByRole('dialog', { name: '验证高危操作', exact: true });
     await verification.getByLabel('当前登录密码', { exact: true }).fill(password);
     await verification.getByRole('button', { name: '确认身份', exact: true }).click();

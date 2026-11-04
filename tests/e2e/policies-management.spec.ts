@@ -287,12 +287,12 @@ test('实际自审要求原地近期密码验证，验证完成保留理由且�
     .getByRole('checkbox', { name: '我确认以管理员身份自审这份快照', exact: true })
     .check();
   await approval.getByRole('button', { name: '确认操作', exact: true }).click();
-  await approval.getByRole('button', { name: '验证高危操作', exact: true }).click();
+
   const verification = page.getByRole('dialog', { name: '验证高危操作', exact: true });
   await verification.getByLabel('当前登录密码', { exact: true }).fill(account.password);
   await verification.getByRole('button', { name: '确认身份', exact: true }).click();
   await expect(verification).toBeHidden();
-  await expect(approval.getByText('身份已确认', { exact: true })).toBeVisible();
+  await expect(approval.getByRole('status').filter({ hasText: '身份已确认' })).toBeVisible();
   await expect(approval.getByLabel('处理理由', { exact: true })).toHaveValue(
     '我核对了自己参与的冻结内容并承担自审责任',
   );

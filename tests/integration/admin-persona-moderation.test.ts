@@ -109,7 +109,7 @@ it('下架恢复必须有修订号和幂等键，重试不重复记录，冲突�
   expect(saved.meta.revision).toBe(created.revision);
 });
 
-it('普通用户、审核员和访客不能处置人设，过期MFA仍可读取但不能写入或借幂等键绕过验证', async () => {
+it('普通用户、审核员和访客不能处置人设，较早的管理员会话仍可读取、处置和安全重试', async () => {
   const admin = await stack.admin();
   const owner = await verifiedCreator(stack);
   const reviewer = await verifiedCreator(stack);
@@ -155,8 +155,15 @@ it('普通用户、审核员和访客不能处置人设，过期MFA仍可读取�
   );
   expect((await admin.http.raw('/api/v1/admin/personas/' + created.id)).status).toBe(200);
   const response = await admin.http.write(path, input, 'POST', { 'Idempotency-Key': key });
-  expect(response.status).toBe(403);
-  expect(await response.json()).toMatchObject({ error: { code: 'MFA_REQUIRED' } });
+  expect(response.status).toBe(200);
+  const restore = { ...input, state: 'normal', expectedRevision: 2 };
+  expect(
+    (await admin.http.write(path, restore, 'POST', { 'Idempotency-Key': randomUUID() })).status,
+  ).toBe(200);
+  const current = AdminPersonaResponseSchema.parse(
+    await (await admin.http.raw('/api/v1/admin/personas/' + created.id)).json(),
+  ).data;
+  expect(current).toMatchObject({ revision: 3, moderationState: 'normal' });
 });
 
 it('两名管理员竞争同一修订号只有一个决定生效，同账号并发重试只追加一次记录', async () => {

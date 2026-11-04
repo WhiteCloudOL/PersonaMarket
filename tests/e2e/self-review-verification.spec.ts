@@ -7,7 +7,6 @@ import { createAdministrator } from '@personamarket/server';
 import {
   AuthContextResponseSchema,
   DraftResponseSchema,
-  ErrorResponseSchema,
   SubmissionResponseSchema,
 } from '@personamarket/contracts';
 import { browserWrite } from '../fixtures/browser-account.js';
@@ -23,7 +22,7 @@ async function capture(page: Page, name: string) {
   await page.screenshot({ path: join(directory, name + '-viewport.png') });
 }
 
-test('未绑定MFA的管理员自审原地确认密码、保留理由并由本人重试', async ({ page }, info) => {
+test('未绑定 MFA 的管理员使用较早的会话确认自审并直接发布', async ({ page }, info) => {
   if (info.project.name === 'desktop') await page.setViewportSize({ width: 1440, height: 900 });
   const source = process.env['TEST_DATABASE_URL'];
   if (!source || !new URL(source).pathname.endsWith('_test')) throw new Error('必须使用隔离测试库');
@@ -53,7 +52,7 @@ test('未绑定MFA的管理员自审原地确认密码、保留理由并由本�
       {
         ...initial.draft,
         platform: 'maibot',
-        summary: '核验自愿MFA与高危自审密码确认',
+        summary: '核验管理员自审权限和确认',
         rightsAccepted: true,
         content: {
           personality: '喜欢自然与文学',
@@ -90,31 +89,6 @@ test('未绑定MFA的管理员自审原地确认密码、保留理由并由本�
     await confirmation.check();
     await capture(page, 'review-before');
     const reviewPath = '/api/v1/admin/moderation/submissions/' + submission.id + '/review';
-    const blocked = page.waitForResponse(
-      (response) => response.url().endsWith(reviewPath) && response.request().method() === 'POST',
-    );
-    await page.getByRole('button', { name: '通过并发布', exact: true }).last().click();
-    const rejected = await blocked;
-    expect(rejected.status()).toBe(403);
-    const error = ErrorResponseSchema.parse(await rejected.json()).error.code;
-    await page.getByRole('button', { name: '验证高危操作', exact: true }).click();
-    const modal = page.getByRole('dialog', { name: '验证高危操作', exact: true });
-    await expect(modal).toBeVisible();
-    // 空白验证表单可截图；输入密码后直到关闭并清空之前不采集截图
-    await capture(page, 'verification-dialog');
-    expect(error).toBe('REAUTH_REQUIRED');
-    await modal.getByLabel('当前登录密码', { exact: true }).fill(password);
-    await modal.getByRole('button', { name: '确认身份', exact: true }).click();
-    await expect(modal).toBeHidden();
-    await expect(page).toHaveURL('/admin/moderation?submission=' + submission.id);
-    await expect(page.getByLabel('审核意见', { exact: true })).toHaveValue(reason);
-    await expect(confirmation).toBeChecked();
-    const pending = await database.pool.query<{ status: string }>(
-      'SELECT status FROM release_submissions WHERE id=$1',
-      [submission.id],
-    );
-    expect(pending.rows[0]?.status).toBe('PENDING');
-    await capture(page, 'review-after-verification');
     const approved = page.waitForResponse(
       (response) => response.url().endsWith(reviewPath) && response.request().method() === 'POST',
     );
@@ -123,6 +97,7 @@ test('未绑定MFA的管理员自审原地确认密码、保留理由并由本�
     expect(result.status()).toBe(200);
     expect(SubmissionResponseSchema.parse(await result.json()).data.status).toBe('APPROVED');
     await expect(page.getByLabel('审核意见', { exact: true })).toHaveCount(0);
+    await expect(page.getByRole('dialog', { name: '验证高危操作', exact: true })).toHaveCount(0);
     const context = AuthContextResponseSchema.parse(
       await (await page.request.get('/api/v1/auth/context')).json(),
     ).data;

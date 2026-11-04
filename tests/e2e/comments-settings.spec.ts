@@ -130,7 +130,7 @@ test('评论设置冲突保留全部选项，关闭后端拒绝且输入保留�
       commentMaxLength: 80,
       commentsPerMinute: 2,
     });
-    await expect(admin.getByRole('button', { name: '验证高危操作', exact: true })).toHaveCount(0);
+    await expect(admin.getByRole('dialog', { name: '验证高危操作', exact: true })).toHaveCount(0);
     const size = admin.viewportSize();
     if (!size) throw new Error('缺少浏览器视口');
     const directory = join('data/tests/comments/current', `${size.width}x${size.height}`);

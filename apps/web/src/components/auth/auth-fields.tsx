@@ -10,7 +10,7 @@ import { Input } from '@personamarket/ui/components/input';
 import { Alert, AlertDescription, AlertTitle } from '@personamarket/ui/components/alert';
 import { Button } from '@personamarket/ui/components/button';
 import { Spinner } from '@personamarket/ui/components/spinner';
-import { StepUpPrompt } from './step-up-prompt';
+import { needsOperationVerification, StepUpPrompt } from './step-up-prompt';
 import { ApiError } from '@/lib/auth-api';
 import { MaintenanceWriteNotice } from '../system/maintenance-write-notice';
 
@@ -54,8 +54,7 @@ export function FormNotice({
   if (!error && !message) return null;
   if (error instanceof ApiError && error.code === 'MAINTENANCE_MODE')
     return <MaintenanceWriteNotice message={error.message} />;
-  if (error instanceof ApiError && ['MFA_REQUIRED', 'REAUTH_REQUIRED'].includes(error.code))
-    return <StepUpPrompt error={error} />;
+  if (needsOperationVerification(error)) return <StepUpPrompt error={error} />;
   return (
     <div className="flex flex-col gap-3">
       <Alert variant={error ? 'destructive' : 'default'} aria-live="polite">

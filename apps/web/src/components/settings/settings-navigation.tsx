@@ -114,6 +114,11 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
               className: 'justify-start',
             })}
             onNavigate={(event) => {
+              if (path === group.href) {
+                event.preventDefault();
+                onNavigate?.();
+                return;
+              }
               if (context?.dirty && !window.confirm('有未保存的设置，确定离开吗')) {
                 event.preventDefault();
                 return;

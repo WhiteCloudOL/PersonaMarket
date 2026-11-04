@@ -30,6 +30,7 @@ import {
   AlertDialogAction,
 } from '@personamarket/ui/components/alert-dialog';
 import { FormNotice } from '../auth/auth-fields';
+import { needsOperationVerification } from '../auth/step-up-prompt';
 import { notificationTimestamp } from '../notifications/delivery-state';
 import {
   canStartTaskCommand,
@@ -151,8 +152,12 @@ export function TaskCommandForm({
           </Collapsible>
         </section>
       )}
-      <FormNotice error={flow.write.error} />
-      <FormNotice error={flow.prepareError} />
+      {!open && (
+        <>
+          <FormNotice error={flow.write.error} />
+          <FormNotice error={flow.prepareError} />
+        </>
+      )}
       {showForm && (
         <form noValidate onSubmit={(event) => void form.handleSubmit(confirm)(event)}>
           <FieldGroup>
@@ -193,7 +198,9 @@ export function TaskCommandForm({
       <AlertDialog
         open={open}
         onOpenChange={(value) => {
-          if (!flow.busy) setOpen(value);
+          if (flow.busy) return;
+          if (!value && needsOperationVerification(flow.write.error)) flow.write.reset();
+          setOpen(value);
         }}
       >
         <AlertDialogContent

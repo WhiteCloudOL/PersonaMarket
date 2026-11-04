@@ -26,11 +26,8 @@ export class PersonaCurationRepository {
         await lockIdentity(tx, actor, true, false);
         const persona = await lockPersona(tx, id);
         const selfReview = persona.ownerId === actor.account.id;
-        if (selfReview) {
-          if (!input.selfReviewConfirmed)
-            throw new BusinessError('FORBIDDEN', '管理自己的作品前请明确确认');
-          await lockIdentity(tx, actor, true, true);
-        }
+        if (selfReview && !input.selfReviewConfirmed)
+          throw new BusinessError('FORBIDDEN', '管理自己的作品前请明确确认');
         const operation = 'persona.curation';
         const command = { id: id.toLowerCase(), ...input };
         const previous = await idempotentResult(tx, actor, operation, key, command);

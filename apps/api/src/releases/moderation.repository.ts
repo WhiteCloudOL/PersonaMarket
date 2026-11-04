@@ -8,7 +8,6 @@ import {
   moderationRecords,
   assetReferences,
   users,
-  userMfa,
   type Database,
 } from '@personamarket/database';
 import {
@@ -25,7 +24,6 @@ import {
 import type { z } from 'zod';
 import { DATABASE, ENVIRONMENT } from '../tokens.js';
 import { lockIdentity } from '../auth/locked-identity.js';
-import { requireRecentVerification } from '../auth/verification-policy.js';
 import type { Identity } from '../auth/auth.service.js';
 import { ReleasesRepository } from './releases.repository.js';
 import { administrationTransaction } from '../admin/administration-transaction.js';
@@ -122,7 +120,7 @@ export class ModerationRepository {
   ) {
     const original = await this.releases.readSubmission(id);
     const result = await this.database.db.transaction(async (tx) => {
-      const { account, session } = await lockIdentity(tx, actor, false, false);
+      const { account } = await lockIdentity(tx, actor, false, false);
       if (!['moderator', 'admin'].includes(account.role))
         throw new BusinessError('FORBIDDEN', '此操作需要审核权限');
       const retry = await idempotentResult(tx, actor, 'submission.review', key, { id, ...input });
@@ -138,18 +136,7 @@ export class ModerationRepository {
         selfReview &&
         (account.role !== 'admin' || !input.selfReviewConfirmed || !input.reason.trim())
       )
-        throw new BusinessError('FORBIDDEN', '管理员自审需要近期二次验证、明确确认和理由');
-      if (selfReview) {
-        // 已持有user/session锁，按实际MFA绑定状态选择近期密码或MFA验证，避免旧快照放行
-        const [mfa] = await tx
-          .select({ confirmedAt: userMfa.confirmedAt })
-          .from(userMfa)
-          .where(eq(userMfa.userId, account.id));
-        requireRecentVerification(
-          { account, session, mfaEnrolled: Boolean(mfa?.confirmedAt) },
-          true,
-        );
-      }
+        throw new BusinessError('FORBIDDEN', '管理员自审需要明确确认和理由');
       if (input.action === 'reject' && !input.reason.trim())
         throw new BusinessError('VALIDATION_FAILED', '驳回时请填写审核意见');
       const [release] = await tx
@@ -287,7 +274,7 @@ export class ModerationRepository {
     const replayed = await administrationTransaction(
       this.database,
       async (tx) => {
-        await lockIdentity(tx, actor, true);
+        await lockIdentity(tx, actor, true, false);
         const operation = 'persona.moderation';
         const command = { id: id.toLowerCase(), ...input };
         const previous = await idempotentResult(tx, actor, operation, key, command);
@@ -323,7 +310,7 @@ export class ModerationRepository {
     await administrationTransaction(
       this.database,
       async (tx) => {
-        await lockIdentity(tx, actor, action !== 'withdraw', action !== 'withdraw');
+        await lockIdentity(tx, actor, action !== 'withdraw', false);
         if (action === 'withdraw') await assertOrdinaryWriteAllowed(tx);
         await applyReleaseModeration(tx, actor, id, releaseId, action, reason, requestId);
       },

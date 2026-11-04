@@ -36,7 +36,7 @@ test('管理员不绑定 MFA 即可使用后台，过期高危操作就地确认
     await page.getByRole('button', { name: '展开频率与会话设置', exact: true }).click();
     await page.getByLabel('新会话有效期（秒）', { exact: true }).fill('3600');
     await page.getByRole('button', { name: '保存注册设置', exact: true }).click();
-    await page.getByRole('button', { name: '验证高危操作', exact: true }).click();
+
     const modal = page.getByRole('dialog', { name: '验证高危操作', exact: true });
     await modal.getByLabel('当前登录密码', { exact: true }).fill(password);
     await modal.getByRole('button', { name: '确认身份', exact: true }).click();

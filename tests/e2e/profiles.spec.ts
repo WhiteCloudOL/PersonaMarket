@@ -269,7 +269,7 @@ test('管理员自审在原页完成真实MFA近期验证，意见和确认保�
     '本人资料自审说明，验证后仍需保留',
   );
   await expect(checked).toBeChecked();
-  await panel.getByRole('button', { name: '验证高危操作', exact: true }).click();
+
   const verification = page.getByRole('dialog', { name: '验证高危操作', exact: true });
   await verification
     .getByLabel('动态验证码或恢复码', { exact: true })

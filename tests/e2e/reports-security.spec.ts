@@ -75,16 +75,16 @@ test('管理员自审在当前面板完成密码验证，确认过程保留公�
       .getByRole('alertdialog', { name: '确认受理举报', exact: true })
       .getByRole('button', { name: '确认保存处理记录', exact: true })
       .click();
-    await expect(panel.getByRole('button', { name: '验证高危操作', exact: true })).toBeVisible();
-    await expect(panel.getByLabel('举报人可见说明', { exact: true })).toHaveValue(
-      '保留这份公开处理说明',
-    );
-    await panel.getByRole('button', { name: '验证高危操作', exact: true }).click();
+    await expect(page.getByRole('dialog', { name: '验证高危操作', exact: true })).toBeVisible();
+
     const verification = page.getByRole('dialog', { name: '验证高危操作', exact: true });
     await verification.getByLabel('当前登录密码', { exact: true }).fill(password);
     await verification.getByRole('button', { name: '确认身份', exact: true }).click();
     await expect(verification).not.toBeVisible();
     await expect(panel).toContainText('身份已确认');
+    await expect(panel.getByLabel('举报人可见说明', { exact: true })).toHaveValue(
+      '保留这份公开处理说明',
+    );
     await expect(panel.getByLabel('仅管理员可见备注', { exact: true })).toHaveValue(
       '保留这份私有处理备注',
     );

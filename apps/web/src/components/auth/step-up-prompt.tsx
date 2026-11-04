@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -17,7 +17,6 @@ import { Field, FieldGroup, FieldLabel, FieldError } from '@personamarket/ui/com
 import { Input } from '@personamarket/ui/components/input';
 import { Button } from '@personamarket/ui/components/button';
 import { Spinner } from '@personamarket/ui/components/spinner';
-import { Alert, AlertTitle, AlertDescription } from '@personamarket/ui/components/alert';
 import { ApiError, authApi, authQuery, readAuthContext } from '@/lib/auth-api';
 const VerificationSchema = z.discriminatedUnion('method', [
   MfaCodeRequestSchema.extend({ method: z.literal('mfa') }),
@@ -26,8 +25,11 @@ const VerificationSchema = z.discriminatedUnion('method', [
 function VerifyOperation({ error }: { error: ApiError }) {
   const passwordRequired = error.code === 'REAUTH_REQUIRED';
   const field = passwordRequired ? 'currentPassword' : 'code';
-  const [open, setOpen] = useState(false);
-  const [verified, setVerified] = useState<Error>();
+  const id = useId();
+  const feedback = useRef<HTMLDivElement>(null);
+  const credential = useRef<HTMLInputElement>(null);
+  const [completed, setCompleted] = useState<{ error: ApiError; verified: boolean }>();
+  const current = completed?.error === error ? completed : undefined;
   const client = useQueryClient();
   const form = useForm<z.infer<typeof VerificationSchema>>({
     resolver: zodResolver(VerificationSchema),
@@ -41,6 +43,7 @@ function VerifyOperation({ error }: { error: ApiError }) {
         ? authApi.reauthenticate(values.currentPassword)
         : authApi.mfa(values.code),
     retry: false,
+    gcTime: 0,
     onSuccess: async () => {
       const before = client.getQueryData<Awaited<ReturnType<typeof readAuthContext>>>(
         authQuery.queryKey,
@@ -52,41 +55,44 @@ function VerifyOperation({ error }: { error: ApiError }) {
       }
       client.setQueryData(authQuery.queryKey, after);
       form.reset();
-      setVerified(error);
-      setOpen(false);
+      mutation.reset();
+      setCompleted({ error, verified: true });
     },
   });
+  const registration = form.register(field);
+  const validationError = form.getFieldState(field, form.formState).error;
   return (
-    <div className="flex flex-col items-start gap-3">
-      <Alert aria-live="polite">
-        <ShieldCheckIcon aria-hidden />
-        <AlertTitle>{verified === error ? '身份已确认' : '确认本次高危操作'}</AlertTitle>
-        <AlertDescription>
-          {verified === error
-            ? '身份已确认，表单内容已保留，请重试刚才的操作'
-            : '完成身份验证后，可在此处继续操作，当前输入会保留'}
-        </AlertDescription>
-      </Alert>
-      {verified !== error && (
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => {
-            mutation.reset();
-            setOpen(true);
-          }}
-        >
-          <ShieldCheckIcon aria-hidden />
-          验证高危操作
-        </Button>
-      )}
+    <>
+      <div ref={feedback} tabIndex={-1}>
+        {current && (
+          <p role="status" className="flex items-start gap-2 text-sm text-muted-foreground">
+            <ShieldCheckIcon aria-hidden className="mt-0.5 size-4 shrink-0" />
+            {current.verified
+              ? '身份已确认，表单内容已保留，请重试刚才的操作'
+              : '已取消身份验证，再次提交可重新验证'}
+          </p>
+        )}
+      </div>
       <Sheet
-        open={open}
-        onOpenChange={(v) => {
-          if (!mutation.isPending) setOpen(v);
+        open={!current}
+        onOpenChange={(open, details) => {
+          if (open) return;
+          if (mutation.isPending) {
+            details.cancel();
+            return;
+          }
+          form.reset();
+          mutation.reset();
+          setCompleted({ error, verified: false });
         }}
       >
-        <SheetContent showCloseButton={!mutation.isPending}>
+        <SheetContent
+          side="bottom"
+          className="max-h-[calc(100dvh-1rem)] gap-0 rounded-t-2xl sm:inset-0 sm:m-auto sm:w-[min(28rem,90vw)] sm:rounded-2xl sm:border sm:data-[side=bottom]:h-fit"
+          initialFocus={(type) => type === 'touch' || credential.current}
+          finalFocus={feedback}
+          showCloseButton={!mutation.isPending}
+        >
           <SheetHeader>
             <SheetTitle>验证高危操作</SheetTitle>
             <SheetDescription>
@@ -96,7 +102,7 @@ function VerifyOperation({ error }: { error: ApiError }) {
             </SheetDescription>
           </SheetHeader>
           <form
-            className="p-5"
+            className="p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]"
             noValidate
             onSubmit={(event) => {
               event.stopPropagation();
@@ -104,20 +110,28 @@ function VerifyOperation({ error }: { error: ApiError }) {
             }}
           >
             <FieldGroup>
-              <Field data-invalid={Boolean(form.getFieldState(field).error)}>
-                <FieldLabel htmlFor="operation-verification">
+              <Field data-invalid={Boolean(validationError)}>
+                <FieldLabel htmlFor={id}>
                   {passwordRequired ? '当前登录密码' : '动态验证码或恢复码'}
                 </FieldLabel>
                 <Input
-                  id="operation-verification"
+                  id={id}
                   type={passwordRequired ? 'password' : 'text'}
                   autoComplete={passwordRequired ? 'current-password' : 'one-time-code'}
                   spellCheck={false}
                   data-sensitive={passwordRequired ? 'password' : 'mfa-code'}
-                  {...form.register(field)}
-                  aria-invalid={Boolean(form.getFieldState(field).error)}
+                  {...registration}
+                  ref={(element) => {
+                    credential.current = element;
+                    registration.ref(element);
+                  }}
+                  readOnly={mutation.isPending}
+                  aria-invalid={Boolean(validationError)}
+                  aria-describedby={validationError ? id + '-error' : undefined}
                 />
-                <FieldError>{form.getFieldState(field).error?.message}</FieldError>
+                {validationError && (
+                  <FieldError id={id + '-error'}>{validationError.message}</FieldError>
+                )}
               </Field>
               {mutation.error && (
                 <p role="alert" className="text-sm text-destructive">
@@ -132,11 +146,15 @@ function VerifyOperation({ error }: { error: ApiError }) {
           </form>
         </SheetContent>
       </Sheet>
-    </div>
+    </>
   );
 }
+export function needsOperationVerification(error: unknown): error is ApiError {
+  return error instanceof ApiError && ['MFA_REQUIRED', 'REAUTH_REQUIRED'].includes(error.code);
+}
+
 export function StepUpPrompt({ error }: { error: Error | null | undefined }) {
-  return error instanceof ApiError && ['MFA_REQUIRED', 'REAUTH_REQUIRED'].includes(error.code) ? (
+  return needsOperationVerification(error) ? (
     <VerifyOperation key={error.code} error={error} />
   ) : null;
 }

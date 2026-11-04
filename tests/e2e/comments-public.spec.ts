@@ -130,7 +130,7 @@ test('真实创建审核回复删除，断网保留输入且不误报成功，�
     );
     await review.getByRole('button', { name: '通过评论', exact: true }).click();
     expect((await approving).status()).toBe(200);
-    await expect(review.getByRole('button', { name: '验证高危操作', exact: true })).toHaveCount(0);
+    await expect(review.getByRole('dialog', { name: '验证高危操作', exact: true })).toHaveCount(0);
     await guest.reload();
     await expect(guest.locator('[aria-label="评论楼层"]').filter({ hasText: body })).toBeVisible();
     expect(await guest.evaluate(() => Reflect.get(window, '__commentXss'))).toBeUndefined();

@@ -102,7 +102,7 @@ test('分区和动作切换保留处置草稿，近期MFA验证后由本人重�
     expect(ErrorResponseSchema.parse(await expired.json()).error.code).toBe('MFA_REQUIRED');
     await expect(panel.getByLabel('被处置者可见说明', { exact: true })).toHaveValue(reason);
     expect((await reader.request.get('/api/v1/personas/' + works.maibot.id)).status()).toBe(200);
-    await panel.getByRole('button', { name: '验证高危操作', exact: true }).click();
+
     const verification = page.getByRole('dialog', { name: '验证高危操作', exact: true });
     // 验证输入不进入自动trace或截图；验证码只在此隔离场景使用
     await verification.getByLabel('动态验证码或恢复码', { exact: true }).fill(admin.recoveryCode);

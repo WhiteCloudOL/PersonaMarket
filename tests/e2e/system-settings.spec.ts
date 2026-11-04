@@ -113,12 +113,12 @@ test('高危策略分别使用未绑定密码和实际MFA原地确认，验证�
   await page.goto('/admin/settings/system');
   const before = await currentSystem(page);
 
-  await expect(page.getByRole('button', { name: '验证高危操作', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('dialog', { name: '验证高危操作', exact: true })).toHaveCount(0);
   await page
     .getByRole('textbox', { name: '公共维护提示', exact: true })
     .fill('密码确认后的维护提示');
   await confirmSystemSave(page);
-  await page.getByRole('button', { name: '验证高危操作', exact: true }).click();
+
   const passwordSheet = page.getByRole('dialog', { name: '验证高危操作', exact: true });
   await passwordSheet
     .getByLabel('当前登录密码', { exact: true })
@@ -143,7 +143,7 @@ test('高危策略分别使用未绑定密码和实际MFA原地确认，验证�
       .getByRole('textbox', { name: '公共维护提示', exact: true })
       .fill('MFA确认后的维护提示');
     await confirmSystemSave(bound);
-    await bound.getByRole('button', { name: '验证高危操作', exact: true }).click();
+
     const mfaSheet = bound.getByRole('dialog', { name: '验证高危操作', exact: true });
     await expect(mfaSheet.getByLabel('当前登录密码', { exact: true })).toHaveCount(0);
     await mfaSheet.getByLabel('动态验证码或恢复码', { exact: true }).fill(admin.recoveryCode);

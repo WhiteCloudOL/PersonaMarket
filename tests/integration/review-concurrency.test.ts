@@ -14,7 +14,7 @@ beforeAll(async () => {
 afterAll(async () => {
   await stack?.close();
 });
-it('管理员自审必须近期 MFA/确认/理由，审核员不能自审，批准与撤回只成功一个', async () => {
+it('管理员自审必须明确确认及理由，审核员不能自审，批准与撤回只成功一个', async () => {
   const admin = await stack.admin();
   const moderator = await verifiedCreator(stack);
   const author = await verifiedCreator(stack);
@@ -58,11 +58,6 @@ it('管理员自审必须近期 MFA/确认/理由，审核员不能自审，批�
   expect((await review(admin.http, ownSub.id, true, '')).status).toBe(403);
   await stack.owner.pool.query(
     "UPDATE auth_sessions SET mfa_verified_at=now()-interval '11 minutes' WHERE user_id=(SELECT id FROM users WHERE username=$1)",
-    [admin.credentials.username],
-  );
-  expect((await review(admin.http, ownSub.id, true)).status).toBe(403);
-  await stack.owner.pool.query(
-    'UPDATE auth_sessions SET mfa_verified_at=now() WHERE user_id=(SELECT id FROM users WHERE username=$1)',
     [admin.credentials.username],
   );
   expect((await review(admin.http, ownSub.id, true)).status).toBe(200);

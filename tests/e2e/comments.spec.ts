@@ -101,7 +101,10 @@ test('批量失败条目已由他人审核后，读取最新状态清除不再�
     expect(BulkReviewCommentsResponseSchema.parse(await result.json()).data).toMatchObject([
       { id: row.id, ok: false, error: { code: 'REAUTH_REQUIRED' } },
     ]);
-    await expect(panel.getByRole('button', { name: '验证高危操作', exact: true })).toHaveCount(1);
+    const verification = page.getByRole('dialog', { name: '验证高危操作', exact: true });
+    await expect(verification).toHaveCount(1);
+    await page.keyboard.press('Escape');
+    await expect(verification).toBeHidden();
     const approved = await browserWrite(
       admin,
       '/api/v1/admin/comments/' + row.id + '/review',
@@ -112,7 +115,7 @@ test('批量失败条目已由他人审核后，读取最新状态清除不再�
     expect(approved.status()).toBe(200);
     await panel.getByRole('button', { name: '读取失败条目最新快照', exact: true }).click();
     await expect(panel.getByRole('button', { name: '返回审核队列', exact: true })).toBeVisible();
-    await expect(panel.getByRole('button', { name: '验证高危操作', exact: true })).toHaveCount(0);
+    await expect(verification).toHaveCount(0);
     await expect(panel.getByRole('button', { name: /^核对并处理/ })).toHaveCount(0);
     await expect(panel.getByLabel('批量审核结果')).toContainText('未完成');
   } finally {
@@ -308,8 +311,8 @@ test('未绑定MFA的管理员评论自审在原页面密码确认，保留理�
     const rejected = await blocked;
     expect(rejected.status()).toBe(403);
     expect(ErrorResponseSchema.parse(await rejected.json()).error.code).toBe('REAUTH_REQUIRED');
-    await expect(page.getByRole('button', { name: '验证高危操作', exact: true })).toHaveCount(1);
-    await page.getByRole('button', { name: '验证高危操作', exact: true }).click();
+    await expect(page.getByRole('dialog', { name: '验证高危操作', exact: true })).toHaveCount(1);
+
     const verification = page.getByRole('dialog', { name: '验证高危操作', exact: true });
     const size = page.viewportSize();
     if (!size) throw new Error('缺少浏览器视口');

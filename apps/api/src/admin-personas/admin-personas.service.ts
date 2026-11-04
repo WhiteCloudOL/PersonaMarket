@@ -27,14 +27,8 @@ export class AdminPersonasService {
   ) {
     this.logger = createLogger('persona-management', auth.env.LOG_LEVEL);
   }
-  private async actor(
-    request: Request,
-    verification: 'session' | 'recent' | 'curation' = 'session',
-  ) {
-    const actor = await this.auth.administrator(
-      request,
-      verification === 'recent' ? 'recent' : 'session',
-    );
+  private async actor(request: Request, write = false) {
+    const actor = await this.auth.administrator(request, 'session');
     const expected = request.get('x-expected-account');
     if (
       expected &&
@@ -42,9 +36,9 @@ export class AdminPersonasService {
     )
       throw new BusinessError('CONFLICT', '登录账号已变化，请重新确认管理操作');
     await this.auth.rate.take(
-      verification !== 'session' ? 'admin-personas-write' : 'admin-personas-read',
+      write ? 'admin-personas-write' : 'admin-personas-read',
       actor.account.id,
-      verification !== 'session' ? 30 : 120,
+      write ? 30 : 120,
       60,
     );
     return actor;
@@ -59,7 +53,7 @@ export class AdminPersonasService {
     return this.repository.records(await this.actor(request), id, input);
   }
   async bulk(request: Request, response: Response, input: AdminPersonaBulkRequest) {
-    const actor = await this.actor(request, input.action === 'curate' ? 'curation' : 'recent');
+    const actor = await this.actor(request, true);
     await this.auth.rate.take('admin-personas-bulk', actor.account.id, 5, 60);
     const requestId = this.auth.requestId(response);
     const results: z.infer<typeof AdminPersonaBulkResponseSchema>['data'] = [];
@@ -126,7 +120,7 @@ export class AdminPersonasService {
     return AdminPersonaBulkResponseSchema.parse({ data: results });
   }
   async curate(request: Request, response: Response, id: string, input: SetPersonaCuration) {
-    const actor = await this.actor(request, 'curation');
+    const actor = await this.actor(request, true);
     const key = IdSchema.safeParse(request.get('idempotency-key'));
     if (!key.success) throw new BusinessError('INVALID_INPUT', '请提供有效的操作幂等标识');
     return this.curations.set(actor, id, input, key.data, this.auth.requestId(response));
@@ -137,7 +131,7 @@ export class AdminPersonasService {
     id: string,
     input: z.infer<typeof PersonaModerationSchema>,
   ) {
-    const actor = await this.actor(request, 'recent');
+    const actor = await this.actor(request, true);
     const key = IdSchema.safeParse(request.get('idempotency-key'));
     if (!key.success) throw new BusinessError('INVALID_INPUT', '请提供有效的操作幂等标识');
     return this.moderation.moderatePersona(

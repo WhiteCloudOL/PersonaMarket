@@ -214,7 +214,7 @@ test('真实任务精确深链、普通业务无需追加近期验证、确认�
   await confirm(page);
   await expect(page.getByRole('alertdialog')).toHaveCount(0);
   await expect(panel.getByRole('button', { name: '核对当前投递状态', exact: true })).toBeFocused();
-  await expect(page.getByRole('button', { name: '验证高危操作', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('dialog', { name: '验证高危操作', exact: true })).toHaveCount(0);
   await expect.poll(async () => (await current(page, id)).status).toBe('delivered');
   await panel.getByRole('button', { name: '核对当前投递状态', exact: true }).click();
   await expect(panel.getByText('已送达站内通知', { exact: true })).toBeVisible();
@@ -454,7 +454,7 @@ test('敏感通知原地确认密码后不自动重发，明确重试仍使用�
   });
   const panel = await open(page, id);
   await confirm(page);
-  await panel.getByRole('button', { name: '验证高危操作', exact: true }).click();
+
   const verify = page.getByRole('dialog', { name: '验证高危操作', exact: true });
   await verify.getByLabel('当前登录密码', { exact: true }).fill(owned.account.password);
   await verify.getByRole('button', { name: '确认身份', exact: true }).click();
@@ -581,7 +581,7 @@ test('已主动绑定MFA的敏感重投仅用动态验证分支，完成后仍�
   });
   const panel = await open(page, id);
   await confirm(page);
-  await panel.getByRole('button', { name: '验证高危操作', exact: true }).click();
+
   const verify = page.getByRole('dialog', { name: '验证高危操作', exact: true });
   await expect(verify.getByLabel('当前登录密码', { exact: true })).toHaveCount(0);
   await verify.getByLabel('动态验证码或恢复码', { exact: true }).fill(administrator.recoveryCode);

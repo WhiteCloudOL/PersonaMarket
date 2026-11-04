@@ -269,7 +269,7 @@ it('并发策展只有一个修订提交，胜出请求重试不重复审计', a
 });
 
 it.each([false, true])(
-  '普通策展不追加近期验证，自审按实际MFA状态要求确认（MFA=%s）',
+  '较早的管理员会话可以管理本人和他人作品，本人仍需显式确认（MFA=%s）',
   async (mfa) => {
     const credentials = {
       username: 'curator_' + randomUUID().slice(0, 8),
@@ -289,7 +289,7 @@ it.each([false, true])(
               })
             ).status,
           ).toBe(200);
-          return { http, credentials };
+          return { http };
         })();
     const reviewer = await stack.admin();
     const owner = await verifiedCreator(stack);
@@ -316,31 +316,13 @@ it.each([false, true])(
       403,
     );
     const confirmed = { ...input, selfReviewConfirmed: true };
-    const challenged = await admin.http.write(path, confirmed, 'PUT', { 'Idempotency-Key': key });
-    expect(challenged.status).toBe(403);
-    expect(await challenged.json()).toMatchObject({
-      error: { code: mfa ? 'MFA_REQUIRED' : 'REAUTH_REQUIRED' },
+    expect(
+      (await admin.http.write(path, confirmed, 'PUT', { 'Idempotency-Key': key })).status,
+    ).toBe(200);
+    expect((await current(admin.http, own.id)).curation).toEqual({
+      official: true,
+      featured: true,
     });
-    const verification = await admin.http.write('/api/v1/auth/reauthenticate', {
-      currentPassword: admin.credentials.password,
-    });
-    if (mfa) {
-      expect(verification.status).toBe(403);
-      expect(await verification.json()).toMatchObject({ error: { code: 'MFA_REQUIRED' } });
-      expect((await current(admin.http, own.id)).curation).toEqual({
-        official: false,
-        featured: false,
-      });
-    } else {
-      expect(verification.status).toBe(200);
-      expect(
-        (await admin.http.write(path, confirmed, 'PUT', { 'Idempotency-Key': key })).status,
-      ).toBe(200);
-      expect((await current(admin.http, own.id)).curation).toEqual({
-        official: true,
-        featured: true,
-      });
-      expect((await admin.http.context()).data.mfaEnabled).toBe(false);
-    }
+    expect((await admin.http.context()).data.mfaEnabled).toBe(mfa);
   },
 );

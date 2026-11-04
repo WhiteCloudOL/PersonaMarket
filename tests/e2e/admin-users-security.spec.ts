@@ -67,7 +67,7 @@ test('高危操作就地确认不自动提交，并发冲突保留理由和选�
       [f.actorId],
     );
     await panel.getByRole('button', { name: '确认执行', exact: true }).click();
-    await panel.getByRole('button', { name: '验证高危操作', exact: true }).click();
+
     const verification = page.getByRole('dialog', { name: '验证高危操作', exact: true });
     await verification.getByLabel('当前登录密码', { exact: true }).fill(f.password);
     await verification.getByRole('button', { name: '确认身份', exact: true }).click();
