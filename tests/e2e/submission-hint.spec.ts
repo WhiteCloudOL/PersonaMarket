@@ -243,6 +243,9 @@ test('网络结果未知后跨设置页保留原请求和后续输入，显式�
   expect((await current(page)).meta).toEqual(before.meta);
   await expect(page.getByLabel('待审提示', { exact: true })).toHaveValue(later);
   await confirmSave(page);
+  await expect(
+    page.getByText('创作设置已保存，待审版本在重新读取时使用当前提示', { exact: true }),
+  ).toBeVisible();
   expect((await current(page)).data.submissions.pendingHint).toBe(later);
 });
 

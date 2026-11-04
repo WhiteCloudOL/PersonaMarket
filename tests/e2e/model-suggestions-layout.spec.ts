@@ -143,7 +143,7 @@ test('模型建议长内容在重点视口可操作，权限、下拉焦点、�
     await page.getByRole('button', { name: '预览默认设置', exact: true }).click();
     const dialog = page.getByRole('alertdialog');
     await expect(
-      dialog.getByRole('heading', { name: '核对模型建议默认设置', exact: true }),
+      dialog.getByRole('heading', { name: '预览模型建议默认设置', exact: true }),
     ).toBeInViewport({ ratio: 1 });
     await expect(dialog.getByRole('button', { name: '保留当前输入', exact: true })).toBeInViewport({
       ratio: 1,

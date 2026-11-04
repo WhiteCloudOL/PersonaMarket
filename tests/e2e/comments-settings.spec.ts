@@ -115,8 +115,7 @@ test('评论设置冲突保留全部选项，关闭后端拒绝且输入保留�
     await expect(display).not.toBeChecked();
     await expect(admin.getByLabel('单条评论字数上限', { exact: true })).toHaveValue('80');
     await expect(admin.getByLabel('每人每分钟提交上限', { exact: true })).toHaveValue('2');
-    await admin.getByRole('button', { name: '读取最新社区设置', exact: true }).click();
-    await expect(admin.getByText('当前选项已保留，确认后再次保存', { exact: true })).toBeVisible();
+    await expect(admin.getByText(/其他管理员同时修改了相同设置/u)).toBeVisible();
     await expect(admin.getByLabel('每人每分钟提交上限', { exact: true })).toHaveValue('2');
     await admin.getByRole('button', { name: '保存社区设置', exact: true }).click();
     await expect(admin.getByText('社区设置已保存', { exact: true })).toBeVisible();

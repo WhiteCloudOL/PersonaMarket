@@ -230,15 +230,7 @@ test('真实编辑器发版、审核差异与驳回重提、公开详情和作�
     }
     await admin.goto('/admin/settings/creation');
     await admin.getByLabel('每人每日投稿次数', { exact: true }).fill('15');
-    await admin.getByLabel('处理理由', { exact: true }).fill('核对创作者流程后调整每日投稿次数');
     await admin.getByRole('button', { name: '保存创作设置', exact: true }).click();
-    const confirmCreation = admin.getByRole('alertdialog', {
-      name: '确认保存创作设置',
-      exact: true,
-    });
-    await expect(confirmCreation).toBeVisible();
-    await confirmCreation.getByRole('button', { name: '确认并保存', exact: true }).click();
-    await expect(confirmCreation).toBeHidden();
     await expect(
       admin.getByText('创作设置已保存，待审版本在重新读取时使用当前提示', { exact: true }),
     ).toBeVisible();

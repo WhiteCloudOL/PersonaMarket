@@ -350,6 +350,7 @@ test('未知操作核对后保留后来输入的下一次送审理由', async ({
   );
   const nav = page.getByRole('navigation', { name: '选择公共规则' });
   await nav.getByRole('link', { name: '隐私说明', exact: true }).click();
+  await expect(page).toHaveURL(/document=privacy/);
   await nav.getByRole('link', { name: '服务条款', exact: true }).click();
   await page.getByRole('button', { name: '提交规则审核', exact: true }).click();
   await expect(confirmation.getByLabel('处理理由', { exact: true })).toHaveValue(
@@ -357,7 +358,7 @@ test('未知操作核对后保留后来输入的下一次送审理由', async ({
   );
 });
 
-test('采用最新送审状态后切换规则返回仍显示已采用修订', async ({ page }) => {
+test('返回规则页面会显示其他管理员新提交的待审快照', async ({ page }) => {
   await login(page);
   let value = await clearPending(page, 'terms');
   value = await mutate(

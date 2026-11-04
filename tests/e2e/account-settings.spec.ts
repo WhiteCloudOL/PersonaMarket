@@ -234,6 +234,7 @@ test('结果未知跨页保留原key和后续输入，429后仍能重试；退�
   expect((await current(page)).meta).toEqual(before.meta);
   await expect(page.getByLabel('新会话有效期（秒）', { exact: true })).toHaveValue('2400');
   await confirmSave(page);
+  await expect(page.getByText(savedText, { exact: true })).toBeVisible();
   expect((await current(page)).data.sessionTtlSeconds).toBe(2400);
   await page.unroute(pattern);
   await page.evaluate(() => {
@@ -312,6 +313,7 @@ test('高危策略分别使用未绑定密码和实际MFA原地确认，验证�
   await expect(page.getByLabel('新会话有效期（秒）', { exact: true })).toHaveValue('3600');
   expect((await current(page)).meta).toEqual(before.meta);
   await confirmSave(page);
+  await expect(page.getByText(savedText, { exact: true })).toBeVisible();
   expect((await current(page)).data.sessionTtlSeconds).toBe(3600);
   const context = await authorContext(browser, page);
   try {
@@ -330,6 +332,7 @@ test('高危策略分别使用未绑定密码和实际MFA原地确认，验证�
     await expect(mfaSheet).toBeHidden();
     expect((await current(bound)).meta).toEqual(previous.meta);
     await confirmSave(bound);
+    await expect(bound.getByText(savedText, { exact: true })).toBeVisible();
     expect((await current(bound)).data.verificationEmailTiming).toBe('on_request');
   } finally {
     await context.close();

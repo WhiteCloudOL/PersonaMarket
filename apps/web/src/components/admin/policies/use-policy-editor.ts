@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
+import { hashKey, useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import {
   PolicyDraftFieldsSchema,
   type ManagedPolicy,
@@ -50,7 +50,15 @@ export function usePolicyEditor(accountId: string, initial: ManagedPolicy) {
     router = useRouter();
   const key = useMemo(() => policyDraftKey(accountId, initial.slug), [accountId, initial.slug]);
   const [preserved] = useState(() => client.getQueryData<Draft>(key));
-  const [snapshot, setSnapshot] = useState(preserved?.snapshot ?? initial);
+  const detailKey = useMemo(
+    () => [...policiesKey(accountId), 'detail', initial.slug],
+    [accountId, initial.slug],
+  );
+  const [snapshot, setSnapshot] = useState(() =>
+    preserved && (preserved.command || preserved.snapshot.revision > initial.revision)
+      ? preserved.snapshot
+      : initial,
+  );
   const [intent, setIntent] = useState<PolicyIntent>();
   const [actionValues, setActionValues] = useState<Record<string, PolicyActionValues>>(
     preserved?.actionValues ?? {},
@@ -63,7 +71,10 @@ export function usePolicyEditor(accountId: string, initial: ManagedPolicy) {
   const stableButton = useRef<HTMLButtonElement>(null);
   const form = useForm<PolicyDraftFields>({
     resolver: zodResolver(PolicyDraftFieldsSchema),
-    defaultValues: preserved?.values ?? policyFields(initial),
+    defaultValues: preserved
+      ? mergeSettings(policyFields(preserved.snapshot), preserved.values, policyFields(snapshot))
+          .data
+      : policyFields(snapshot),
   });
   const [title, summary, bodyMarkdown] = useWatch({
     control: form.control,
@@ -147,7 +158,7 @@ export function usePolicyEditor(accountId: string, initial: ManagedPolicy) {
           policyFields(latest),
         );
         if (!activeAccount(client, accountId)) throw error;
-        client.setQueryData([...policiesKey(accountId), 'detail', initial.slug], { data: latest });
+        client.setQueryData(detailKey, { data: latest });
         if (alive.current) {
           setSnapshot(latest);
           form.reset(merged.data);
@@ -190,7 +201,7 @@ export function usePolicyEditor(accountId: string, initial: ManagedPolicy) {
         prepared.actionKey && same(actionValues[prepared.actionKey], submittedAction)
           ? { ...actionValues, [prepared.actionKey]: { reason: '', selfReviewConfirmed: false } }
           : actionValues;
-      client.setQueryData([...policiesKey(accountId), 'detail', initial.slug], result);
+      client.setQueryData(detailKey, result);
       void client.invalidateQueries({
         queryKey: [...policiesKey(accountId), 'submissions', initial.slug],
       });
@@ -250,6 +261,28 @@ export function usePolicyEditor(accountId: string, initial: ManagedPolicy) {
       }
     },
   });
+  useEffect(() => {
+    const detailHash = hashKey(detailKey);
+    return client.getQueryCache().subscribe((event) => {
+      if (
+        event.type !== 'updated' ||
+        event.query.queryHash !== detailHash ||
+        event.action.type !== 'success' ||
+        event.action.manual ||
+        command.current
+      )
+        return;
+      const latest = client.getQueryData<{ data: ManagedPolicy }>(detailKey)?.data;
+      if (!latest || latest.revision <= snapshot.revision || !activeAccount(client, accountId))
+        return;
+      const merged = mergeSettings(policyFields(snapshot), form.getValues(), policyFields(latest));
+      setSnapshot(latest);
+      form.reset(merged.data);
+      setIntent(undefined);
+      if (merged.conflict) setMessage(settingsConflictMessage);
+    });
+  }, [accountId, client, detailKey, form, snapshot]);
+
   function prepareIntent(next: PolicyIntent) {
     if (unresolved) {
       setMessage('请先核对原提交结果，再发起其他操作');

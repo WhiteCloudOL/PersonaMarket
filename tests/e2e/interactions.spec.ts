@@ -376,12 +376,6 @@ test('社区开关冲突保留输入并由用户重试，关闭直接API拒绝�
     expect((await conflict).status()).toBe(412);
     await expect(likes).not.toBeChecked();
     await expect(favorites).not.toBeChecked();
-    // 回归：旧界面只有错误提示，没有保留输入读取新版本的操作
-    await admin.getByRole('button', { name: '读取最新社区设置', exact: true }).click();
-    await expect(admin.getByText('当前选项已保留，确认后再次保存', { exact: true })).toBeVisible();
-    await expect(likes).not.toBeChecked();
-    await expect(favorites).not.toBeChecked();
-    await admin.getByRole('button', { name: '保存社区设置', exact: true }).click();
     await expect(admin.getByText('社区设置已保存', { exact: true })).toBeVisible();
     const saved = InteractionSettingsResponseSchema.parse(
       await (await admin.request.get('/api/v1/admin/settings/community')).json(),

@@ -74,6 +74,7 @@ test('维护设置默认差异、字段定位及并发修改保留输入，历�
   await expect(message).toHaveValue('本地保留的提示');
   await expect(page.getByText(/其他管理员同时修改了相同设置/u)).toBeVisible();
   await confirmSystemSave(page);
+  await expect(page.getByText(systemSavedText, { exact: true })).toBeVisible();
   const records = SystemSettingsRecordsResponseSchema.parse(
     await (await page.request.get(systemEndpoint + '/records')).json(),
   );
@@ -129,6 +130,7 @@ test('高危策略分别使用未绑定密码和实际MFA原地确认，验证�
   );
   expect((await currentSystem(page)).meta).toEqual(before.meta);
   await confirmSystemSave(page);
+  await expect(page.getByText(systemSavedText, { exact: true })).toBeVisible();
   expect((await currentSystem(page)).data.maintenanceMessage).toBe('密码确认后的维护提示');
   const context = await systemBrowserContext(browser, page);
   try {
@@ -149,6 +151,7 @@ test('高危策略分别使用未绑定密码和实际MFA原地确认，验证�
     await expect(mfaSheet).toBeHidden();
     expect((await currentSystem(bound)).meta).toEqual(previous.meta);
     await confirmSystemSave(bound);
+    await expect(bound.getByText(systemSavedText, { exact: true })).toBeVisible();
     expect((await currentSystem(bound)).data.maintenanceMessage).toBe('MFA确认后的维护提示');
   } finally {
     await context.close();
@@ -220,6 +223,7 @@ test('结果未知跨页保留原key和后续输入，429后仍可重试，退�
     '后续维护提示',
   );
   await confirmSystemSave(page);
+  await expect(page.getByText(systemSavedText, { exact: true })).toBeVisible();
   expect((await currentSystem(page)).data.maintenanceMessage).toBe('后续维护提示');
   await page.unroute(pattern);
   await page.evaluate(() => {

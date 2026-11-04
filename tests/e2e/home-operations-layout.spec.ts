@@ -205,13 +205,13 @@ test('首页运营长内容在重点视口可用，五条真实内容、确认�
     }
     const preview = page.getByRole('button', { name: '预览默认设置', exact: true });
     await preview.click();
-    const dialog = page.getByRole('alertdialog', { name: '核对首页默认设置', exact: true });
+    const dialog = page.getByRole('alertdialog', { name: '预览首页默认设置', exact: true });
     const comparison = dialog.getByRole('region', { name: '首页默认设置对照', exact: true });
     await comparison.focus();
     await comparison.press('End');
     expect(await comparison.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
     await expect(
-      dialog.getByRole('heading', { name: '核对首页默认设置', exact: true }),
+      dialog.getByRole('heading', { name: '预览首页默认设置', exact: true }),
     ).toBeInViewport({ ratio: 1 });
     await expect(dialog.getByRole('button', { name: '填入默认值', exact: true })).toBeInViewport({
       ratio: 1,
