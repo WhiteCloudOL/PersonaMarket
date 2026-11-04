@@ -8,6 +8,8 @@ COPY . .
 RUN pnpm install --frozen-lockfile
 RUN pnpm exec turbo run build --concurrency=2 --filter=@personamarket/web
 RUN mkdir -p /runtime-dirs/cache
+RUN libatomic="$(ldd /usr/local/bin/node | awk '$1 == "libatomic.so.1" { print $3 }')" \
+    && install -D -m 0644 "$libatomic" /runtime-libs/libatomic.so.1
 
 FROM gcr.io/distroless/cc-debian13:nonroot@sha256:3ee00291cf386ec52a552e6a858d555debd74776eb4bfa53fa3df2cd6677515e AS runtime
 ENV NODE_ENV=production
@@ -17,6 +19,8 @@ ENV HOSTNAME=0.0.0.0
 ENV PORT=3000
 WORKDIR /app
 COPY --from=build /usr/local/bin/node /usr/local/bin/node
+COPY --from=build /runtime-libs/libatomic.so.1 /usr/lib/libatomic.so.1
+RUN ["/usr/local/bin/node", "--version"]
 COPY --from=build /usr/local/LICENSE /usr/share/doc/node/LICENSE
 COPY --from=build --chown=1000:1000 /workspace/apps/web/.next/standalone ./
 COPY --from=build --chown=1000:1000 /workspace/apps/web/.next/static ./apps/web/.next/static

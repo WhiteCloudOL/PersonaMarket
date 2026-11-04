@@ -12,12 +12,16 @@ RUN pnpm build:packages && pnpm --filter @personamarket/api build && pnpm --filt
 ARG PACKAGE=@personamarket/api
 RUN pnpm --filter ${PACKAGE} deploy --prod /out/app
 RUN mkdir -p /runtime-dirs/storage
+RUN libatomic="$(ldd /usr/local/bin/node | awk '$1 == "libatomic.so.1" { print $3 }')" \
+    && install -D -m 0644 "$libatomic" /runtime-libs/libatomic.so.1
 
 FROM gcr.io/distroless/cc-debian13:nonroot@sha256:3ee00291cf386ec52a552e6a858d555debd74776eb4bfa53fa3df2cd6677515e AS runtime
 ENV NODE_ENV=production
 ENV PATH=/usr/local/bin:/usr/bin:/bin
 WORKDIR /app
 COPY --from=build /usr/local/bin/node /usr/local/bin/node
+COPY --from=build /runtime-libs/libatomic.so.1 /usr/lib/libatomic.so.1
+RUN ["/usr/local/bin/node", "--version"]
 COPY --from=build /usr/local/LICENSE /usr/share/doc/node/LICENSE
 COPY --from=build --chown=1000:1000 /out/app .
 COPY --from=build --chown=1000:1000 /runtime-dirs/storage /data/storage
