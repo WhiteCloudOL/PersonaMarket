@@ -265,12 +265,10 @@ test('管理员自审在原页完成真实MFA近期验证，意见和确认保�
   const failure = await rejected;
   expect(failure.status()).toBe(403);
   expect(ErrorResponseSchema.parse(await failure.json()).error.code).toBe('MFA_REQUIRED');
-  await expect(panel.getByLabel('给作者的处理说明', { exact: true })).toHaveValue(
-    '本人资料自审说明，验证后仍需保留',
-  );
-  await expect(checked).toBeChecked();
 
   const verification = page.getByRole('dialog', { name: '验证高危操作', exact: true });
+  await expect(verification).toBeVisible();
+  await expect(panel).toHaveCount(0);
   await verification
     .getByLabel('动态验证码或恢复码', { exact: true })
     .fill(administrator.recoveryCode);

@@ -62,7 +62,11 @@ export function NotificationDeliveryPanel({ accountId }: { accountId: string }) 
   }, [mode, raw, returnId]);
   function close() {
     if (pending) return;
-    if (mode === 'detail' && search.has('failuresPage')) setReturnId(id);
+    if (mode === 'detail' && search.has('failuresPage')) {
+      // Keep focus on a stable element while the detail controls unmount.
+      heading.current?.focus({ preventScroll: true });
+      setReturnId(id);
+    }
     router.push(
       notificationHref(
         pathname,
