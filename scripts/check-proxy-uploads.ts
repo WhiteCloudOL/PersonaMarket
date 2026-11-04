@@ -6,6 +6,7 @@ import {
   MarketPersonaSchema,
   MarketImportPreviewResponseSchema,
   AssetResponseSchema,
+  ErrorResponseSchema,
   PERSONA_AVATAR_MAX_BYTES,
   DraftResponseSchema,
   ImportPreviewResponseSchema,
@@ -183,8 +184,13 @@ const avatarAsset = AssetResponseSchema.parse(await avatar.json()).data;
 assert.equal(avatarAsset.mime, 'image/webp');
 assert.ok(avatarAsset.bytes < 512 * 1024);
 assert.ok(avatarAsset.width <= 512 && avatarAsset.height <= 512);
+const exactLimit = await upload(avatarPath, paddedPng(PERSONA_AVATAR_MAX_BYTES), 'limit.png');
+assert.equal(exactLimit.status, 400, '头像大小必须严格小于 10 MiB');
+const sizeError = ErrorResponseSchema.parse(await exactLimit.json()).error;
+assert.equal(sizeError.code, 'INVALID_INPUT');
+assert.match(sizeError.message, /10 MiB/);
 assert.equal(
-  (await upload(avatarPath, paddedPng(PERSONA_AVATAR_MAX_BYTES), 'too-large.png')).status,
+  (await upload(avatarPath, paddedPng(PERSONA_AVATAR_MAX_BYTES + 1), 'too-large.png')).status,
   413,
 );
 assert.equal((await http.raw('/api/v1/me/assets/' + image.id)).status, 200);
