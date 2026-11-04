@@ -9,7 +9,7 @@ import {
   type PersonaDraft,
 } from '@personamarket/contracts';
 import { createAuthStack } from '../fixtures/auth-stack.js';
-import { mailToken, mailText } from '../fixtures/mailpit.js';
+import { mailText } from '../fixtures/mailpit.js';
 let stack: Awaited<ReturnType<typeof createAuthStack>>;
 beforeAll(async () => {
   stack = await createAuthStack();
