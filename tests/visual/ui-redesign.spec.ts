@@ -1,4 +1,5 @@
 import { selectTheme } from '../fixtures/theme.js';
+import { accountNavigationItem, closeAccountNavigation } from '../fixtures/account-navigation.js';
 import {
   expect,
   test,
@@ -247,13 +248,13 @@ test.beforeAll(async ({ browser }, info) => {
           key: 'home-empty',
           url: '/',
           actor: 'author' as const,
-          ready: '每一个有趣的角色，都从一个灵感开始',
+          ready: '第一个角色，等你来写',
         },
         {
           key: 'explore-empty',
           url: '/explore',
           actor: 'author' as const,
-          ready: '没有找到匹配的人设',
+          ready: '暂无公开作品',
         },
         {
           key: 'workspace-empty',
@@ -652,13 +653,14 @@ test('逐页真实截图与布局', async ({ browser }, info) => {
         await expect(guest).not.toHaveURL(/model=/);
       }
       await author.goto('/account');
-      const accountMenu = author.getByRole('button', { name: '打开账号菜单' });
-      await accountMenu.click();
-      await expect(author.getByRole('menuitem', { name: '创作工作台' })).toBeVisible();
-      await expect(author.getByRole('menuitem', { name: '站点设置' })).toHaveCount(0);
+      await expect(await accountNavigationItem(author, '创作工作台')).toBeVisible();
+      await expect(
+        author
+          .getByRole('menuitem', { name: '站点设置', exact: true })
+          .or(author.getByRole('link', { name: '站点设置', exact: true })),
+      ).toHaveCount(0);
       await captureCurrent(author, 'account-menu', viewport, 'light', false);
-      await author.keyboard.press('Escape');
-      await expect(accountMenu).toBeFocused();
+      await closeAccountNavigation(author);
       await expect(author.getByText('Chrome · Android', { exact: true })).toBeVisible();
       const rawAgent = author.getByText(/Mozilla\/5\.0/).first();
       await expect(rawAgent).toBeHidden();
