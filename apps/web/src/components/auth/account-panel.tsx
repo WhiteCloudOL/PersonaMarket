@@ -17,6 +17,7 @@ import { FormNotice } from './auth-fields';
 import { useAuthChange } from './use-auth-change';
 import { MonitorIcon, SmartphoneIcon, MailIcon } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@personamarket/ui/components/tabs';
+import { cn } from '@personamarket/ui/lib/utils';
 import { Avatar, AvatarFallback } from '@personamarket/ui/components/avatar';
 import { deviceSummary } from '@/lib/device-summary';
 import { EmailVerificationNotice } from './email-verification-notice';
@@ -125,13 +126,16 @@ export function AccountPanel() {
       >
         <TabsList
           aria-label="账号管理"
-          className="w-full flex-wrap justify-start gap-1 group-data-horizontal/tabs:h-auto"
+          className={cn(
+            'w-full justify-start gap-1 group-data-horizontal/tabs:h-auto',
+            admin ? 'grid grid-cols-2 sm:grid-cols-4' : 'flex flex-wrap',
+          )}
         >
           {tabs.map((tab) => (
             <TabsTrigger
               key={tab.value}
               value={tab.value}
-              className="h-auto min-h-11 min-w-24 flex-1 whitespace-normal px-3 py-2"
+              className="h-auto min-h-11 min-w-0 flex-1 basis-24 whitespace-normal px-3 py-2"
             >
               {tab.label}
             </TabsTrigger>
