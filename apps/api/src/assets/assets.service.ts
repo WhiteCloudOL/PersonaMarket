@@ -34,9 +34,15 @@ export class AssetsService {
       createdAt: row.createdAt.toISOString(),
     });
   }
-  async upload(request: Request, purpose: z.infer<typeof AssetPurposeSchema>, bytes: Buffer) {
+  async upload(
+    request: Request,
+    purpose: z.infer<typeof AssetPurposeSchema> | 'persona-avatar',
+    bytes: Buffer,
+  ) {
     const actor = await this.auth.identity(request);
     const expected = request.get('x-expected-account');
+    if (purpose === 'persona-avatar' && !expected)
+      throw new BusinessError('INVALID_INPUT', '请确认要上传头像的账号');
     if (
       expected &&
       (!IdSchema.safeParse(expected).success || expected.toLowerCase() !== actor.account.id)

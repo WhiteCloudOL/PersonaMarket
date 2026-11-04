@@ -1,4 +1,5 @@
 import sharp from 'sharp';
+import { PERSONA_AVATAR_MAX_BYTES } from '@personamarket/contracts';
 import { BusinessError } from './errors.js';
 let running = false;
 let waiting = 0;
@@ -12,9 +13,15 @@ async function acquire() {
   }
   running = true;
 }
-export async function normalizeImage(bytes: Uint8Array, expectedMime?: string) {
-  if (bytes.byteLength > 5242880 || bytes.byteLength === 0)
-    throw new BusinessError('INVALID_INPUT', '图片需要在 5 MiB 以内');
+export async function normalizeImage(
+  bytes: Uint8Array,
+  expectedMime?: string,
+  personaAvatar = false,
+) {
+  const limit = personaAvatar ? PERSONA_AVATAR_MAX_BYTES - 1 : 5242880;
+  const maxSize = personaAvatar ? '10 MiB' : '5 MiB';
+  if (bytes.byteLength === 0 || bytes.byteLength > limit)
+    throw new BusinessError('INVALID_INPUT', `图片需要在 ${maxSize} 以内`);
   await acquire();
   try {
     const image = sharp(bytes, { limitInputPixels: 40000000, animated: false, failOn: 'warning' });
@@ -28,8 +35,9 @@ export async function normalizeImage(bytes: Uint8Array, expectedMime?: string) {
         expectedMime !== `image/${metadata.format === 'jpeg' ? 'jpeg' : metadata.format}`)
     )
       throw new Error('UNSUPPORTED_IMAGE');
+    image.rotate();
+    if (personaAvatar) image.resize(512, 512, { fit: 'inside', withoutEnlargement: true });
     const { data, info } = await image
-      .rotate()
       .webp({ quality: 85 })
       .timeout({ seconds: 5 })
       .toBuffer({ resolveWithObject: true });
@@ -38,7 +46,7 @@ export async function normalizeImage(bytes: Uint8Array, expectedMime?: string) {
   } catch (cause) {
     throw new BusinessError(
       'INVALID_INPUT',
-      '图片无法处理，请上传 5 MiB、4000 万像素以内的静态 JPEG、PNG 或 WebP',
+      `图片无法处理，请上传 ${maxSize}、4000 万像素以内的静态 JPEG、PNG 或 WebP`,
       { cause },
     );
   } finally {

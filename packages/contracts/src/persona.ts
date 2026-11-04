@@ -90,30 +90,17 @@ const sharedOrigin = {
   redistribution: RedistributionSchema,
   policyText: textSchema(0, 5_000).optional(),
 };
-export const OriginDeclarationSchema = z
-  .discriminatedUnion('type', [
-    z.strictObject({ type: z.literal('original'), ...sharedOrigin }),
-    z.strictObject({
-      type: z.literal('repost'),
-      ...sharedOrigin,
-      originalAuthor: textSchema(1, 100),
-      sourceUrl: z.url({ protocol: /^https?$/ }).optional(),
-      sourceDescription: textSchema(1, 2_000).optional(),
-      authorizationStatement: textSchema(1, 5_000),
-    }),
-  ])
-  .superRefine((origin, context) => {
-    if (origin.redistribution === 'custom' && !origin.policyText?.trim()) {
-      context.addIssue({ code: 'custom', path: ['policyText'], message: '请填写自定义转载规则' });
-    }
-    if (origin.type === 'repost' && !origin.sourceUrl && !origin.sourceDescription?.trim()) {
-      context.addIssue({
-        code: 'custom',
-        path: ['sourceDescription'],
-        message: '请提供来源链接或来源说明',
-      });
-    }
-  });
+export const OriginDeclarationSchema = z.discriminatedUnion('type', [
+  z.strictObject({ type: z.literal('original'), ...sharedOrigin }),
+  z.strictObject({
+    type: z.literal('repost'),
+    ...sharedOrigin,
+    originalAuthor: textSchema(0, 100).optional(),
+    sourceUrl: z.url({ protocol: /^https?$/ }).optional(),
+    sourceDescription: textSchema(1, 2_000).optional(),
+    authorizationStatement: textSchema(0, 5_000).optional(),
+  }),
+]);
 
 const SnapshotMetadataSchema = z.strictObject({
   schemaVersion: z.literal(1),

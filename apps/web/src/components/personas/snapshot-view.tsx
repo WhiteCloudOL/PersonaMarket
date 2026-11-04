@@ -244,7 +244,9 @@ export function OriginDetails({ snapshot }: { snapshot: Snapshot }) {
       )}
       {snapshot.origin.type === 'repost' && (
         <>
-          <p className="break-words text-sm">原作者：{snapshot.origin.originalAuthor}</p>
+          {snapshot.origin.originalAuthor?.trim() && (
+            <p className="break-words text-sm">原作者：{snapshot.origin.originalAuthor}</p>
+          )}
           {snapshot.origin.sourceUrl && (
             <a
               href={snapshot.origin.sourceUrl}
@@ -255,12 +257,16 @@ export function OriginDetails({ snapshot }: { snapshot: Snapshot }) {
               查看原始来源
             </a>
           )}
-          <p className="whitespace-pre-wrap break-words text-sm leading-7">
-            {snapshot.origin.sourceDescription}
-          </p>
-          <p className="whitespace-pre-wrap break-words text-sm leading-7">
-            {snapshot.origin.authorizationStatement}
-          </p>
+          {snapshot.origin.sourceDescription?.trim() && (
+            <p className="whitespace-pre-wrap break-words text-sm leading-7">
+              {snapshot.origin.sourceDescription}
+            </p>
+          )}
+          {snapshot.origin.authorizationStatement?.trim() && (
+            <p className="whitespace-pre-wrap break-words text-sm leading-7">
+              {snapshot.origin.authorizationStatement}
+            </p>
+          )}
         </>
       )}
     </EditorSection>

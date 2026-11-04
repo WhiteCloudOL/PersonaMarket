@@ -8393,9 +8393,13 @@
                       "properties": {
                         "message": {
                           "type": "string"
+                        },
+                        "assurance": {
+                          "type": "string",
+                          "enum": ["authenticated", "mfa_setup", "mfa_required"]
                         }
                       },
-                      "required": ["message"],
+                      "required": ["message", "assurance"],
                       "additionalProperties": false
                     }
                   },
@@ -26377,6 +26381,16 @@
                               "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                             }
                           },
+                          "customTags": {
+                            "maxItems": 8,
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 24,
+                              "pattern": "^[^\\p{Cc}\\p{Cf}]+$"
+                            }
+                          },
                           "readmeMarkdown": {
                             "type": "string"
                           },
@@ -26463,12 +26477,7 @@
                                     "type": "string"
                                   }
                                 },
-                                "required": [
-                                  "type",
-                                  "redistribution",
-                                  "originalAuthor",
-                                  "authorizationStatement"
-                                ],
+                                "required": ["type", "redistribution"],
                                 "additionalProperties": false
                               }
                             ]
@@ -26564,6 +26573,16 @@
                               "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                             }
                           },
+                          "customTags": {
+                            "maxItems": 8,
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 24,
+                              "pattern": "^[^\\p{Cc}\\p{Cf}]+$"
+                            }
+                          },
                           "readmeMarkdown": {
                             "type": "string"
                           },
@@ -26650,12 +26669,7 @@
                                     "type": "string"
                                   }
                                 },
-                                "required": [
-                                  "type",
-                                  "redistribution",
-                                  "originalAuthor",
-                                  "authorizationStatement"
-                                ],
+                                "required": ["type", "redistribution"],
                                 "additionalProperties": false
                               }
                             ]
@@ -26794,6 +26808,16 @@
                                     "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                                   }
                                 },
+                                "customTags": {
+                                  "maxItems": 8,
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 24,
+                                    "pattern": "^[^\\p{Cc}\\p{Cf}]+$"
+                                  }
+                                },
                                 "readmeMarkdown": {
                                   "type": "string"
                                 },
@@ -26880,12 +26904,7 @@
                                           "type": "string"
                                         }
                                       },
-                                      "required": [
-                                        "type",
-                                        "redistribution",
-                                        "originalAuthor",
-                                        "authorizationStatement"
-                                      ],
+                                      "required": ["type", "redistribution"],
                                       "additionalProperties": false
                                     }
                                   ]
@@ -26981,6 +27000,16 @@
                                     "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                                   }
                                 },
+                                "customTags": {
+                                  "maxItems": 8,
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 24,
+                                    "pattern": "^[^\\p{Cc}\\p{Cf}]+$"
+                                  }
+                                },
                                 "readmeMarkdown": {
                                   "type": "string"
                                 },
@@ -27067,12 +27096,7 @@
                                           "type": "string"
                                         }
                                       },
-                                      "required": [
-                                        "type",
-                                        "redistribution",
-                                        "originalAuthor",
-                                        "authorizationStatement"
-                                      ],
+                                      "required": ["type", "redistribution"],
                                       "additionalProperties": false
                                     }
                                   ]
@@ -28423,6 +28447,16 @@
                                     "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                                   }
                                 },
+                                "customTags": {
+                                  "maxItems": 8,
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 24,
+                                    "pattern": "^[^\\p{Cc}\\p{Cf}]+$"
+                                  }
+                                },
                                 "readmeMarkdown": {
                                   "type": "string"
                                 },
@@ -28509,12 +28543,7 @@
                                           "type": "string"
                                         }
                                       },
-                                      "required": [
-                                        "type",
-                                        "redistribution",
-                                        "originalAuthor",
-                                        "authorizationStatement"
-                                      ],
+                                      "required": ["type", "redistribution"],
                                       "additionalProperties": false
                                     }
                                   ]
@@ -28610,6 +28639,16 @@
                                     "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                                   }
                                 },
+                                "customTags": {
+                                  "maxItems": 8,
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 24,
+                                    "pattern": "^[^\\p{Cc}\\p{Cf}]+$"
+                                  }
+                                },
                                 "readmeMarkdown": {
                                   "type": "string"
                                 },
@@ -28696,12 +28735,7 @@
                                           "type": "string"
                                         }
                                       },
-                                      "required": [
-                                        "type",
-                                        "redistribution",
-                                        "originalAuthor",
-                                        "authorizationStatement"
-                                      ],
+                                      "required": ["type", "redistribution"],
                                       "additionalProperties": false
                                     }
                                   ]
@@ -29418,6 +29452,16 @@
                           "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                         }
                       },
+                      "customTags": {
+                        "maxItems": 8,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 24,
+                          "pattern": "^[^\\p{Cc}\\p{Cf}]+$"
+                        }
+                      },
                       "readmeMarkdown": {
                         "type": "string"
                       },
@@ -29504,12 +29548,7 @@
                                 "type": "string"
                               }
                             },
-                            "required": [
-                              "type",
-                              "redistribution",
-                              "originalAuthor",
-                              "authorizationStatement"
-                            ],
+                            "required": ["type", "redistribution"],
                             "additionalProperties": false
                           }
                         ]
@@ -29605,6 +29644,16 @@
                           "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                         }
                       },
+                      "customTags": {
+                        "maxItems": 8,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 24,
+                          "pattern": "^[^\\p{Cc}\\p{Cf}]+$"
+                        }
+                      },
                       "readmeMarkdown": {
                         "type": "string"
                       },
@@ -29691,12 +29740,7 @@
                                 "type": "string"
                               }
                             },
-                            "required": [
-                              "type",
-                              "redistribution",
-                              "originalAuthor",
-                              "authorizationStatement"
-                            ],
+                            "required": ["type", "redistribution"],
                             "additionalProperties": false
                           }
                         ]
@@ -29831,6 +29875,16 @@
                                     "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                                   }
                                 },
+                                "customTags": {
+                                  "maxItems": 8,
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 24,
+                                    "pattern": "^[^\\p{Cc}\\p{Cf}]+$"
+                                  }
+                                },
                                 "readmeMarkdown": {
                                   "type": "string"
                                 },
@@ -29917,12 +29971,7 @@
                                           "type": "string"
                                         }
                                       },
-                                      "required": [
-                                        "type",
-                                        "redistribution",
-                                        "originalAuthor",
-                                        "authorizationStatement"
-                                      ],
+                                      "required": ["type", "redistribution"],
                                       "additionalProperties": false
                                     }
                                   ]
@@ -30018,6 +30067,16 @@
                                     "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                                   }
                                 },
+                                "customTags": {
+                                  "maxItems": 8,
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 24,
+                                    "pattern": "^[^\\p{Cc}\\p{Cf}]+$"
+                                  }
+                                },
                                 "readmeMarkdown": {
                                   "type": "string"
                                 },
@@ -30104,12 +30163,7 @@
                                           "type": "string"
                                         }
                                       },
-                                      "required": [
-                                        "type",
-                                        "redistribution",
-                                        "originalAuthor",
-                                        "authorizationStatement"
-                                      ],
+                                      "required": ["type", "redistribution"],
                                       "additionalProperties": false
                                     }
                                   ]
@@ -32603,6 +32657,16 @@
                                     "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                                   }
                                 },
+                                "customTags": {
+                                  "maxItems": 8,
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 24,
+                                    "pattern": "^[^\\p{Cc}\\p{Cf}]+$"
+                                  }
+                                },
                                 "readmeMarkdown": {
                                   "type": "string"
                                 },
@@ -32689,12 +32753,7 @@
                                           "type": "string"
                                         }
                                       },
-                                      "required": [
-                                        "type",
-                                        "redistribution",
-                                        "originalAuthor",
-                                        "authorizationStatement"
-                                      ],
+                                      "required": ["type", "redistribution"],
                                       "additionalProperties": false
                                     }
                                   ]
@@ -32790,6 +32849,16 @@
                                     "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                                   }
                                 },
+                                "customTags": {
+                                  "maxItems": 8,
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 24,
+                                    "pattern": "^[^\\p{Cc}\\p{Cf}]+$"
+                                  }
+                                },
                                 "readmeMarkdown": {
                                   "type": "string"
                                 },
@@ -32876,12 +32945,7 @@
                                           "type": "string"
                                         }
                                       },
-                                      "required": [
-                                        "type",
-                                        "redistribution",
-                                        "originalAuthor",
-                                        "authorizationStatement"
-                                      ],
+                                      "required": ["type", "redistribution"],
                                       "additionalProperties": false
                                     }
                                   ]
@@ -35189,6 +35253,16 @@
                                     "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                                   }
                                 },
+                                "customTags": {
+                                  "maxItems": 8,
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 24,
+                                    "pattern": "^[^\\p{Cc}\\p{Cf}]+$"
+                                  }
+                                },
                                 "readmeMarkdown": {
                                   "type": "string"
                                 },
@@ -35275,12 +35349,7 @@
                                           "type": "string"
                                         }
                                       },
-                                      "required": [
-                                        "type",
-                                        "redistribution",
-                                        "originalAuthor",
-                                        "authorizationStatement"
-                                      ],
+                                      "required": ["type", "redistribution"],
                                       "additionalProperties": false
                                     }
                                   ]
@@ -35376,6 +35445,16 @@
                                     "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                                   }
                                 },
+                                "customTags": {
+                                  "maxItems": 8,
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 24,
+                                    "pattern": "^[^\\p{Cc}\\p{Cf}]+$"
+                                  }
+                                },
                                 "readmeMarkdown": {
                                   "type": "string"
                                 },
@@ -35462,12 +35541,7 @@
                                           "type": "string"
                                         }
                                       },
-                                      "required": [
-                                        "type",
-                                        "redistribution",
-                                        "originalAuthor",
-                                        "authorizationStatement"
-                                      ],
+                                      "required": ["type", "redistribution"],
                                       "additionalProperties": false
                                     }
                                   ]
@@ -36488,6 +36562,16 @@
                                     "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                                   }
                                 },
+                                "customTags": {
+                                  "maxItems": 8,
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 24,
+                                    "pattern": "^[^\\p{Cc}\\p{Cf}]+$"
+                                  }
+                                },
                                 "readmeMarkdown": {
                                   "type": "string"
                                 },
@@ -36574,12 +36658,7 @@
                                           "type": "string"
                                         }
                                       },
-                                      "required": [
-                                        "type",
-                                        "redistribution",
-                                        "originalAuthor",
-                                        "authorizationStatement"
-                                      ],
+                                      "required": ["type", "redistribution"],
                                       "additionalProperties": false
                                     }
                                   ]
@@ -36675,6 +36754,16 @@
                                     "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                                   }
                                 },
+                                "customTags": {
+                                  "maxItems": 8,
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 24,
+                                    "pattern": "^[^\\p{Cc}\\p{Cf}]+$"
+                                  }
+                                },
                                 "readmeMarkdown": {
                                   "type": "string"
                                 },
@@ -36761,12 +36850,7 @@
                                           "type": "string"
                                         }
                                       },
-                                      "required": [
-                                        "type",
-                                        "redistribution",
-                                        "originalAuthor",
-                                        "authorizationStatement"
-                                      ],
+                                      "required": ["type", "redistribution"],
                                       "additionalProperties": false
                                     }
                                   ]
@@ -41420,8 +41504,7 @@
                   "title",
                   "sourceDescription",
                   "target",
-                  "confirmed",
-                  "authorizationStatement"
+                  "confirmed"
                 ],
                 "additionalProperties": false
               }
@@ -41472,6 +41555,16 @@
                                     "type": "string",
                                     "format": "uuid",
                                     "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                  }
+                                },
+                                "customTags": {
+                                  "maxItems": 8,
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 24,
+                                    "pattern": "^[^\\p{Cc}\\p{Cf}]+$"
                                   }
                                 },
                                 "readmeMarkdown": {
@@ -41560,12 +41653,7 @@
                                           "type": "string"
                                         }
                                       },
-                                      "required": [
-                                        "type",
-                                        "redistribution",
-                                        "originalAuthor",
-                                        "authorizationStatement"
-                                      ],
+                                      "required": ["type", "redistribution"],
                                       "additionalProperties": false
                                     }
                                   ]
@@ -41661,6 +41749,16 @@
                                     "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                                   }
                                 },
+                                "customTags": {
+                                  "maxItems": 8,
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 24,
+                                    "pattern": "^[^\\p{Cc}\\p{Cf}]+$"
+                                  }
+                                },
                                 "readmeMarkdown": {
                                   "type": "string"
                                 },
@@ -41747,12 +41845,7 @@
                                           "type": "string"
                                         }
                                       },
-                                      "required": [
-                                        "type",
-                                        "redistribution",
-                                        "originalAuthor",
-                                        "authorizationStatement"
-                                      ],
+                                      "required": ["type", "redistribution"],
                                       "additionalProperties": false
                                     }
                                   ]
@@ -44951,6 +45044,635 @@
         "tags": ["assets"]
       }
     },
+    "/api/v1/me/assets/upload-persona-avatar": {
+      "post": {
+        "operationId": "uploadPersonaAvatar",
+        "parameters": [
+          {
+            "name": "X-Expected-Account",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                },
+                "required": ["file"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "purpose": {
+                          "type": "string",
+                          "enum": ["content", "evidence", "avatar"]
+                        },
+                        "mime": {
+                          "type": "string",
+                          "enum": ["image/webp"]
+                        },
+                        "bytes": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "exclusiveMinimum": true,
+                          "maximum": 9007199254740991
+                        },
+                        "width": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "exclusiveMinimum": true,
+                          "maximum": 9007199254740991
+                        },
+                        "height": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "exclusiveMinimum": true,
+                          "maximum": 9007199254740991
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "purpose",
+                        "mime",
+                        "bytes",
+                        "width",
+                        "height",
+                        "createdAt"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": ["data"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "INVALID_INPUT",
+                            "VALIDATION_FAILED",
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "MFA_REQUIRED",
+                            "REAUTH_REQUIRED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "REVISION_CONFLICT",
+                            "RATE_LIMITED",
+                            "MAINTENANCE_MODE",
+                            "SERVICE_UNAVAILABLE",
+                            "INVALID_RESPONSE",
+                            "INTERNAL_ERROR",
+                            "UNSUPPORTED_FORMAT"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "fieldErrors": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "message"],
+                            "additionalProperties": false
+                          }
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        }
+                      },
+                      "required": ["code", "message", "fieldErrors", "requestId"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": ["error"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "INVALID_INPUT",
+                            "VALIDATION_FAILED",
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "MFA_REQUIRED",
+                            "REAUTH_REQUIRED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "REVISION_CONFLICT",
+                            "RATE_LIMITED",
+                            "MAINTENANCE_MODE",
+                            "SERVICE_UNAVAILABLE",
+                            "INVALID_RESPONSE",
+                            "INTERNAL_ERROR",
+                            "UNSUPPORTED_FORMAT"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "fieldErrors": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "message"],
+                            "additionalProperties": false
+                          }
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        }
+                      },
+                      "required": ["code", "message", "fieldErrors", "requestId"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": ["error"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "INVALID_INPUT",
+                            "VALIDATION_FAILED",
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "MFA_REQUIRED",
+                            "REAUTH_REQUIRED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "REVISION_CONFLICT",
+                            "RATE_LIMITED",
+                            "MAINTENANCE_MODE",
+                            "SERVICE_UNAVAILABLE",
+                            "INVALID_RESPONSE",
+                            "INTERNAL_ERROR",
+                            "UNSUPPORTED_FORMAT"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "fieldErrors": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "message"],
+                            "additionalProperties": false
+                          }
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        }
+                      },
+                      "required": ["code", "message", "fieldErrors", "requestId"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": ["error"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "INVALID_INPUT",
+                            "VALIDATION_FAILED",
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "MFA_REQUIRED",
+                            "REAUTH_REQUIRED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "REVISION_CONFLICT",
+                            "RATE_LIMITED",
+                            "MAINTENANCE_MODE",
+                            "SERVICE_UNAVAILABLE",
+                            "INVALID_RESPONSE",
+                            "INTERNAL_ERROR",
+                            "UNSUPPORTED_FORMAT"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "fieldErrors": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "message"],
+                            "additionalProperties": false
+                          }
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        }
+                      },
+                      "required": ["code", "message", "fieldErrors", "requestId"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": ["error"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "INVALID_INPUT",
+                            "VALIDATION_FAILED",
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "MFA_REQUIRED",
+                            "REAUTH_REQUIRED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "REVISION_CONFLICT",
+                            "RATE_LIMITED",
+                            "MAINTENANCE_MODE",
+                            "SERVICE_UNAVAILABLE",
+                            "INVALID_RESPONSE",
+                            "INTERNAL_ERROR",
+                            "UNSUPPORTED_FORMAT"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "fieldErrors": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "message"],
+                            "additionalProperties": false
+                          }
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        }
+                      },
+                      "required": ["code", "message", "fieldErrors", "requestId"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": ["error"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "INVALID_INPUT",
+                            "VALIDATION_FAILED",
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "MFA_REQUIRED",
+                            "REAUTH_REQUIRED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "REVISION_CONFLICT",
+                            "RATE_LIMITED",
+                            "MAINTENANCE_MODE",
+                            "SERVICE_UNAVAILABLE",
+                            "INVALID_RESPONSE",
+                            "INTERNAL_ERROR",
+                            "UNSUPPORTED_FORMAT"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "fieldErrors": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "message"],
+                            "additionalProperties": false
+                          }
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        }
+                      },
+                      "required": ["code", "message", "fieldErrors", "requestId"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": ["error"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "INVALID_INPUT",
+                            "VALIDATION_FAILED",
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "MFA_REQUIRED",
+                            "REAUTH_REQUIRED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "REVISION_CONFLICT",
+                            "RATE_LIMITED",
+                            "MAINTENANCE_MODE",
+                            "SERVICE_UNAVAILABLE",
+                            "INVALID_RESPONSE",
+                            "INTERNAL_ERROR",
+                            "UNSUPPORTED_FORMAT"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "fieldErrors": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "message"],
+                            "additionalProperties": false
+                          }
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        }
+                      },
+                      "required": ["code", "message", "fieldErrors", "requestId"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": ["error"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "INVALID_INPUT",
+                            "VALIDATION_FAILED",
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "MFA_REQUIRED",
+                            "REAUTH_REQUIRED",
+                            "NOT_FOUND",
+                            "CONFLICT",
+                            "REVISION_CONFLICT",
+                            "RATE_LIMITED",
+                            "MAINTENANCE_MODE",
+                            "SERVICE_UNAVAILABLE",
+                            "INVALID_RESPONSE",
+                            "INTERNAL_ERROR",
+                            "UNSUPPORTED_FORMAT"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "fieldErrors": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "message"],
+                            "additionalProperties": false
+                          }
+                        },
+                        "requestId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        }
+                      },
+                      "required": ["code", "message", "fieldErrors", "requestId"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": ["error"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "summary": "",
+        "tags": ["assets"]
+      }
+    },
     "/api/v1/me/assets/{id}": {
       "get": {
         "operationId": "readOwnImage",
@@ -45744,12 +46466,7 @@
                                           "type": "string"
                                         }
                                       },
-                                      "required": [
-                                        "type",
-                                        "redistribution",
-                                        "originalAuthor",
-                                        "authorizationStatement"
-                                      ],
+                                      "required": ["type", "redistribution"],
                                       "additionalProperties": false
                                     }
                                   ]
@@ -45907,12 +46624,7 @@
                                           "type": "string"
                                         }
                                       },
-                                      "required": [
-                                        "type",
-                                        "redistribution",
-                                        "originalAuthor",
-                                        "authorizationStatement"
-                                      ],
+                                      "required": ["type", "redistribution"],
                                       "additionalProperties": false
                                     }
                                   ]
@@ -46862,12 +47574,7 @@
                                             "type": "string"
                                           }
                                         },
-                                        "required": [
-                                          "type",
-                                          "redistribution",
-                                          "originalAuthor",
-                                          "authorizationStatement"
-                                        ],
+                                        "required": ["type", "redistribution"],
                                         "additionalProperties": false
                                       }
                                     ]
@@ -47025,12 +47732,7 @@
                                             "type": "string"
                                           }
                                         },
-                                        "required": [
-                                          "type",
-                                          "redistribution",
-                                          "originalAuthor",
-                                          "authorizationStatement"
-                                        ],
+                                        "required": ["type", "redistribution"],
                                         "additionalProperties": false
                                       }
                                     ]
@@ -48638,12 +49340,7 @@
                                           "type": "string"
                                         }
                                       },
-                                      "required": [
-                                        "type",
-                                        "redistribution",
-                                        "originalAuthor",
-                                        "authorizationStatement"
-                                      ],
+                                      "required": ["type", "redistribution"],
                                       "additionalProperties": false
                                     }
                                   ]
@@ -48801,12 +49498,7 @@
                                           "type": "string"
                                         }
                                       },
-                                      "required": [
-                                        "type",
-                                        "redistribution",
-                                        "originalAuthor",
-                                        "authorizationStatement"
-                                      ],
+                                      "required": ["type", "redistribution"],
                                       "additionalProperties": false
                                     }
                                   ]
@@ -50414,12 +51106,7 @@
                                             "type": "string"
                                           }
                                         },
-                                        "required": [
-                                          "type",
-                                          "redistribution",
-                                          "originalAuthor",
-                                          "authorizationStatement"
-                                        ],
+                                        "required": ["type", "redistribution"],
                                         "additionalProperties": false
                                       }
                                     ]
@@ -50577,12 +51264,7 @@
                                             "type": "string"
                                           }
                                         },
-                                        "required": [
-                                          "type",
-                                          "redistribution",
-                                          "originalAuthor",
-                                          "authorizationStatement"
-                                        ],
+                                        "required": ["type", "redistribution"],
                                         "additionalProperties": false
                                       }
                                     ]
@@ -51514,12 +52196,7 @@
                                               "type": "string"
                                             }
                                           },
-                                          "required": [
-                                            "type",
-                                            "redistribution",
-                                            "originalAuthor",
-                                            "authorizationStatement"
-                                          ],
+                                          "required": ["type", "redistribution"],
                                           "additionalProperties": false
                                         }
                                       ]
@@ -51677,12 +52354,7 @@
                                               "type": "string"
                                             }
                                           },
-                                          "required": [
-                                            "type",
-                                            "redistribution",
-                                            "originalAuthor",
-                                            "authorizationStatement"
-                                          ],
+                                          "required": ["type", "redistribution"],
                                           "additionalProperties": false
                                         }
                                       ]
@@ -51940,12 +52612,7 @@
                                           "type": "string"
                                         }
                                       },
-                                      "required": [
-                                        "type",
-                                        "redistribution",
-                                        "originalAuthor",
-                                        "authorizationStatement"
-                                      ],
+                                      "required": ["type", "redistribution"],
                                       "additionalProperties": false
                                     }
                                   ]
@@ -52103,12 +52770,7 @@
                                           "type": "string"
                                         }
                                       },
-                                      "required": [
-                                        "type",
-                                        "redistribution",
-                                        "originalAuthor",
-                                        "authorizationStatement"
-                                      ],
+                                      "required": ["type", "redistribution"],
                                       "additionalProperties": false
                                     }
                                   ]
@@ -53054,12 +53716,7 @@
                                           "type": "string"
                                         }
                                       },
-                                      "required": [
-                                        "type",
-                                        "redistribution",
-                                        "originalAuthor",
-                                        "authorizationStatement"
-                                      ],
+                                      "required": ["type", "redistribution"],
                                       "additionalProperties": false
                                     }
                                   ]
@@ -53217,12 +53874,7 @@
                                           "type": "string"
                                         }
                                       },
-                                      "required": [
-                                        "type",
-                                        "redistribution",
-                                        "originalAuthor",
-                                        "authorizationStatement"
-                                      ],
+                                      "required": ["type", "redistribution"],
                                       "additionalProperties": false
                                     }
                                   ]
@@ -57197,12 +57849,7 @@
                                           "type": "string"
                                         }
                                       },
-                                      "required": [
-                                        "type",
-                                        "redistribution",
-                                        "originalAuthor",
-                                        "authorizationStatement"
-                                      ],
+                                      "required": ["type", "redistribution"],
                                       "additionalProperties": false
                                     }
                                   ]
@@ -57360,12 +58007,7 @@
                                           "type": "string"
                                         }
                                       },
-                                      "required": [
-                                        "type",
-                                        "redistribution",
-                                        "originalAuthor",
-                                        "authorizationStatement"
-                                      ],
+                                      "required": ["type", "redistribution"],
                                       "additionalProperties": false
                                     }
                                   ]
@@ -58302,12 +58944,7 @@
                                             "type": "string"
                                           }
                                         },
-                                        "required": [
-                                          "type",
-                                          "redistribution",
-                                          "originalAuthor",
-                                          "authorizationStatement"
-                                        ],
+                                        "required": ["type", "redistribution"],
                                         "additionalProperties": false
                                       }
                                     ]
@@ -58465,12 +59102,7 @@
                                             "type": "string"
                                           }
                                         },
-                                        "required": [
-                                          "type",
-                                          "redistribution",
-                                          "originalAuthor",
-                                          "authorizationStatement"
-                                        ],
+                                        "required": ["type", "redistribution"],
                                         "additionalProperties": false
                                       }
                                     ]
@@ -59394,12 +60026,7 @@
                                           "type": "string"
                                         }
                                       },
-                                      "required": [
-                                        "type",
-                                        "redistribution",
-                                        "originalAuthor",
-                                        "authorizationStatement"
-                                      ],
+                                      "required": ["type", "redistribution"],
                                       "additionalProperties": false
                                     }
                                   ]
@@ -59557,12 +60184,7 @@
                                           "type": "string"
                                         }
                                       },
-                                      "required": [
-                                        "type",
-                                        "redistribution",
-                                        "originalAuthor",
-                                        "authorizationStatement"
-                                      ],
+                                      "required": ["type", "redistribution"],
                                       "additionalProperties": false
                                     }
                                   ]

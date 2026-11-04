@@ -74,6 +74,11 @@ export type AuthContextResponse = z.infer<typeof AuthContextResponseSchema>;
 export const AuthNoticeResponseSchema = z.strictObject({
   data: z.strictObject({ message: z.string() }),
 });
+export const LoginResponseSchema = z.strictObject({
+  data: AuthNoticeResponseSchema.shape.data.extend({
+    assurance: z.enum(['authenticated', 'mfa_setup', 'mfa_required']),
+  }),
+});
 export const AuthSessionsResponseSchema = z.strictObject({
   data: z.array(SessionSummarySchema).max(20),
 });

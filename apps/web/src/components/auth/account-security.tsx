@@ -292,7 +292,7 @@ export function AccountSecurity() {
         敏感操作会校验当前密码，已开启二次验证的账号还需要近期验证身份
       </p>
       <Link
-        href="/mfa?reauth=1"
+        href="/account?tab=mfa"
         className={cn(
           buttonVariants({ variant: 'link' }),
           'h-auto min-h-11 w-fit max-w-full justify-start whitespace-normal px-0 py-2 text-left underline',

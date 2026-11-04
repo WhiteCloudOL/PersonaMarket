@@ -13,12 +13,13 @@ import { Button } from '@personamarket/ui/components/button';
 import { AuthField, FormNotice, SubmitButton } from './auth-fields';
 import { authApi, authQuery } from '@/lib/auth-api';
 import { useAuthChange } from './use-auth-change';
+import { announceAuthSession } from '@/lib/auth-session-events';
 
 export function MfaForm({
   mode,
   returnTo,
 }: {
-  mode: 'auto' | 'setup' | 'verify';
+  mode: 'auto' | 'setup' | 'verify' | 'manage';
   returnTo?: string | undefined;
 }) {
   const context = useQuery(authQuery);
@@ -50,7 +51,12 @@ export function MfaForm({
   });
   const verify = useMutation({
     mutationFn: authApi.mfa,
-    onSuccess: () => changed(returnTo),
+    onSuccess: async () => {
+      if (mode !== 'manage') return changed(returnTo);
+      form.reset();
+      await client.invalidateQueries({ queryKey: authQuery.queryKey });
+      announceAuthSession();
+    },
     retry: false,
   });
   if (context.isPending) return <p role="status">正在读取二次验证状态…</p>;
@@ -91,10 +97,15 @@ export function MfaForm({
         <p role="status" className="text-sm">
           {copyNotice}
         </p>
-        <Button onClick={() => void changed(returnTo)}>已安全保存，继续</Button>
+        <Button onClick={() => (mode === 'manage' ? setCodes(null) : void changed(returnTo))}>
+          已安全保存，继续
+        </Button>
       </div>
     );
-  const needSetup = mode === 'setup' || context.data.data.assurance === 'mfa_setup';
+  const needSetup =
+    mode === 'setup' ||
+    context.data.data.assurance === 'mfa_setup' ||
+    (mode === 'manage' && !context.data.data.mfaEnabled);
   if (needSetup && !enrollment)
     return (
       <div className="flex flex-col gap-5">
@@ -141,7 +152,10 @@ export function MfaForm({
           error={form.formState.errors.code?.message}
         />
       </FieldGroup>
-      <FormNotice error={confirm.error ?? verify.error} />
+      <FormNotice
+        error={confirm.error ?? verify.error}
+        message={mode === 'manage' && verify.isSuccess ? '已重新验证身份' : undefined}
+      />
       <SubmitButton pending={confirm.isPending || verify.isPending}>
         {enrollment ? '确认绑定' : '完成二次验证'}
       </SubmitButton>

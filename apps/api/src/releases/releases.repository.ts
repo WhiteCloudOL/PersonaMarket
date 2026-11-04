@@ -18,6 +18,7 @@ import {
   SubmissionPendingHintResponseSchema,
   createPublicSnapshotSchema,
   PublicSnapshotSchema,
+  PublicationSchema,
   publicSnapshotCandidate,
   type CreateReleaseSchema,
   type RestoreSubmissionSchema,
@@ -239,6 +240,44 @@ export class ReleasesRepository {
         .select({ value: max(releaseSubmissions.attemptNumber) })
         .from(releaseSubmissions)
         .where(eq(releaseSubmissions.releaseId, release.id));
+      const customTagNames = draft.customTags ?? [];
+      if (customTagNames.length) {
+        // 并发投稿按一致的名称顺序写入，数据库唯一索引负责复用同名标签。
+        await tx
+          .insert(tags)
+          .values(
+            customTagNames
+              .toSorted((a, b) => {
+                const first = a.toLowerCase();
+                const second = b.toLowerCase();
+                return first < second ? -1 : first > second ? 1 : 0;
+              })
+              .map((name) => ({ name, userCreated: true })),
+          )
+          .onConflictDoNothing();
+        const customRows = await tx
+          .select({ id: tags.id, name: tags.name })
+          .from(tags)
+          .where(
+            and(
+              eq(tags.active, true),
+              sql`lower(${tags.name}) IN (${sql.join(
+                customTagNames.map((name) => sql`lower(${name})`),
+                sql`, `,
+              )})`,
+            ),
+          )
+          .for('share');
+        if (
+          customRows.length !== customTagNames.length ||
+          customRows.some((row) => snapshot.tagIds.includes(row.id))
+        )
+          throw new BusinessError('VALIDATION_FAILED', '存在重复或已停用的标签，请重新填写', {
+            fieldErrors: [{ path: 'customTags', message: '请移除重复或已停用的标签' }],
+          });
+        snapshot.tagIds.push(...customRows.map((row) => row.id));
+        tagRows.push(...customRows);
+      }
       const publication = {
         publisher: account.username,
         category,
@@ -334,6 +373,14 @@ export class ReleasesRepository {
         throw new BusinessError('REVISION_CONFLICT', '当前草稿已变化，请备份编辑后重新确认');
       const previous = PersonaDraftSchema.parse(row.payload);
       const snapshot = PublicSnapshotSchema.parse(submission.snapshot);
+      const custom = snapshot.tagIds.length
+        ? await tx
+            .select({ id: tags.id })
+            .from(tags)
+            .where(and(inArray(tags.id, snapshot.tagIds), eq(tags.userCreated, true)))
+        : [];
+      const customIds = new Set(custom.map((row) => row.id));
+      const publication = PublicationSchema.parse(submission.publication);
       const proofs = await tx
         .select({ id: assetReferences.assetId })
         .from(assetReferences)
@@ -346,6 +393,8 @@ export class ReleasesRepository {
         );
       const payload = PersonaDraftSchema.parse({
         ...snapshot,
+        tagIds: snapshot.tagIds.filter((tagId) => !customIds.has(tagId)),
+        customTags: publication.tags.filter((tag) => customIds.has(tag.id)).map((tag) => tag.name),
         authorNotes: snapshot.authorNotes ?? '',
         rightsAccepted: previous.rightsAccepted,
         evidenceAssetIds: proofs.map((proof) => proof.id),

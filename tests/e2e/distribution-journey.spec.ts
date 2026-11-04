@@ -144,8 +144,9 @@ for (const platform of ['maibot', 'astrbot'] as const) {
                 exact: true,
               })
               .click();
+            await author.getByLabel('作品标签', { exact: true }).fill('温柔治愈');
             await author
-              .getByRole('group', { name: '作品标签', exact: true })
+              .getByRole('group', { name: '推荐标签', exact: true })
               .getByRole('button', { name: '温柔治愈', exact: true })
               .click();
             await author

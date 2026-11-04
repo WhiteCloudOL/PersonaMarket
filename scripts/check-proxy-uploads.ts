@@ -6,6 +6,7 @@ import {
   MarketPersonaSchema,
   MarketImportPreviewResponseSchema,
   AssetResponseSchema,
+  PERSONA_AVATAR_MAX_BYTES,
   DraftResponseSchema,
   ImportPreviewResponseSchema,
   TextImportSourceResponseSchema,
@@ -59,6 +60,7 @@ async function upload(path: string, bytes: Buffer<ArrayBuffer>, filename: string
     headers: {
       Origin: http.origin,
       'X-CSRF-Token': context.data.csrfToken,
+      'X-Expected-Account': context.data.account?.id ?? '',
       Cookie: [...http.cookies].map(([key, value]) => key + '=' + value).join('; '),
     },
     signal: AbortSignal.timeout(30000),
@@ -174,6 +176,17 @@ assert.equal(imageResponse.status, 200, '合法大于4MiB的PNG应穿过Caddy并
 const image = AssetResponseSchema.parse(await imageResponse.json()).data;
 assert.equal(image.mime, 'image/webp');
 assert.ok(image.bytes < png.length);
+const avatarPath = '/api/v1/me/assets/upload-persona-avatar';
+const avatar = await upload(avatarPath, paddedPng(PERSONA_AVATAR_MAX_BYTES - 1), 'avatar.png');
+assert.equal(avatar.status, 200, '小于 10 MiB 的头像应经代理成功转为 WebP');
+const avatarAsset = AssetResponseSchema.parse(await avatar.json()).data;
+assert.equal(avatarAsset.mime, 'image/webp');
+assert.ok(avatarAsset.bytes < 512 * 1024);
+assert.ok(avatarAsset.width <= 512 && avatarAsset.height <= 512);
+assert.equal(
+  (await upload(avatarPath, paddedPng(PERSONA_AVATAR_MAX_BYTES), 'too-large.png')).status,
+  413,
+);
 assert.equal((await http.raw('/api/v1/me/assets/' + image.id)).status, 200);
 assert.equal(
   (await new AuthHttp(input.origin, input.publicOrigin).raw('/api/v1/public/assets/' + image.id))
@@ -250,5 +263,5 @@ const ordinary = await http.raw('/api/v1/auth/login', {
 });
 assert.equal(ordinary.status, 413);
 console.log(
-  '真实Caddy→API：4MiB通用JSON/原生GBK/UTF16边界、原文确认、大PNG重编码、大ZIP预览确认、超限和拒绝后重试通过',
+  '真实Caddy→API：4MiB通用JSON/原生GBK/UTF16边界、原文确认、PNG和人设头像重编码、大ZIP预览确认、超限和拒绝后重试通过',
 );

@@ -4,7 +4,13 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { FormProvider, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
+import {
+  useIsMutating,
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type UseQueryResult,
+} from '@tanstack/react-query';
 import {
   PersonaDraftSchema,
   emptyPersonaDraft,
@@ -32,6 +38,7 @@ import { authQuery } from '@/lib/auth-api';
 import { personasApi } from '@/lib/personas-api';
 import { DraftText, EditorSection, MaiBotFields, AstrBotFields } from './draft-fields';
 import { CategoryField, TagsField } from './taxonomy-fields';
+import { PersonaAvatarField, personaAvatarUploadKey } from './persona-avatar-field';
 import { RecommendedModelsFields } from './model-fields';
 import { OriginFields } from './origin-fields';
 import { PlatformField } from './platform-field';
@@ -142,8 +149,12 @@ function CreatePersonaFields({ auth }: { auth: UseQueryResult<AuthContextRespons
         : { ...current, platform: 'astrbot', content: structuredClone(buffers.current.astrbot) };
     form.reset(draft, { keepDefaultValues: true });
   };
-  const save = form.handleSubmit((draft) => mutation.mutate({ draft, intent: 'edit' }));
+  const avatarPending = useIsMutating({ mutationKey: personaAvatarUploadKey }) > 0;
+  const save = form.handleSubmit((draft) => {
+    if (!avatarPending) mutation.mutate({ draft, intent: 'edit' });
+  });
   const release = form.handleSubmit((draft) => {
+    if (avatarPending) return;
     const checked = createPublicSnapshotSchema(limits).safeParse(publicSnapshotCandidate(draft));
     if (!checked.success || !draft.rightsAccepted) {
       form.setError('root.publication', {
@@ -158,7 +169,7 @@ function CreatePersonaFields({ auth }: { auth: UseQueryResult<AuthContextRespons
     <>
       <Button
         type="submit"
-        disabled={pending}
+        disabled={pending || avatarPending}
         className="h-auto min-h-11 min-w-0 flex-1 whitespace-normal"
         variant="outline"
       >
@@ -171,7 +182,7 @@ function CreatePersonaFields({ auth }: { auth: UseQueryResult<AuthContextRespons
       </Button>
       <Button
         type="button"
-        disabled={pending || !taxonomy.data}
+        disabled={pending || avatarPending || !taxonomy.data}
         className="h-auto min-h-11 min-w-0 flex-1 whitespace-normal"
         onClick={() => void release()}
       >
@@ -271,7 +282,10 @@ function CreatePersonaFields({ auth }: { auth: UseQueryResult<AuthContextRespons
                   <DraftText name="title" label="人设名称" limit={80} />
                   <CategoryField />
                   <DraftText name="summary" label="一句话简介" limit={200} />
-                  <TagsField variant="select" />
+                  <PersonaAvatarField />
+                  <div className="min-w-0 sm:col-span-2">
+                    <TagsField />
+                  </div>
                 </div>
               </EditorSection>
               <PlatformField value={platform} onChange={choosePlatform} />

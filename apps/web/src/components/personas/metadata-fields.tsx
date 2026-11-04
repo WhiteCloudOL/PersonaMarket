@@ -2,6 +2,7 @@ import { EditorSection } from './editor-section';
 import { CategoryField, TagsField } from './taxonomy-fields';
 import { RecommendedModelsFields } from './model-fields';
 import { OriginFields } from './origin-fields';
+import { PersonaAvatarField } from './persona-avatar-field';
 export function MetadataFields() {
   return (
     <>
@@ -13,6 +14,7 @@ export function MetadataFields() {
       >
         <CategoryField />
         <TagsField />
+        <PersonaAvatarField />
       </EditorSection>
       <RecommendedModelsFields />
       <OriginFields />

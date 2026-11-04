@@ -42,7 +42,8 @@ export function assertMediaRemote(settings: MediaSettings, value: string) {
   return target;
 }
 
-export type MediaImageSource = { kind: 'local' } | { kind: 'remote'; urls: readonly string[] };
+export type MediaImageSource =
+  { kind: 'local' | 'persona-avatar' } | { kind: 'remote'; urls: readonly string[] };
 export function assertMediaImageSize(settings: MediaSettings, inputBytes: number) {
   if (!Number.isSafeInteger(inputBytes) || inputBytes <= 0 || inputBytes > 5242880)
     throw new BusinessError('INVALID_INPUT', '图片不能为空且需要在 5 MiB 以内');
@@ -54,8 +55,8 @@ export function assertMediaImage(
   inputBytes: number,
   source: MediaImageSource = { kind: 'local' },
 ) {
-  assertMediaImageSize(settings, inputBytes);
-  if (source.kind === 'local') {
+  if (source.kind !== 'persona-avatar') assertMediaImageSize(settings, inputBytes);
+  if (source.kind !== 'remote') {
     if (!settings.uploadsEnabled) throw new BusinessError('FORBIDDEN', '管理员已关闭本地图片上传');
   } else {
     if (!source.urls.length)

@@ -1,6 +1,7 @@
 import {
   listOwnAssets,
   uploadOwnImage,
+  uploadPersonaAvatar,
   importOwnImageUrl,
   getOwnImageImportJob,
 } from '@personamarket/api-client';
@@ -9,10 +10,32 @@ import {
   AssetResponseSchema,
   AssetJobResponseSchema,
 } from '@personamarket/contracts';
-import { checkedResponse, authenticatedWrite, sessionRequestOptions } from './auth-api';
+import {
+  checkedResponse,
+  authenticatedWrite,
+  authenticatedWriteFor,
+  sessionRequestOptions,
+} from './auth-api';
 const options = () => ({ ...sessionRequestOptions, signal: AbortSignal.timeout(15000) });
 export const assetsApi = {
   list: async () => checkedResponse(await listOwnAssets(options()), AssetListResponseSchema),
+  uploadAvatar: (accountId: string, file: File) =>
+    authenticatedWriteFor(
+      accountId,
+      (header) =>
+        uploadPersonaAvatar({
+          ...options(),
+          signal: AbortSignal.timeout(60000),
+          body: { file },
+          params: { header: { ...header, 'X-Expected-Account': accountId } },
+          bodySerializer: (body) => {
+            const form = new FormData();
+            form.set('file', body.file);
+            return form;
+          },
+        }),
+      AssetResponseSchema,
+    ),
   upload: (file: File, purpose: 'content' | 'evidence') =>
     authenticatedWrite(
       (header) =>

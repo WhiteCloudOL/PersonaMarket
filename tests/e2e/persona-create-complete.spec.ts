@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { DraftResponseSchema } from '@personamarket/contracts';
 import { loginCreator } from '../fixtures/browser-account.js';
+import { fixturePng } from '../fixtures/image.js';
 
 test.use({ trace: 'off', screenshot: 'off' });
 test('创建页完整填写、平台正文与来源切换保留、真实初始化和移动预览', async ({ page }, info) => {
@@ -8,16 +9,28 @@ test('创建页完整填写、平台正文与来源切换保留、真实初始�
   page.on('pageerror', (error) => browserErrors.push(error.message));
   await loginCreator(page);
   await page.goto('/dashboard/personas/new');
+  await expect(page.locator('link[rel="icon"][href^="/favicon.ico"]')).toHaveCount(1);
+  expect((await page.request.get('/favicon.ico')).status()).toBe(200);
   await page.getByLabel('人设名称', { exact: true }).fill('星光书房的新角色');
   await page.getByLabel('一句话简介', { exact: true }).fill('创建时一起保存的简介');
-  for (const name of ['主要分类', '作品标签']) {
-    const bounds = await page.getByRole('combobox', { name, exact: true }).boundingBox();
-    expect(bounds?.height).toBeGreaterThanOrEqual(44);
+  const tag = page.getByLabel('作品标签', { exact: true });
+  expect(
+    (await page.getByRole('combobox', { name: '主要分类', exact: true }).boundingBox())?.height,
+  ).toBeGreaterThanOrEqual(44);
+  expect((await tag.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  for (const name of ['温柔治愈', '文学创作']) {
+    await tag.fill(name);
+    await page.getByRole('button', { name, exact: true }).click();
   }
-  await page.getByRole('combobox', { name: '作品标签', exact: true }).click();
-  await page.getByRole('option', { name: '温柔治愈', exact: true }).click();
-  await page.getByRole('option', { name: '文学创作', exact: true }).click();
-  await page.keyboard.press('Escape');
+  await tag.fill(' 星海图书馆 ');
+  await tag.press('Enter');
+  await expect(
+    page.getByRole('button', { name: '移除标签 星海图书馆', exact: true }),
+  ).toBeVisible();
+  await page
+    .getByLabel('人设头像', { exact: true })
+    .setInputFiles({ name: 'avatar.png', mimeType: 'image/png', buffer: fixturePng });
+  await expect(page.getByAltText('当前人设头像')).toBeVisible();
   await page.getByLabel('人格设定', { exact: true }).fill('  喜欢星光与阅读\n保留空白  ');
   await page.getByLabel('表达风格', { exact: true }).fill('温和自然');
   await page.getByLabel('行为风格', { exact: true }).fill('尊重边界');
@@ -56,9 +69,20 @@ test('创建页完整填写、平台正文与来源切换保留、真实初始�
   expect(saved.meta.revision).toBe(1);
   expect(saved.data.draft.summary).toBe('创建时一起保存的简介');
   expect(saved.data.draft.tagIds).toHaveLength(2);
+  expect(saved.data.draft.customTags).toEqual(['星海图书馆']);
+  expect(saved.data.draft.avatarAssetId).toBeTruthy();
+  expect(
+    (await page.request.get('/api/v1/me/assets/' + saved.data.draft.avatarAssetId)).headers()[
+      'content-type'
+    ],
+  ).toContain('image/webp');
   expect(saved.data.draft.recommendedModels).toEqual([{ modelId: 'author/model', note: '' }]);
   expect(saved.data.draft.origin).toMatchObject({ type: 'repost', originalAuthor: '原作者说明' });
   await page.reload();
+  await expect(page.getByAltText('当前人设头像')).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: '移除标签 星海图书馆', exact: true }),
+  ).toBeVisible();
   await expect(page.getByLabel('人格设定', { exact: true })).toHaveValue(
     '  喜欢星光与阅读\n保留空白  ',
   );

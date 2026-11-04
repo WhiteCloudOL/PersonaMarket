@@ -41,6 +41,7 @@ export const tags = pgTable(
     id: uuid('id').defaultRandom().primaryKey(),
     name: varchar('name', { length: 80 }).notNull(),
     active: boolean('active').default(true).notNull(),
+    userCreated: boolean('user_created').default(false).notNull(),
     ...taxonomyManagementColumns(),
   },
   (table) => [

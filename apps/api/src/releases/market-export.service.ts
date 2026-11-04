@@ -87,7 +87,14 @@ export class MarketExportService {
         tagNames: release.publication.tags.map((tag) => tag.name),
         readmeMarkdown: remapMarkdownImages(snapshot.readmeMarkdown, replacements),
         recommendedModels: snapshot.recommendedModels,
-        origin: snapshot.origin,
+        origin:
+          snapshot.origin.type === 'repost'
+            ? {
+                ...snapshot.origin,
+                originalAuthor: snapshot.origin.originalAuthor ?? '',
+                authorizationStatement: snapshot.origin.authorizationStatement ?? '',
+              }
+            : snapshot.origin,
         authorNotes: snapshot.authorNotes ?? '',
         ...(snapshot.avatarAssetId ? { avatarKey: snapshot.avatarAssetId.toLowerCase() } : {}),
         ...(snapshot.coverAssetId ? { coverKey: snapshot.coverAssetId.toLowerCase() } : {}),

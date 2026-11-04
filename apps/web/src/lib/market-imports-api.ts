@@ -92,14 +92,20 @@ export const marketImportsApi = {
         MarketImportDiscardResponseSchema,
       ),
     ),
-  confirm: (accountId: string, body: z.infer<typeof MarketImportConfirmSchema>) =>
+  confirm: (
+    accountId: string,
+    { authorizationStatement, ...body }: z.infer<typeof MarketImportConfirmSchema>,
+  ) =>
     network(() =>
       authenticatedWriteFor(
         accountId,
         (header) =>
           api.confirmMarketPersonaImport({
             ...options(),
-            body,
+            body: {
+              ...body,
+              ...(authorizationStatement === undefined ? {} : { authorizationStatement }),
+            },
             params: { header },
           }),
         DraftResponseSchema,

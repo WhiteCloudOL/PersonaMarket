@@ -2880,6 +2880,50 @@ export interface ApiPaths {
       };
     };
   };
+  '/api/v1/me/assets/upload-persona-avatar': {
+    post: {
+      parameters: Params<Models.UploadPersonaAvatarData>;
+      requestBody: { content: { 'multipart/form-data': Models.UploadPersonaAvatarData['body'] } };
+      responses: {
+        200: {
+          headers: Record<string, unknown>;
+          content: { 'application/json': Models.UploadPersonaAvatarResponses[200] };
+        };
+        400: {
+          headers: Record<string, unknown>;
+          content: { 'application/json': Models.UploadPersonaAvatarErrors[400] };
+        };
+        401: {
+          headers: Record<string, unknown>;
+          content: { 'application/json': Models.UploadPersonaAvatarErrors[401] };
+        };
+        403: {
+          headers: Record<string, unknown>;
+          content: { 'application/json': Models.UploadPersonaAvatarErrors[403] };
+        };
+        404: {
+          headers: Record<string, unknown>;
+          content: { 'application/json': Models.UploadPersonaAvatarErrors[404] };
+        };
+        409: {
+          headers: Record<string, unknown>;
+          content: { 'application/json': Models.UploadPersonaAvatarErrors[409] };
+        };
+        413: {
+          headers: Record<string, unknown>;
+          content: { 'application/json': Models.UploadPersonaAvatarErrors[413] };
+        };
+        429: {
+          headers: Record<string, unknown>;
+          content: { 'application/json': Models.UploadPersonaAvatarErrors[429] };
+        };
+        503: {
+          headers: Record<string, unknown>;
+          content: { 'application/json': Models.UploadPersonaAvatarErrors[503] };
+        };
+      };
+    };
+  };
   '/api/v1/me/assets/{id}': {
     get: {
       parameters: Params<Models.ReadOwnImageData>;
@@ -10134,6 +10178,17 @@ export function uploadOwnImage({
   ...options
 }: FetchOptions<ApiPaths['/api/v1/me/assets/upload/{purpose}']['post']> & { baseUrl?: string }) {
   return createClient<ApiPaths>({ baseUrl }).POST('/api/v1/me/assets/upload/{purpose}', options);
+}
+export function uploadPersonaAvatar({
+  baseUrl = '',
+  ...options
+}: FetchOptions<ApiPaths['/api/v1/me/assets/upload-persona-avatar']['post']> & {
+  baseUrl?: string;
+}) {
+  return createClient<ApiPaths>({ baseUrl }).POST(
+    '/api/v1/me/assets/upload-persona-avatar',
+    options,
+  );
 }
 export function readOwnImage({
   baseUrl = '',

@@ -153,7 +153,9 @@ export function AssetLibrary({ step = '04' }: { step?: string }) {
             event.target.value = '';
           }}
         />
-        <FieldDescription>证据与作品图片分开存储，发布时不会进入公开内容或导出包</FieldDescription>
+        <FieldDescription>
+          选填。证据与作品图片分开存储，发布时不会进入公开内容或导出包。
+        </FieldDescription>
       </Field>
       <Field>
         <FieldLabel htmlFor="remote-image-url">在线图片地址</FieldLabel>

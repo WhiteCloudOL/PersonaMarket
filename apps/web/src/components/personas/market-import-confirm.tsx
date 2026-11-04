@@ -73,7 +73,9 @@ export function MarketImportConfirm({
           ? preview.draft.origin.sourceDescription || preview.source?.personaUrl || ''
           : '',
       authorizationStatement:
-        preview.draft.origin.type === 'repost' ? preview.draft.origin.authorizationStatement : '',
+        preview.draft.origin.type === 'repost'
+          ? (preview.draft.origin.authorizationStatement ?? '')
+          : '',
     },
   });
   const confirmed = useWatch({ control: form.control, name: 'confirmed' });

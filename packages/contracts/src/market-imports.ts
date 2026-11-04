@@ -44,10 +44,7 @@ export const MarketImportDiscardResponseSchema = z.strictObject({
   data: z.strictObject({ id: IdSchema, cancelled: z.literal(true) }),
 });
 export const MarketImportConfirmSchema = ImportConfirmRequestSchema.extend({
-  authorizationStatement: textSchema(1, 5000).refine(
-    (value) => Boolean(value.trim()),
-    '请填写并核实本次转载依据',
-  ),
+  authorizationStatement: textSchema(0, 5000).optional(),
 });
 export const MarketImportImageJobSchema = z.strictObject({
   schemaVersion: z.literal(1),

@@ -2,10 +2,12 @@ import { describe, expect, it } from 'vitest';
 import {
   DraftContentSchema,
   OriginDeclarationSchema,
+  PersonaDraftSchema,
   PersonaContentSchema,
   PublicBrandSchema,
   PublicSnapshotSchema,
   createPersonaContentSchema,
+  emptyPersonaDraft,
   textSchema,
 } from '@personamarket/contracts';
 import { astrbotContent, maibotContent, publicSnapshot } from '../fixtures/persona.js';
@@ -66,7 +68,7 @@ describe('平台与快照契约', () => {
     });
     expect(tightened.safeParse(maibotContent).success).toBe(false);
   });
-  it('转载要求来源与依据，自定义政策要求说明', () => {
+  it('来源和转载许可仍必选，授权证据和说明可留空', () => {
     expect(
       OriginDeclarationSchema.safeParse({
         type: 'repost',
@@ -74,9 +76,29 @@ describe('平台与快照契约', () => {
         authorizationStatement: '获得许可',
         redistribution: 'not_allowed',
       }).success,
-    ).toBe(false);
+    ).toBe(true);
     expect(
       OriginDeclarationSchema.safeParse({ type: 'original', redistribution: 'custom' }).success,
+    ).toBe(true);
+    expect(OriginDeclarationSchema.safeParse({ type: 'repost' }).success).toBe(false);
+    expect(OriginDeclarationSchema.safeParse({ redistribution: 'not_allowed' }).success).toBe(
+      false,
+    );
+  });
+  it('自定义标签可以保存，推荐与自定义合计最多八个且不得重名', () => {
+    const draft = emptyPersonaDraft('maibot');
+    expect(PersonaDraftSchema.parse({ ...draft, customTags: [' 夜读 '] }).customTags).toEqual([
+      '夜读',
+    ]);
+    expect(PersonaDraftSchema.safeParse({ ...draft, customTags: ['Lore', 'lore'] }).success).toBe(
+      false,
+    );
+    expect(
+      PersonaDraftSchema.safeParse({
+        ...draft,
+        tagIds: ['11111111-1111-4111-8111-111111111111'],
+        customTags: Array.from({ length: 8 }, (_, index) => `标签 ${index}`),
+      }).success,
     ).toBe(false);
   });
   it('公开白名单剔除数据库中的私有字段', () => {

@@ -1,9 +1,15 @@
 'use client';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { useQuery } from '@tanstack/react-query';
-import type { PersonaDraft } from '@personamarket/contracts';
+import {
+  CustomPersonaTagSchema,
+  MAX_PERSONA_TAGS,
+  type PersonaDraft,
+} from '@personamarket/contracts';
+import { useState } from 'react';
+import { XIcon } from 'lucide-react';
 import { Button } from '@personamarket/ui/components/button';
-import { ToggleGroup, ToggleGroupItem } from '@personamarket/ui/components/toggle-group';
+import { Input } from '@personamarket/ui/components/input';
 import {
   Select,
   SelectTrigger,
@@ -50,78 +56,173 @@ export function CategoryField() {
   );
 }
 
-export function TagsField({ variant = 'choices' }: { variant?: 'choices' | 'select' }) {
+export function TagsField() {
   const form = useFormContext<PersonaDraft>();
   const taxonomy = useQuery(taxonomyQuery);
   const tagIds = useWatch({ control: form.control, name: 'tagIds' });
+  const customTags = useWatch({ control: form.control, name: 'customTags' }) ?? [];
+  const [input, setInput] = useState('');
+  const [expanded, setExpanded] = useState(false);
+  const [error, setError] = useState('');
+  const tags = taxonomy.data?.data.tags ?? [];
+  const count = tagIds.length + customTags.length;
+  const search = input.trim().toLowerCase();
+  const options = tags.filter(
+    (tag) =>
+      !tagIds.includes(tag.id) &&
+      !customTags.some((name) => name.toLowerCase() === tag.name.toLowerCase()) &&
+      tag.name.toLowerCase().includes(search),
+  );
+  const select = (id: string) => {
+    if (count >= MAX_PERSONA_TAGS) return;
+    form.setValue('tagIds', [...tagIds, id], { shouldDirty: true });
+    setInput('');
+    setError('');
+  };
+  const add = () => {
+    if (count >= MAX_PERSONA_TAGS) return;
+    const result = CustomPersonaTagSchema.safeParse(input);
+    if (!result.success) {
+      setError('请输入 1–24 个字符的标签');
+      return;
+    }
+    const match = tags.find((tag) => tag.name.toLowerCase() === search);
+    if (
+      (match && tagIds.includes(match.id)) ||
+      customTags.some((name) => name.toLowerCase() === search)
+    ) {
+      setError('这个标签已经添加');
+      return;
+    }
+    if (match) select(match.id);
+    else {
+      form.setValue('customTags', [...customTags, result.data], { shouldDirty: true });
+      setInput('');
+      setError('');
+    }
+  };
   return (
-    <Field>
-      <div className="flex items-center justify-between gap-2">
-        <FieldLabel id="tags-label">作品标签</FieldLabel>
-        {variant === 'select' && (
-          <span className="text-xs tabular-nums text-muted-foreground">{tagIds.length} / 8</span>
-        )}
+    <Field data-invalid={Boolean(error)}>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <FieldLabel htmlFor="draft-customTags">作品标签</FieldLabel>
+        <span aria-live="polite" className="text-xs tabular-nums text-muted-foreground">
+          {count} / {MAX_PERSONA_TAGS}
+        </span>
       </div>
-      {taxonomy.isPending ? (
-        <p role="status" className="text-sm text-muted-foreground">
-          正在读取分类与标签…
-        </p>
-      ) : taxonomy.isError ? (
-        <div className="flex flex-col gap-2">
-          <FormNotice error="无法读取分类与标签，请重试" />
-          <Button type="button" variant="outline" onClick={() => void taxonomy.refetch()}>
-            重试读取分类与标签
-          </Button>
-        </div>
-      ) : taxonomy.data.data.tags.length && variant === 'select' ? (
-        <Select
-          multiple
-          value={tagIds}
-          items={taxonomy.data.data.tags.map((item) => ({ value: item.id, label: item.name }))}
-          onValueChange={(value) => {
-            if (value.length <= 8) form.setValue('tagIds', value, { shouldDirty: true });
-          }}
-        >
-          <SelectTrigger aria-labelledby="tags-label" className="h-11 w-full min-w-0">
-            <SelectValue placeholder="选择作品标签…" className="min-w-0 truncate" />
-          </SelectTrigger>
-          <SelectContent alignItemWithTrigger={false}>
-            <SelectGroup>
-              {taxonomy.data.data.tags.map((item) => (
-                <SelectItem
-                  key={item.id}
-                  value={item.id}
-                  disabled={tagIds.length >= 8 && !tagIds.includes(item.id)}
-                >
-                  {item.name}
-                </SelectItem>
-              ))}
-            </SelectGroup>
-          </SelectContent>
-        </Select>
-      ) : taxonomy.data.data.tags.length ? (
-        <ToggleGroup
-          multiple
-          value={tagIds}
-          aria-labelledby="tags-label"
-          className="flex-wrap"
-          variant="outline"
-          onValueChange={(value) => {
-            if (value.length <= 8)
-              form.setValue('tagIds', value.map(String), { shouldDirty: true });
-          }}
-        >
-          {taxonomy.data.data.tags.map((item) => (
-            <ToggleGroupItem key={item.id} value={item.id}>
-              {item.name}
-            </ToggleGroupItem>
+      {count > 0 && (
+        <div className="flex flex-wrap gap-2" role="group" aria-label="已添加的标签">
+          {tagIds.map((id) => {
+            const name = tags.find((tag) => tag.id === id)?.name ?? '已有标签';
+            return (
+              <Button
+                key={id}
+                type="button"
+                variant="secondary"
+                className="h-auto min-h-11 max-w-full whitespace-normal"
+                aria-label={`移除标签 ${name}`}
+                onClick={() =>
+                  form.setValue(
+                    'tagIds',
+                    tagIds.filter((tagId) => tagId !== id),
+                    { shouldDirty: true },
+                  )
+                }
+              >
+                <span className="min-w-0 wrap-anywhere">{name}</span>
+                <XIcon data-icon="inline-end" aria-hidden />
+              </Button>
+            );
+          })}
+          {customTags.map((name) => (
+            <Button
+              key={name}
+              type="button"
+              variant="secondary"
+              className="h-auto min-h-11 max-w-full whitespace-normal"
+              aria-label={`移除标签 ${name}`}
+              onClick={() =>
+                form.setValue(
+                  'customTags',
+                  customTags.filter((tag) => tag !== name),
+                  { shouldDirty: true },
+                )
+              }
+            >
+              <span className="min-w-0 wrap-anywhere">{name}</span>
+              <XIcon data-icon="inline-end" aria-hidden />
+            </Button>
           ))}
-        </ToggleGroup>
-      ) : (
-        <p className="text-sm text-muted-foreground">管理员添加标签后，可在这里选择</p>
+        </div>
       )}
-      {variant === 'choices' && (
-        <FieldDescription>可选，已选择 {tagIds.length} / 8 个标签</FieldDescription>
+      <div className="flex flex-wrap items-start gap-2">
+        <Input
+          id="draft-customTags"
+          name="persona-tag-input"
+          autoComplete="off"
+          aria-describedby="persona-tag-help"
+          aria-invalid={Boolean(error)}
+          placeholder="搜索或输入新标签…"
+          value={input}
+          disabled={count >= MAX_PERSONA_TAGS}
+          className="min-h-11 min-w-0 flex-1 basis-36"
+          onChange={(event) => {
+            setInput(event.target.value);
+            setError('');
+          }}
+          onKeyDown={(event) => {
+            if (event.key !== 'Enter' || event.nativeEvent.isComposing || event.keyCode === 229)
+              return;
+            event.preventDefault();
+            if (input.trim()) add();
+          }}
+        />
+        <Button
+          type="button"
+          variant="outline"
+          disabled={!input.trim() || count >= MAX_PERSONA_TAGS}
+          onClick={add}
+        >
+          添加标签
+        </Button>
+      </div>
+      <FieldDescription id="persona-tag-help">
+        可选。选择推荐标签，或输入自定义标签后按回车。
+      </FieldDescription>
+      {error && <FormNotice error={error} />}
+      {taxonomy.isPending && (
+        <p role="status" className="text-sm text-muted-foreground">
+          正在读取推荐标签…
+        </p>
+      )}
+      {taxonomy.isError && (
+        <Button type="button" variant="outline" onClick={() => void taxonomy.refetch()}>
+          重试读取推荐标签
+        </Button>
+      )}
+      {options.length > 0 && count < MAX_PERSONA_TAGS && (
+        <div className="flex flex-wrap gap-2" role="group" aria-label="推荐标签">
+          {(expanded ? options : options.slice(0, 8)).map((tag) => (
+            <Button
+              key={tag.id}
+              type="button"
+              variant="outline"
+              className="h-auto min-h-11 max-w-full whitespace-normal"
+              onClick={() => select(tag.id)}
+            >
+              <span className="min-w-0 wrap-anywhere">{tag.name}</span>
+            </Button>
+          ))}
+          {options.length > 8 && (
+            <Button
+              type="button"
+              variant="ghost"
+              aria-expanded={expanded}
+              onClick={() => setExpanded(!expanded)}
+            >
+              {expanded ? '收起推荐' : '更多推荐'}
+            </Button>
+          )}
+        </div>
       )}
     </Field>
   );

@@ -5,6 +5,7 @@ import { cookies } from 'next/headers';
 import { Providers } from '@/components/providers';
 import { SiteHeader } from '@/components/site-header';
 import { SiteFooter } from '@/components/site-footer';
+import { RouteContent } from '@/components/route-content';
 import { PublicMaintenanceNotice } from '@/components/system/public-maintenance-notice';
 import { readThemePreference } from '@/lib/theme-preference';
 
@@ -29,7 +30,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
           <Suspense fallback={null}>
             <PublicMaintenanceNotice />
           </Suspense>
-          {children}
+          <RouteContent>{children}</RouteContent>
           <SiteFooter />
         </Providers>
       </body>

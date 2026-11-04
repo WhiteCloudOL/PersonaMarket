@@ -23,7 +23,7 @@ export async function storeImage(
   database: Database,
   storage: Storage,
   ownerId: string,
-  purpose: 'content' | 'evidence' | 'avatar',
+  purpose: 'content' | 'evidence' | 'avatar' | 'persona-avatar',
   bytes: Uint8Array,
   sourceUrl?: string,
   fixedId?: string,
@@ -33,9 +33,9 @@ export async function storeImage(
   if (execution === 'request') await assertOrdinaryRequestAllowed(database);
   const origin: MediaImageSource = sourceUrl
     ? { kind: 'remote', urls: [sourceUrl, ...visitedSources] }
-    : { kind: 'local' };
+    : { kind: purpose === 'persona-avatar' ? 'persona-avatar' : 'local' };
   assertMediaImage(await readMediaSettings(database.db), bytes.byteLength, origin);
-  const normalized = await normalizeImage(bytes);
+  const normalized = await normalizeImage(bytes, undefined, origin.kind === 'persona-avatar');
   const storageKey = randomUUID().replaceAll('-', '') + '.webp';
   await storage.put(storageKey, normalized.data);
   try {
@@ -57,7 +57,7 @@ export async function storeImage(
         .values({
           ...(fixedId ? { id: fixedId } : {}),
           ownerId,
-          purpose,
+          purpose: purpose === 'persona-avatar' ? 'content' : purpose,
           storageKey,
           mime: 'image/webp',
           width: normalized.width,

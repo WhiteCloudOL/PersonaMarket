@@ -52,8 +52,9 @@ test('真实编辑器发版、审核差异与驳回重提、公开详情和作�
       await page
         .getByRole('option', { name: platform === 'MaiBot' ? '陪伴聊天' : '角色扮演', exact: true })
         .click();
+      await page.getByLabel('作品标签', { exact: true }).fill('温柔治愈');
       await page
-        .getByRole('group', { name: '作品标签', exact: true })
+        .getByRole('group', { name: '推荐标签', exact: true })
         .getByRole('button', { name: '温柔治愈', exact: true })
         .click();
       await page.getByRole('button', { name: '添加推荐模型', exact: true }).click();

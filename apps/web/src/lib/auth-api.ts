@@ -7,6 +7,7 @@ import {
   MfaConfirmResponseSchema,
   MfaSetupResponseSchema,
   PublicConfigResponseSchema,
+  LoginResponseSchema,
   type RegisterRequestSchema,
   type LoginRequestSchema,
 } from '@personamarket/contracts';
@@ -126,7 +127,7 @@ export const authApi = {
           params: { header },
           signal: AbortSignal.timeout(10000),
         }),
-      AuthNoticeResponseSchema,
+      LoginResponseSchema,
     ),
   verify: (token: string) =>
     write(

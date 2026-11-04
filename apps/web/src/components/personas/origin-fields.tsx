@@ -44,7 +44,7 @@ export function OriginFields({ step = '07' }: { step?: string }) {
       id="persona-origin"
       title="作品来源"
       step={step}
-      description="站内发布者来自当前账号，原作者与转载依据会随版本保留"
+      description="请选择原创或转载，并声明转载许可。补充说明和证据可以留空"
     >
       <Field>
         <FieldLabel id="origin-label">来源类型</FieldLabel>
@@ -67,19 +67,31 @@ export function OriginFields({ step = '07' }: { step?: string }) {
       </Field>
       {origin.type === 'repost' && (
         <>
-          <DraftText name="origin.originalAuthor" label="原作者" limit={100} />
+          <DraftText
+            name="origin.originalAuthor"
+            label="原作者"
+            limit={100}
+            description="选填，可注明原作者或团队"
+          />
           <DraftText
             name="origin.sourceUrl"
             label="来源链接"
             limit={2000}
-            description="填写 HTTP 或 HTTPS 链接，或在下方补充可核查的来源说明"
+            description="选填，支持 HTTP 或 HTTPS 链接"
           />
-          <DraftText name="origin.sourceDescription" label="来源说明" limit={2000} multiline />
+          <DraftText
+            name="origin.sourceDescription"
+            label="来源说明"
+            limit={2000}
+            multiline
+            description="选填，可补充作品来源"
+          />
           <DraftText
             name="origin.authorizationStatement"
             label="转载授权依据"
             limit={5000}
             multiline
+            description="选填，可补充转载授权的背景"
           />
         </>
       )}
@@ -108,7 +120,13 @@ export function OriginFields({ step = '07' }: { step?: string }) {
         </Select>
       </Field>
       {origin.redistribution === 'custom' && (
-        <DraftText name="origin.policyText" label="自定义转载规则" limit={5000} multiline />
+        <DraftText
+          name="origin.policyText"
+          label="自定义转载规则"
+          limit={5000}
+          multiline
+          description="选填，可补充转载条件"
+        />
       )}
       <DraftText name="authorNotes" label="作者使用说明" limit={2000} multiline />
       <Field orientation="horizontal">

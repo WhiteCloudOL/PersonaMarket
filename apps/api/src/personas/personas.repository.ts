@@ -183,7 +183,7 @@ export class PersonasRepository {
       this.database.db
         .select({ id: tags.id, name: tags.name })
         .from(tags)
-        .where(eq(tags.active, true))
+        .where(and(eq(tags.active, true), eq(tags.userCreated, false)))
         .orderBy(asc(tags.sortOrder), asc(tags.name), asc(tags.id)),
       this.database.db.query.siteSettings.findFirst({
         where: eq(siteSettings.key, 'contentLimits'),

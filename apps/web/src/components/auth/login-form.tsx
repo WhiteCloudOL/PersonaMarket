@@ -9,6 +9,7 @@ import type { z } from 'zod';
 import { FieldGroup } from '@personamarket/ui/components/field';
 import { AuthField, FormNotice, SubmitButton } from './auth-fields';
 import { authApi } from '@/lib/auth-api';
+import { announceAuthSession } from '@/lib/auth-session-events';
 import { useAuthChange } from './use-auth-change';
 export function LoginForm({ returnTo }: { returnTo?: string | undefined }) {
   const changed = useAuthChange();
@@ -18,9 +19,14 @@ export function LoginForm({ returnTo }: { returnTo?: string | undefined }) {
   });
   const mutation = useMutation({
     mutationFn: authApi.login,
-    onSuccess: async () => {
+    onSuccess: ({ data }) => {
       form.resetField('password');
-      await changed(returnTo);
+      // 创作页用当前 React 树保留访客草稿，登录后回到同一标签页继续编辑。
+      if (returnTo) return changed(returnTo);
+      announceAuthSession();
+      const target = data.assurance === 'authenticated' ? '/account' : '/mfa';
+      // 登录会旋转身份，整页导航同时丢弃旧账号的路由和查询缓存。
+      window.location.replace(target);
     },
     retry: false,
   });
@@ -48,8 +54,17 @@ export function LoginForm({ returnTo }: { returnTo?: string | undefined }) {
           error={form.formState.errors.password?.message}
         />
       </FieldGroup>
-      <FormNotice error={mutation.error} />
-      <SubmitButton pending={mutation.isPending}>登录</SubmitButton>
+      <FormNotice
+        error={
+          mutation.error?.name === 'TimeoutError'
+            ? '登录请求超时，请检查网络后重试'
+            : mutation.error
+        }
+      />
+      <SubmitButton pending={mutation.isPending} disabled={mutation.isSuccess}>
+        登录
+      </SubmitButton>
+      {mutation.isSuccess && <FormNotice message="登录已通过，正在打开下一页…" />}
       <div className="flex flex-wrap justify-between gap-3 text-sm">
         <Link href="/register" className="underline underline-offset-4">
           创建账号

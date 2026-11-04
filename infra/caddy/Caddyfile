@@ -18,8 +18,12 @@
 		method POST
 		path /api/v1/me/assets/upload/content /api/v1/me/assets/upload/evidence /api/v1/me/market-imports/*/images/*/upload
 	}
+	@persona_avatar_upload {
+		method POST
+		path /api/v1/me/assets/upload-persona-avatar
+	}
 	route {
-		# 仅上传入口预留multipart开销；API继续执行128MiB/4MiB文件与5MiB图片硬限
+		# 上传入口预留 multipart 开销，API 仍分别限制包、文本、图片和头像的实际文件大小。
 		handle @native_import_file {
 			request_body {
 				max_size 5MiB
@@ -35,6 +39,12 @@
 		handle @image_upload {
 			request_body {
 				max_size 6MiB
+			}
+			reverse_proxy api:3001
+		}
+		handle @persona_avatar_upload {
+			request_body {
+				max_size 11MiB
 			}
 			reverse_proxy api:3001
 		}

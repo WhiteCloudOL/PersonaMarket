@@ -324,8 +324,9 @@ export class AuthService implements OnApplicationShutdown {
       previous ? (hashAuthSecret('session', previous) ?? undefined) : undefined,
     );
     this.applySession(response, issue, result.session.expiresAt);
+    const assurance = this.assurance(result);
     return {
-      data: { message: this.assurance(result) === 'authenticated' ? '登录成功' : '请完成二次验证' },
+      data: { assurance, message: assurance === 'authenticated' ? '登录成功' : '请完成二次验证' },
     };
   }
   async logout(request: Request, response: Response, all = false, targetId?: string) {

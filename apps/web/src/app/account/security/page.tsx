@@ -1,4 +1,4 @@
 import { redirect } from 'next/navigation';
 export default function Page() {
-  redirect('/dashboard/security');
+  redirect('/account?tab=security');
 }

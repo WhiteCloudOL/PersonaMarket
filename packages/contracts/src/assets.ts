@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { IdSchema, TimestampSchema } from './common.js';
 export const AssetPurposeSchema = z.enum(['content', 'evidence', 'avatar']);
+export const PERSONA_AVATAR_MAX_BYTES = 10 * 1024 * 1024;
 export const AssetUploadParamsSchema = z.strictObject({ purpose: AssetPurposeSchema });
 export const AssetInfoSchema = z.strictObject({
   id: IdSchema,

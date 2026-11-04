@@ -15,21 +15,30 @@ import {
 import { checkedResponse, authenticatedWrite, sessionRequestOptions } from './auth-api';
 const options = () => ({ ...sessionRequestOptions, signal: AbortSignal.timeout(10000) });
 function draftBody(value: PersonaDraft) {
-  const { avatarAssetId, coverAssetId, recommendedModels, origin, ...rest } = value;
+  const { avatarAssetId, coverAssetId, recommendedModels, origin, customTags, ...rest } = value;
   const { policyText, ...originFields } = origin;
   const source =
     originFields.type === 'repost'
       ? (() => {
-          const { sourceUrl, sourceDescription, ...fields } = originFields;
+          const {
+            sourceUrl,
+            sourceDescription,
+            originalAuthor,
+            authorizationStatement,
+            ...fields
+          } = originFields;
           return {
             ...fields,
             ...(sourceUrl === undefined ? {} : { sourceUrl }),
             ...(sourceDescription === undefined ? {} : { sourceDescription }),
+            ...(originalAuthor === undefined ? {} : { originalAuthor }),
+            ...(authorizationStatement === undefined ? {} : { authorizationStatement }),
           };
         })()
       : originFields;
   return {
     ...rest,
+    ...(customTags === undefined ? {} : { customTags }),
     origin: { ...source, ...(policyText === undefined ? {} : { policyText }) },
     recommendedModels: recommendedModels.map(({ modelId, note }) => ({
       modelId,

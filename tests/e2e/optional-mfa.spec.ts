@@ -22,9 +22,9 @@ test('管理员不绑定 MFA 即可使用后台，过期高危操作就地确认
     await page.getByLabel('密码', { exact: true }).fill(password);
     await page.getByRole('button', { name: '登录', exact: true }).click();
     await expect(page).toHaveURL(/\/account$/);
-    await expect(page.getByRole('link', { name: '设置二次验证', exact: true })).toBeVisible();
-    await page.getByRole('link', { name: '站点设置', exact: true }).click();
-    await expect(page.getByRole('heading', { name: '站点品牌设置' })).toBeVisible();
+    await expect(page.getByRole('tab', { name: '二次验证', exact: true })).toBeVisible();
+    await page.getByRole('tab', { name: '站点设置', exact: true }).click();
+    await expect(page.getByRole('heading', { name: '站点展示' })).toBeVisible();
     await database.pool.query(
       "UPDATE auth_sessions SET created_at=now()-interval '11 minutes' WHERE user_id=(SELECT id FROM users WHERE username=$1)",
       [username],

@@ -104,6 +104,8 @@ docker compose --profile maintenance run --rm admin
 
 ## 账号安全与邮箱变更
 
+登录后在「账号管理」切换设备会话、二次验证和密码与邮箱标签。管理员也可在「站点设置」标签修改站点名称与简介，再进入完整的后台设置。
+
 用户在「账号与安全 → 密码与邮箱设置」更新密码、申请新邮箱确认及提交或撤回停用申请。新密码为 12–64 个 Unicode 字符，拒绝完整常见口令和明显的账号口令；登录仍支持历史密码长度，不截断原始输入。已启用 MFA 的账号在敏感操作前需近期二次验证，未绑定 MFA 的管理员使用近期密码确认。
 
 修改密码需要当前密码，成功后撤销所有会话与旧验证链接。新邮箱确认链接用途独立、绑定目标地址、三十分钟单次有效，重发使此前变更链接失效；确认前仍使用原邮箱，确认后撤销所有旧会话和安全链接，并向原已验证邮箱发送安全通知。链接令牌位于 fragment，由用户明确确认，普通 GET 不改变账号。
@@ -129,7 +131,7 @@ Compose 使用 Caddy 作为 Web 与 API 的统一外部入口，两者的 `TRUST
 
 当前配置用于本地运行。对公网发布前须完成依赖与镜像安全处置、业务权限验收和恢复演练，并提供 AGPL 对应版本源码获取方式；运行镜像采用固定摘要的精简系统和可审查补丁构建，构建时需访问官方镜像源、Go 模块源及 Alpine 软件源。
 
-Caddy 按入口限制请求体：通用文件预览的 POST 请求为 129 MiB，原生文件预览 `/api/v1/me/persona-imports/preview/file` 与文本源预览 `/api/v1/me/persona-imports/text/source/file` 的 POST 请求为 5 MiB，图片上传的 POST 请求为 6 MiB，其他入口为 4 MiB。上传入口的额外空间用于 multipart 边界和文件名；API 继续执行通用 JSON/原生文本/TXT/Markdown 4 MiB、完整 ZIP 128 MiB、单图 5 MiB 的文件硬限及鉴权、配额和内容校验。前置其他代理时需同步这些入口限制。更新 `infra/caddy/Caddyfile` 后执行 `docker compose -f compose.yaml restart caddy` 加载配置。
+Caddy 按入口限制请求体。通用文件预览的 POST 请求为 129 MiB，原生文件与文本源预览的 POST 请求为 5 MiB，普通图片上传为 6 MiB，人设头像上传 `/api/v1/me/assets/upload-persona-avatar` 为 11 MiB，其他入口为 4 MiB。额外空间用于 multipart 边界和文件名。API 继续执行通用 JSON、原生文本、TXT、Markdown 4 MiB，ZIP 128 MiB，普通单图 5 MiB，以及人设头像小于 10 MiB 的文件硬限。前置其他代理时需同步这些入口限制。更新 `infra/caddy/Caddyfile` 后执行 `docker compose -f compose.yaml restart caddy` 加载配置。
 
 升级前按 [OPERATIONS.md](OPERATIONS.md) 备份数据库与私有文件，构建新镜像后先停止旧版 API、Worker 和 Web 写入进程，再运行单一迁移进程，迁移成功后启动新应用。包含 `0019_public_search_projection` 的升级会启用 PostgreSQL 自带的 `pg_trgm` 扩展，并在迁移锁内分批重建公开搜索字段与首次发布时间；迁移账号需具有创建该受信扩展的权限。重跑迁移可继续未完成批次，原始已审核正文和来源声明保持不变。升级失败时保持停写并排查，勿启动旧版写入进程覆盖新搜索投影；回退应用和数据库应使用同一份已验证备份。
 

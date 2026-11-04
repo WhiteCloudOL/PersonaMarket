@@ -64,7 +64,7 @@ export function DraftChecks({
     {
       label: '作品名称与简介',
       anchor: 'basic-information',
-      fields: ['title', 'summary', 'categoryId', 'tagIds'],
+      fields: ['title', 'summary', 'categoryId', 'tagIds', 'customTags'],
     },
     { label: '平台正文与对话', anchor: 'persona-content', fields: ['content'] },
     { label: '推荐模型', anchor: 'recommended-models', fields: ['recommendedModels'] },

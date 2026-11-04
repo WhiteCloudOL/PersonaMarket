@@ -3310,6 +3310,7 @@ export type LoginAccountResponses = {
   200: {
     data: {
       message: string;
+      assurance: 'authenticated' | 'mfa_setup' | 'mfa_required';
     };
   };
 };
@@ -10544,6 +10545,7 @@ export type CreateOwnPersonaData = {
           summary: string;
           categoryId: string | null;
           tagIds: Array<string>;
+          customTags?: Array<string>;
           readmeMarkdown: string;
           recommendedModels: Array<{
             modelId: string;
@@ -10561,10 +10563,10 @@ export type CreateOwnPersonaData = {
                 redistribution:
                   'not_allowed' | 'attribution_required' | 'contact_required' | 'custom';
                 policyText?: string;
-                originalAuthor: string;
+                originalAuthor?: string;
                 sourceUrl?: '' | string;
                 sourceDescription?: string;
-                authorizationStatement: string;
+                authorizationStatement?: string;
               };
           authorNotes: string;
           rightsAccepted: boolean;
@@ -10584,6 +10586,7 @@ export type CreateOwnPersonaData = {
           summary: string;
           categoryId: string | null;
           tagIds: Array<string>;
+          customTags?: Array<string>;
           readmeMarkdown: string;
           recommendedModels: Array<{
             modelId: string;
@@ -10601,10 +10604,10 @@ export type CreateOwnPersonaData = {
                 redistribution:
                   'not_allowed' | 'attribution_required' | 'contact_required' | 'custom';
                 policyText?: string;
-                originalAuthor: string;
+                originalAuthor?: string;
                 sourceUrl?: '' | string;
                 sourceDescription?: string;
-                authorizationStatement: string;
+                authorizationStatement?: string;
               };
           authorNotes: string;
           rightsAccepted: boolean;
@@ -10854,6 +10857,7 @@ export type CreateOwnPersonaResponses = {
             summary: string;
             categoryId: string | null;
             tagIds: Array<string>;
+            customTags?: Array<string>;
             readmeMarkdown: string;
             recommendedModels: Array<{
               modelId: string;
@@ -10871,10 +10875,10 @@ export type CreateOwnPersonaResponses = {
                   redistribution:
                     'not_allowed' | 'attribution_required' | 'contact_required' | 'custom';
                   policyText?: string;
-                  originalAuthor: string;
+                  originalAuthor?: string;
                   sourceUrl?: '' | string;
                   sourceDescription?: string;
-                  authorizationStatement: string;
+                  authorizationStatement?: string;
                 };
             authorNotes: string;
             rightsAccepted: boolean;
@@ -10894,6 +10898,7 @@ export type CreateOwnPersonaResponses = {
             summary: string;
             categoryId: string | null;
             tagIds: Array<string>;
+            customTags?: Array<string>;
             readmeMarkdown: string;
             recommendedModels: Array<{
               modelId: string;
@@ -10911,10 +10916,10 @@ export type CreateOwnPersonaResponses = {
                   redistribution:
                     'not_allowed' | 'attribution_required' | 'contact_required' | 'custom';
                   policyText?: string;
-                  originalAuthor: string;
+                  originalAuthor?: string;
                   sourceUrl?: '' | string;
                   sourceDescription?: string;
-                  authorizationStatement: string;
+                  authorizationStatement?: string;
                 };
             authorNotes: string;
             rightsAccepted: boolean;
@@ -11176,6 +11181,7 @@ export type GetOwnPersonaDraftResponses = {
             summary: string;
             categoryId: string | null;
             tagIds: Array<string>;
+            customTags?: Array<string>;
             readmeMarkdown: string;
             recommendedModels: Array<{
               modelId: string;
@@ -11193,10 +11199,10 @@ export type GetOwnPersonaDraftResponses = {
                   redistribution:
                     'not_allowed' | 'attribution_required' | 'contact_required' | 'custom';
                   policyText?: string;
-                  originalAuthor: string;
+                  originalAuthor?: string;
                   sourceUrl?: '' | string;
                   sourceDescription?: string;
-                  authorizationStatement: string;
+                  authorizationStatement?: string;
                 };
             authorNotes: string;
             rightsAccepted: boolean;
@@ -11216,6 +11222,7 @@ export type GetOwnPersonaDraftResponses = {
             summary: string;
             categoryId: string | null;
             tagIds: Array<string>;
+            customTags?: Array<string>;
             readmeMarkdown: string;
             recommendedModels: Array<{
               modelId: string;
@@ -11233,10 +11240,10 @@ export type GetOwnPersonaDraftResponses = {
                   redistribution:
                     'not_allowed' | 'attribution_required' | 'contact_required' | 'custom';
                   policyText?: string;
-                  originalAuthor: string;
+                  originalAuthor?: string;
                   sourceUrl?: '' | string;
                   sourceDescription?: string;
-                  authorizationStatement: string;
+                  authorizationStatement?: string;
                 };
             authorNotes: string;
             rightsAccepted: boolean;
@@ -11274,6 +11281,7 @@ export type SaveOwnPersonaDraftData = {
         summary: string;
         categoryId: string | null;
         tagIds: Array<string>;
+        customTags?: Array<string>;
         readmeMarkdown: string;
         recommendedModels: Array<{
           modelId: string;
@@ -11291,10 +11299,10 @@ export type SaveOwnPersonaDraftData = {
               redistribution:
                 'not_allowed' | 'attribution_required' | 'contact_required' | 'custom';
               policyText?: string;
-              originalAuthor: string;
+              originalAuthor?: string;
               sourceUrl?: '' | string;
               sourceDescription?: string;
-              authorizationStatement: string;
+              authorizationStatement?: string;
             };
         authorNotes: string;
         rightsAccepted: boolean;
@@ -11314,6 +11322,7 @@ export type SaveOwnPersonaDraftData = {
         summary: string;
         categoryId: string | null;
         tagIds: Array<string>;
+        customTags?: Array<string>;
         readmeMarkdown: string;
         recommendedModels: Array<{
           modelId: string;
@@ -11331,10 +11340,10 @@ export type SaveOwnPersonaDraftData = {
               redistribution:
                 'not_allowed' | 'attribution_required' | 'contact_required' | 'custom';
               policyText?: string;
-              originalAuthor: string;
+              originalAuthor?: string;
               sourceUrl?: '' | string;
               sourceDescription?: string;
-              authorizationStatement: string;
+              authorizationStatement?: string;
             };
         authorNotes: string;
         rightsAccepted: boolean;
@@ -11586,6 +11595,7 @@ export type SaveOwnPersonaDraftResponses = {
             summary: string;
             categoryId: string | null;
             tagIds: Array<string>;
+            customTags?: Array<string>;
             readmeMarkdown: string;
             recommendedModels: Array<{
               modelId: string;
@@ -11603,10 +11613,10 @@ export type SaveOwnPersonaDraftResponses = {
                   redistribution:
                     'not_allowed' | 'attribution_required' | 'contact_required' | 'custom';
                   policyText?: string;
-                  originalAuthor: string;
+                  originalAuthor?: string;
                   sourceUrl?: '' | string;
                   sourceDescription?: string;
-                  authorizationStatement: string;
+                  authorizationStatement?: string;
                 };
             authorNotes: string;
             rightsAccepted: boolean;
@@ -11626,6 +11636,7 @@ export type SaveOwnPersonaDraftResponses = {
             summary: string;
             categoryId: string | null;
             tagIds: Array<string>;
+            customTags?: Array<string>;
             readmeMarkdown: string;
             recommendedModels: Array<{
               modelId: string;
@@ -11643,10 +11654,10 @@ export type SaveOwnPersonaDraftResponses = {
                   redistribution:
                     'not_allowed' | 'attribution_required' | 'contact_required' | 'custom';
                   policyText?: string;
-                  originalAuthor: string;
+                  originalAuthor?: string;
                   sourceUrl?: '' | string;
                   sourceDescription?: string;
-                  authorizationStatement: string;
+                  authorizationStatement?: string;
                 };
             authorNotes: string;
             rightsAccepted: boolean;
@@ -12624,6 +12635,7 @@ export type ConfirmNativePersonaImportResponses = {
             summary: string;
             categoryId: string | null;
             tagIds: Array<string>;
+            customTags?: Array<string>;
             readmeMarkdown: string;
             recommendedModels: Array<{
               modelId: string;
@@ -12641,10 +12653,10 @@ export type ConfirmNativePersonaImportResponses = {
                   redistribution:
                     'not_allowed' | 'attribution_required' | 'contact_required' | 'custom';
                   policyText?: string;
-                  originalAuthor: string;
+                  originalAuthor?: string;
                   sourceUrl?: '' | string;
                   sourceDescription?: string;
-                  authorizationStatement: string;
+                  authorizationStatement?: string;
                 };
             authorNotes: string;
             rightsAccepted: boolean;
@@ -12664,6 +12676,7 @@ export type ConfirmNativePersonaImportResponses = {
             summary: string;
             categoryId: string | null;
             tagIds: Array<string>;
+            customTags?: Array<string>;
             readmeMarkdown: string;
             recommendedModels: Array<{
               modelId: string;
@@ -12681,10 +12694,10 @@ export type ConfirmNativePersonaImportResponses = {
                   redistribution:
                     'not_allowed' | 'attribution_required' | 'contact_required' | 'custom';
                   policyText?: string;
-                  originalAuthor: string;
+                  originalAuthor?: string;
                   sourceUrl?: '' | string;
                   sourceDescription?: string;
-                  authorizationStatement: string;
+                  authorizationStatement?: string;
                 };
             authorNotes: string;
             rightsAccepted: boolean;
@@ -13547,6 +13560,7 @@ export type PreviewMarketPersonaImportResponses = {
             summary: string;
             categoryId: string | null;
             tagIds: Array<string>;
+            customTags?: Array<string>;
             readmeMarkdown: string;
             recommendedModels: Array<{
               modelId: string;
@@ -13564,10 +13578,10 @@ export type PreviewMarketPersonaImportResponses = {
                   redistribution:
                     'not_allowed' | 'attribution_required' | 'contact_required' | 'custom';
                   policyText?: string;
-                  originalAuthor: string;
+                  originalAuthor?: string;
                   sourceUrl?: '' | string;
                   sourceDescription?: string;
-                  authorizationStatement: string;
+                  authorizationStatement?: string;
                 };
             authorNotes: string;
             rightsAccepted: boolean;
@@ -13587,6 +13601,7 @@ export type PreviewMarketPersonaImportResponses = {
             summary: string;
             categoryId: string | null;
             tagIds: Array<string>;
+            customTags?: Array<string>;
             readmeMarkdown: string;
             recommendedModels: Array<{
               modelId: string;
@@ -13604,10 +13619,10 @@ export type PreviewMarketPersonaImportResponses = {
                   redistribution:
                     'not_allowed' | 'attribution_required' | 'contact_required' | 'custom';
                   policyText?: string;
-                  originalAuthor: string;
+                  originalAuthor?: string;
                   sourceUrl?: '' | string;
                   sourceDescription?: string;
-                  authorizationStatement: string;
+                  authorizationStatement?: string;
                 };
             authorNotes: string;
             rightsAccepted: boolean;
@@ -14248,6 +14263,7 @@ export type GetMarketPersonaImportResponses = {
             summary: string;
             categoryId: string | null;
             tagIds: Array<string>;
+            customTags?: Array<string>;
             readmeMarkdown: string;
             recommendedModels: Array<{
               modelId: string;
@@ -14265,10 +14281,10 @@ export type GetMarketPersonaImportResponses = {
                   redistribution:
                     'not_allowed' | 'attribution_required' | 'contact_required' | 'custom';
                   policyText?: string;
-                  originalAuthor: string;
+                  originalAuthor?: string;
                   sourceUrl?: '' | string;
                   sourceDescription?: string;
-                  authorizationStatement: string;
+                  authorizationStatement?: string;
                 };
             authorNotes: string;
             rightsAccepted: boolean;
@@ -14288,6 +14304,7 @@ export type GetMarketPersonaImportResponses = {
             summary: string;
             categoryId: string | null;
             tagIds: Array<string>;
+            customTags?: Array<string>;
             readmeMarkdown: string;
             recommendedModels: Array<{
               modelId: string;
@@ -14305,10 +14322,10 @@ export type GetMarketPersonaImportResponses = {
                   redistribution:
                     'not_allowed' | 'attribution_required' | 'contact_required' | 'custom';
                   policyText?: string;
-                  originalAuthor: string;
+                  originalAuthor?: string;
                   sourceUrl?: '' | string;
                   sourceDescription?: string;
-                  authorizationStatement: string;
+                  authorizationStatement?: string;
                 };
             authorNotes: string;
             rightsAccepted: boolean;
@@ -15551,7 +15568,7 @@ export type ConfirmMarketPersonaImportData = {
           expectedRevision: number;
         };
     confirmed: true;
-    authorizationStatement: string;
+    authorizationStatement?: string;
   };
   headers: {
     'X-CSRF-Token': string;
@@ -15838,6 +15855,7 @@ export type ConfirmMarketPersonaImportResponses = {
             summary: string;
             categoryId: string | null;
             tagIds: Array<string>;
+            customTags?: Array<string>;
             readmeMarkdown: string;
             recommendedModels: Array<{
               modelId: string;
@@ -15855,10 +15873,10 @@ export type ConfirmMarketPersonaImportResponses = {
                   redistribution:
                     'not_allowed' | 'attribution_required' | 'contact_required' | 'custom';
                   policyText?: string;
-                  originalAuthor: string;
+                  originalAuthor?: string;
                   sourceUrl?: '' | string;
                   sourceDescription?: string;
-                  authorizationStatement: string;
+                  authorizationStatement?: string;
                 };
             authorNotes: string;
             rightsAccepted: boolean;
@@ -15878,6 +15896,7 @@ export type ConfirmMarketPersonaImportResponses = {
             summary: string;
             categoryId: string | null;
             tagIds: Array<string>;
+            customTags?: Array<string>;
             readmeMarkdown: string;
             recommendedModels: Array<{
               modelId: string;
@@ -15895,10 +15914,10 @@ export type ConfirmMarketPersonaImportResponses = {
                   redistribution:
                     'not_allowed' | 'attribution_required' | 'contact_required' | 'custom';
                   policyText?: string;
-                  originalAuthor: string;
+                  originalAuthor?: string;
                   sourceUrl?: '' | string;
                   sourceDescription?: string;
-                  authorizationStatement: string;
+                  authorizationStatement?: string;
                 };
             authorNotes: string;
             rightsAccepted: boolean;
@@ -16884,6 +16903,249 @@ export type UploadOwnImageResponses = {
 
 export type UploadOwnImageResponse = UploadOwnImageResponses[keyof UploadOwnImageResponses];
 
+export type UploadPersonaAvatarData = {
+  body: {
+    file: Blob | File;
+  };
+  headers: {
+    'X-Expected-Account': string;
+    'X-CSRF-Token': string;
+  };
+  path?: never;
+  query?: never;
+  url: '/api/v1/me/assets/upload-persona-avatar';
+};
+
+export type UploadPersonaAvatarErrors = {
+  400: {
+    error: {
+      code:
+        | 'INVALID_INPUT'
+        | 'VALIDATION_FAILED'
+        | 'UNAUTHENTICATED'
+        | 'FORBIDDEN'
+        | 'MFA_REQUIRED'
+        | 'REAUTH_REQUIRED'
+        | 'NOT_FOUND'
+        | 'CONFLICT'
+        | 'REVISION_CONFLICT'
+        | 'RATE_LIMITED'
+        | 'MAINTENANCE_MODE'
+        | 'SERVICE_UNAVAILABLE'
+        | 'INVALID_RESPONSE'
+        | 'INTERNAL_ERROR'
+        | 'UNSUPPORTED_FORMAT';
+      message: string;
+      fieldErrors: Array<{
+        path: string;
+        message: string;
+      }>;
+      requestId: string;
+    };
+  };
+  401: {
+    error: {
+      code:
+        | 'INVALID_INPUT'
+        | 'VALIDATION_FAILED'
+        | 'UNAUTHENTICATED'
+        | 'FORBIDDEN'
+        | 'MFA_REQUIRED'
+        | 'REAUTH_REQUIRED'
+        | 'NOT_FOUND'
+        | 'CONFLICT'
+        | 'REVISION_CONFLICT'
+        | 'RATE_LIMITED'
+        | 'MAINTENANCE_MODE'
+        | 'SERVICE_UNAVAILABLE'
+        | 'INVALID_RESPONSE'
+        | 'INTERNAL_ERROR'
+        | 'UNSUPPORTED_FORMAT';
+      message: string;
+      fieldErrors: Array<{
+        path: string;
+        message: string;
+      }>;
+      requestId: string;
+    };
+  };
+  403: {
+    error: {
+      code:
+        | 'INVALID_INPUT'
+        | 'VALIDATION_FAILED'
+        | 'UNAUTHENTICATED'
+        | 'FORBIDDEN'
+        | 'MFA_REQUIRED'
+        | 'REAUTH_REQUIRED'
+        | 'NOT_FOUND'
+        | 'CONFLICT'
+        | 'REVISION_CONFLICT'
+        | 'RATE_LIMITED'
+        | 'MAINTENANCE_MODE'
+        | 'SERVICE_UNAVAILABLE'
+        | 'INVALID_RESPONSE'
+        | 'INTERNAL_ERROR'
+        | 'UNSUPPORTED_FORMAT';
+      message: string;
+      fieldErrors: Array<{
+        path: string;
+        message: string;
+      }>;
+      requestId: string;
+    };
+  };
+  404: {
+    error: {
+      code:
+        | 'INVALID_INPUT'
+        | 'VALIDATION_FAILED'
+        | 'UNAUTHENTICATED'
+        | 'FORBIDDEN'
+        | 'MFA_REQUIRED'
+        | 'REAUTH_REQUIRED'
+        | 'NOT_FOUND'
+        | 'CONFLICT'
+        | 'REVISION_CONFLICT'
+        | 'RATE_LIMITED'
+        | 'MAINTENANCE_MODE'
+        | 'SERVICE_UNAVAILABLE'
+        | 'INVALID_RESPONSE'
+        | 'INTERNAL_ERROR'
+        | 'UNSUPPORTED_FORMAT';
+      message: string;
+      fieldErrors: Array<{
+        path: string;
+        message: string;
+      }>;
+      requestId: string;
+    };
+  };
+  409: {
+    error: {
+      code:
+        | 'INVALID_INPUT'
+        | 'VALIDATION_FAILED'
+        | 'UNAUTHENTICATED'
+        | 'FORBIDDEN'
+        | 'MFA_REQUIRED'
+        | 'REAUTH_REQUIRED'
+        | 'NOT_FOUND'
+        | 'CONFLICT'
+        | 'REVISION_CONFLICT'
+        | 'RATE_LIMITED'
+        | 'MAINTENANCE_MODE'
+        | 'SERVICE_UNAVAILABLE'
+        | 'INVALID_RESPONSE'
+        | 'INTERNAL_ERROR'
+        | 'UNSUPPORTED_FORMAT';
+      message: string;
+      fieldErrors: Array<{
+        path: string;
+        message: string;
+      }>;
+      requestId: string;
+    };
+  };
+  413: {
+    error: {
+      code:
+        | 'INVALID_INPUT'
+        | 'VALIDATION_FAILED'
+        | 'UNAUTHENTICATED'
+        | 'FORBIDDEN'
+        | 'MFA_REQUIRED'
+        | 'REAUTH_REQUIRED'
+        | 'NOT_FOUND'
+        | 'CONFLICT'
+        | 'REVISION_CONFLICT'
+        | 'RATE_LIMITED'
+        | 'MAINTENANCE_MODE'
+        | 'SERVICE_UNAVAILABLE'
+        | 'INVALID_RESPONSE'
+        | 'INTERNAL_ERROR'
+        | 'UNSUPPORTED_FORMAT';
+      message: string;
+      fieldErrors: Array<{
+        path: string;
+        message: string;
+      }>;
+      requestId: string;
+    };
+  };
+  429: {
+    error: {
+      code:
+        | 'INVALID_INPUT'
+        | 'VALIDATION_FAILED'
+        | 'UNAUTHENTICATED'
+        | 'FORBIDDEN'
+        | 'MFA_REQUIRED'
+        | 'REAUTH_REQUIRED'
+        | 'NOT_FOUND'
+        | 'CONFLICT'
+        | 'REVISION_CONFLICT'
+        | 'RATE_LIMITED'
+        | 'MAINTENANCE_MODE'
+        | 'SERVICE_UNAVAILABLE'
+        | 'INVALID_RESPONSE'
+        | 'INTERNAL_ERROR'
+        | 'UNSUPPORTED_FORMAT';
+      message: string;
+      fieldErrors: Array<{
+        path: string;
+        message: string;
+      }>;
+      requestId: string;
+    };
+  };
+  503: {
+    error: {
+      code:
+        | 'INVALID_INPUT'
+        | 'VALIDATION_FAILED'
+        | 'UNAUTHENTICATED'
+        | 'FORBIDDEN'
+        | 'MFA_REQUIRED'
+        | 'REAUTH_REQUIRED'
+        | 'NOT_FOUND'
+        | 'CONFLICT'
+        | 'REVISION_CONFLICT'
+        | 'RATE_LIMITED'
+        | 'MAINTENANCE_MODE'
+        | 'SERVICE_UNAVAILABLE'
+        | 'INVALID_RESPONSE'
+        | 'INTERNAL_ERROR'
+        | 'UNSUPPORTED_FORMAT';
+      message: string;
+      fieldErrors: Array<{
+        path: string;
+        message: string;
+      }>;
+      requestId: string;
+    };
+  };
+};
+
+export type UploadPersonaAvatarError = UploadPersonaAvatarErrors[keyof UploadPersonaAvatarErrors];
+
+export type UploadPersonaAvatarResponses = {
+  200: {
+    data: {
+      id: string;
+      purpose: 'content' | 'evidence' | 'avatar';
+      mime: 'image/webp';
+      bytes: number;
+      width: number;
+      height: number;
+      createdAt: string;
+    };
+  };
+};
+
+export type UploadPersonaAvatarResponse =
+  UploadPersonaAvatarResponses[keyof UploadPersonaAvatarResponses];
+
 export type ReadOwnImageData = {
   body?: never;
   path: {
@@ -17403,10 +17665,10 @@ export type GetOwnSubmissionsResponses = {
                   redistribution:
                     'not_allowed' | 'attribution_required' | 'contact_required' | 'custom';
                   policyText?: string;
-                  originalAuthor: string;
+                  originalAuthor?: string;
                   sourceUrl?: string;
                   sourceDescription?: string;
-                  authorizationStatement: string;
+                  authorizationStatement?: string;
                 };
             platform: 'maibot';
             content: {
@@ -17441,10 +17703,10 @@ export type GetOwnSubmissionsResponses = {
                   redistribution:
                     'not_allowed' | 'attribution_required' | 'contact_required' | 'custom';
                   policyText?: string;
-                  originalAuthor: string;
+                  originalAuthor?: string;
                   sourceUrl?: string;
                   sourceDescription?: string;
-                  authorizationStatement: string;
+                  authorizationStatement?: string;
                 };
             platform: 'astrbot';
             content: {
@@ -17775,10 +18037,10 @@ export type CreateOwnReleaseResponses = {
                   redistribution:
                     'not_allowed' | 'attribution_required' | 'contact_required' | 'custom';
                   policyText?: string;
-                  originalAuthor: string;
+                  originalAuthor?: string;
                   sourceUrl?: string;
                   sourceDescription?: string;
-                  authorizationStatement: string;
+                  authorizationStatement?: string;
                 };
             platform: 'maibot';
             content: {
@@ -17813,10 +18075,10 @@ export type CreateOwnReleaseResponses = {
                   redistribution:
                     'not_allowed' | 'attribution_required' | 'contact_required' | 'custom';
                   policyText?: string;
-                  originalAuthor: string;
+                  originalAuthor?: string;
                   sourceUrl?: string;
                   sourceDescription?: string;
-                  authorizationStatement: string;
+                  authorizationStatement?: string;
                 };
             platform: 'astrbot';
             content: {
@@ -18408,10 +18670,10 @@ export type WithdrawOwnSubmissionResponses = {
                   redistribution:
                     'not_allowed' | 'attribution_required' | 'contact_required' | 'custom';
                   policyText?: string;
-                  originalAuthor: string;
+                  originalAuthor?: string;
                   sourceUrl?: string;
                   sourceDescription?: string;
-                  authorizationStatement: string;
+                  authorizationStatement?: string;
                 };
             platform: 'maibot';
             content: {
@@ -18446,10 +18708,10 @@ export type WithdrawOwnSubmissionResponses = {
                   redistribution:
                     'not_allowed' | 'attribution_required' | 'contact_required' | 'custom';
                   policyText?: string;
-                  originalAuthor: string;
+                  originalAuthor?: string;
                   sourceUrl?: string;
                   sourceDescription?: string;
-                  authorizationStatement: string;
+                  authorizationStatement?: string;
                 };
             platform: 'astrbot';
             content: {
@@ -19040,10 +19302,10 @@ export type GetSubmissionReviewQueueResponses = {
                   redistribution:
                     'not_allowed' | 'attribution_required' | 'contact_required' | 'custom';
                   policyText?: string;
-                  originalAuthor: string;
+                  originalAuthor?: string;
                   sourceUrl?: string;
                   sourceDescription?: string;
-                  authorizationStatement: string;
+                  authorizationStatement?: string;
                 };
             platform: 'maibot';
             content: {
@@ -19078,10 +19340,10 @@ export type GetSubmissionReviewQueueResponses = {
                   redistribution:
                     'not_allowed' | 'attribution_required' | 'contact_required' | 'custom';
                   policyText?: string;
-                  originalAuthor: string;
+                  originalAuthor?: string;
                   sourceUrl?: string;
                   sourceDescription?: string;
-                  authorizationStatement: string;
+                  authorizationStatement?: string;
                 };
             platform: 'astrbot';
             content: {
@@ -19405,10 +19667,10 @@ export type GetSubmissionReviewDetailResponses = {
                     redistribution:
                       'not_allowed' | 'attribution_required' | 'contact_required' | 'custom';
                     policyText?: string;
-                    originalAuthor: string;
+                    originalAuthor?: string;
                     sourceUrl?: string;
                     sourceDescription?: string;
-                    authorizationStatement: string;
+                    authorizationStatement?: string;
                   };
               platform: 'maibot';
               content: {
@@ -19443,10 +19705,10 @@ export type GetSubmissionReviewDetailResponses = {
                     redistribution:
                       'not_allowed' | 'attribution_required' | 'contact_required' | 'custom';
                     policyText?: string;
-                    originalAuthor: string;
+                    originalAuthor?: string;
                     sourceUrl?: string;
                     sourceDescription?: string;
-                    authorizationStatement: string;
+                    authorizationStatement?: string;
                   };
               platform: 'astrbot';
               content: {
@@ -19501,10 +19763,10 @@ export type GetSubmissionReviewDetailResponses = {
                   redistribution:
                     'not_allowed' | 'attribution_required' | 'contact_required' | 'custom';
                   policyText?: string;
-                  originalAuthor: string;
+                  originalAuthor?: string;
                   sourceUrl?: string;
                   sourceDescription?: string;
-                  authorizationStatement: string;
+                  authorizationStatement?: string;
                 };
             platform: 'maibot';
             content: {
@@ -19539,10 +19801,10 @@ export type GetSubmissionReviewDetailResponses = {
                   redistribution:
                     'not_allowed' | 'attribution_required' | 'contact_required' | 'custom';
                   policyText?: string;
-                  originalAuthor: string;
+                  originalAuthor?: string;
                   sourceUrl?: string;
                   sourceDescription?: string;
-                  authorizationStatement: string;
+                  authorizationStatement?: string;
                 };
             platform: 'astrbot';
             content: {
@@ -19868,10 +20130,10 @@ export type ReviewSubmissionResponses = {
                   redistribution:
                     'not_allowed' | 'attribution_required' | 'contact_required' | 'custom';
                   policyText?: string;
-                  originalAuthor: string;
+                  originalAuthor?: string;
                   sourceUrl?: string;
                   sourceDescription?: string;
-                  authorizationStatement: string;
+                  authorizationStatement?: string;
                 };
             platform: 'maibot';
             content: {
@@ -19906,10 +20168,10 @@ export type ReviewSubmissionResponses = {
                   redistribution:
                     'not_allowed' | 'attribution_required' | 'contact_required' | 'custom';
                   policyText?: string;
-                  originalAuthor: string;
+                  originalAuthor?: string;
                   sourceUrl?: string;
                   sourceDescription?: string;
-                  authorizationStatement: string;
+                  authorizationStatement?: string;
                 };
             platform: 'astrbot';
             content: {
@@ -21380,10 +21642,10 @@ export type GetPublicPersonaResponses = {
                   redistribution:
                     'not_allowed' | 'attribution_required' | 'contact_required' | 'custom';
                   policyText?: string;
-                  originalAuthor: string;
+                  originalAuthor?: string;
                   sourceUrl?: string;
                   sourceDescription?: string;
-                  authorizationStatement: string;
+                  authorizationStatement?: string;
                 };
             platform: 'maibot';
             content: {
@@ -21418,10 +21680,10 @@ export type GetPublicPersonaResponses = {
                   redistribution:
                     'not_allowed' | 'attribution_required' | 'contact_required' | 'custom';
                   policyText?: string;
-                  originalAuthor: string;
+                  originalAuthor?: string;
                   sourceUrl?: string;
                   sourceDescription?: string;
-                  authorizationStatement: string;
+                  authorizationStatement?: string;
                 };
             platform: 'astrbot';
             content: {
@@ -21746,10 +22008,10 @@ export type GetPublicReleaseHistoryResponses = {
                   redistribution:
                     'not_allowed' | 'attribution_required' | 'contact_required' | 'custom';
                   policyText?: string;
-                  originalAuthor: string;
+                  originalAuthor?: string;
                   sourceUrl?: string;
                   sourceDescription?: string;
-                  authorizationStatement: string;
+                  authorizationStatement?: string;
                 };
             platform: 'maibot';
             content: {
@@ -21784,10 +22046,10 @@ export type GetPublicReleaseHistoryResponses = {
                   redistribution:
                     'not_allowed' | 'attribution_required' | 'contact_required' | 'custom';
                   policyText?: string;
-                  originalAuthor: string;
+                  originalAuthor?: string;
                   sourceUrl?: string;
                   sourceDescription?: string;
-                  authorizationStatement: string;
+                  authorizationStatement?: string;
                 };
             platform: 'astrbot';
             content: {
@@ -22110,10 +22372,10 @@ export type GetPublicReleaseResponses = {
                   redistribution:
                     'not_allowed' | 'attribution_required' | 'contact_required' | 'custom';
                   policyText?: string;
-                  originalAuthor: string;
+                  originalAuthor?: string;
                   sourceUrl?: string;
                   sourceDescription?: string;
-                  authorizationStatement: string;
+                  authorizationStatement?: string;
                 };
             platform: 'maibot';
             content: {
@@ -22148,10 +22410,10 @@ export type GetPublicReleaseResponses = {
                   redistribution:
                     'not_allowed' | 'attribution_required' | 'contact_required' | 'custom';
                   policyText?: string;
-                  originalAuthor: string;
+                  originalAuthor?: string;
                   sourceUrl?: string;
                   sourceDescription?: string;
-                  authorizationStatement: string;
+                  authorizationStatement?: string;
                 };
             platform: 'astrbot';
             content: {

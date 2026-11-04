@@ -68,6 +68,8 @@ it('两平台真实投稿审核、不可变快照、并发与幂等、更新隔�
     title: '林间云鸭',
     summary: '与你分享林间日常',
     rightsAccepted: true,
+    customTags: ['林间夜读'],
+    origin: { type: 'repost', redistribution: 'custom' },
     readmeMarkdown: '# 作者原文\n\n  保留空白  ',
     content: {
       personality: '温和亲切的向导',
@@ -84,6 +86,12 @@ it('两平台真实投稿审核、不可变快照、并发与幂等、更新隔�
   expect(submissionResponse.status).toBe(200);
   const submission = SubmissionResponseSchema.parse(await submissionResponse.json()).data;
   expect(submission.status).toBe('PENDING');
+  expect(submission.publication.tags.map((tag) => tag.name)).toContain('林间夜读');
+  expect(submission.snapshot.origin).toEqual({ type: 'repost', redistribution: 'custom' });
+  const facetsPath = '/api/v1/site/persona-filters';
+  const pendingFacets = await visitor.raw(facetsPath);
+  expect(pendingFacets.status).toBe(200);
+  expect(await pendingFacets.text()).not.toContain('林间夜读');
   expect(SubmissionResponseSchema.parse(await (await create('1.0.0', 2, key)).json()).data.id).toBe(
     submission.id,
   );
@@ -132,6 +140,8 @@ it('两平台真实投稿审核、不可变快照、并发与幂等、更新隔�
     await (await visitor.raw('/api/v1/personas/' + id)).json(),
   ).data;
   expect(live.snapshot.title).toBe('林间云鸭');
+  expect(live.publication.tags.map((tag) => tag.name)).toContain('林间夜读');
+  expect(await (await visitor.raw(facetsPath)).text()).toContain('林间夜读');
   expect(
     PublicPersonaListResponseSchema.parse(
       await (await visitor.raw('/api/v1/personas?q=' + encodeURIComponent('未经审核'))).json(),

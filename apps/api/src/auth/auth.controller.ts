@@ -31,6 +31,7 @@ import {
   ErrorResponseSchema,
   ForgotPasswordRequestSchema,
   LoginRequestSchema,
+  LoginResponseSchema,
   ReauthenticateRequestSchema,
   MfaCodeRequestSchema,
   MfaConfirmResponseSchema,
@@ -92,8 +93,8 @@ export class AuthController {
   @HttpCode(200)
   @CsrfHeader()
   @ApiOperation({ operationId: 'loginAccount', summary: '密码登录并旋转会话' })
-  @ApiOkResponse({ standardSchema: AuthNoticeResponseSchema })
-  @SerializeOptions({ schema: AuthNoticeResponseSchema })
+  @ApiOkResponse({ standardSchema: LoginResponseSchema })
+  @SerializeOptions({ schema: LoginResponseSchema })
   login(
     @Body({ schema: LoginRequestSchema }) input: z.infer<typeof LoginRequestSchema>,
     @Req() request: Request,

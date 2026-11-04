@@ -32,6 +32,8 @@ test('账号安全在大字触控布局中，提交按钮文字和重新验证�
     const page = await context.newPage();
     await loginCreator(page);
     await page.goto('/dashboard/security');
+    await expect(page).toHaveURL(/\/account\?tab=security$/);
+    await expect(page.getByRole('tab', { name: '站点设置', exact: true })).toHaveCount(0);
     await expect(page.getByRole('heading', { name: '修改登录密码', exact: true })).toBeVisible();
     await page.evaluate(() => {
       document.documentElement.style.fontSize = '200%';
@@ -60,13 +62,13 @@ test('账号安全在大字触控布局中，提交按钮文字和重新验证�
       expect(bounds.text.bottom).toBeLessThanOrEqual(bounds.bottom + 0.5);
     }
     const reverify = page.getByRole('link', { name: '重新验证二次身份', exact: true });
-    await expect(reverify).toHaveAttribute('href', '/mfa?reauth=1');
+    await expect(reverify).toHaveAttribute('href', '/account?tab=mfa');
     if (mobile) await reverify.tap();
     else {
       await reverify.focus();
       await page.keyboard.press('Enter');
     }
-    await expect(page).toHaveURL(/\/mfa\?reauth=1$/);
+    await expect(page).toHaveURL(/\/account\?tab=mfa$/);
   } finally {
     await context.close();
   }
@@ -217,11 +219,11 @@ test('真实邮箱注册、验证、登录与全部会话退出，跨设备布�
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );
-    await page.getByRole('link', { name: '密码与邮箱设置', exact: true }).click();
-    await expect(page).toHaveURL(/\/dashboard\/security$/);
+    await page.getByRole('tab', { name: '密码与邮箱', exact: true }).click();
+    await expect(page).toHaveURL(/\/account\?tab=security$/);
     await expect(page.getByRole('heading', { name: '修改登录密码', exact: true })).toBeVisible();
     const reverify = page.getByRole('link', { name: '重新验证二次身份', exact: true });
-    await expect(reverify).toHaveAttribute('href', '/mfa?reauth=1');
+    await expect(reverify).toHaveAttribute('href', '/account?tab=mfa');
     const target = await reverify.boundingBox();
     expect(target?.width).toBeGreaterThanOrEqual(44);
     expect(target?.height).toBeGreaterThanOrEqual(44);
@@ -258,7 +260,7 @@ test('真实邮箱注册、验证、登录与全部会话退出，跨设备布�
     await page.getByLabel('密码', { exact: true }).fill(nextPassword);
     await page.getByRole('button', { name: '登录', exact: true }).click();
     await expect(page).toHaveURL(/\/account$/);
-    await page.getByRole('link', { name: '密码与邮箱设置', exact: true }).click();
+    await page.getByRole('tab', { name: '密码与邮箱', exact: true }).click();
     const passwordForm = page.getByRole('form', { name: '修改登录密码', exact: true });
     await passwordForm.getByLabel('当前密码', { exact: true }).fill(nextPassword);
     const finalPassword = 'Q7!m9W2#x4rT'; // 正好 12 个字符，验证用户要求的新下限。
@@ -300,7 +302,7 @@ test('管理员浏览器 MFA 引导、一次性恢复码与品牌设置', async 
   await page.getByRole('button', { name: '登录', exact: true }).click();
   await expect(page).toHaveURL(/\/account$/);
   expect((await page.request.get('/api/v1/admin/settings/brand')).status()).toBe(200);
-  await page.getByRole('link', { name: '设置二次验证', exact: true }).click();
+  await page.getByRole('tab', { name: '二次验证', exact: true }).click();
   const setupEvent = page.waitForResponse(
     (response) =>
       response.url().endsWith('/api/v1/auth/mfa/setup') && response.request().method() === 'POST',
@@ -318,13 +320,20 @@ test('管理员浏览器 MFA 引导、一次性恢复码与品牌设置', async 
     10,
   );
   await page.getByRole('button', { name: '已安全保存，继续' }).click();
-  await expect(page).toHaveURL(/\/account$/);
-  await page.getByRole('link', { name: '站点设置', exact: true }).click();
-  await expect(page.getByRole('heading', { name: '站点品牌设置' })).toBeVisible();
+  await expect(page).toHaveURL(/\/account\?tab=mfa$/);
+  await expect(page.getByRole('list', { name: '一次性恢复码' })).toHaveCount(0);
+  await page.getByRole('tab', { name: '站点设置', exact: true }).click();
+  await expect(page.getByRole('heading', { name: '站点展示' })).toBeVisible();
   await expect(page.getByLabel('站点名称')).toBeVisible();
   await page.getByLabel('站点简介').fill('人设灵感，从这里开始');
+  await page.getByRole('tab', { name: '设备会话', exact: true }).click();
+  await expect(page.getByRole('heading', { name: '设备会话', exact: true })).toBeVisible();
+  await page.goBack();
+  await expect(page.getByLabel('站点简介')).toHaveValue('人设灵感，从这里开始');
   await page.getByRole('button', { name: '保存品牌设置', exact: true }).click();
   await expect(page.getByText('品牌设置已保存，首页将展示最新内容')).toBeVisible();
+  await page.getByRole('link', { name: '更多站点管理设置', exact: true }).click();
+  await expect(page.getByRole('heading', { name: '站点品牌设置', exact: true })).toBeVisible();
   const settingsMenu = page.getByRole('button', { name: '选择设置分组', exact: true });
   if (await settingsMenu.isVisible()) await settingsMenu.click();
   await page.getByRole('link', { name: '邮件服务 SMTP', exact: true }).click();
