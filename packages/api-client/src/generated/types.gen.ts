@@ -2750,7 +2750,12 @@ export type GetReadinessResponse = GetReadinessResponses[keyof GetReadinessRespo
 export type GetAuthContextData = {
   body?: never;
   path?: never;
-  query?: never;
+  query?: {
+    /**
+     * 只读取注册和邮件配置，发送验证码时另行检查邮件连接
+     */
+    registration?: 'configuration';
+  };
   url: '/api/v1/auth/context';
 };
 

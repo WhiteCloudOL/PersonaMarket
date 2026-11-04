@@ -2,6 +2,7 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import { listenHttp } from '../../scripts/http-server.js';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createApplication } from '@personamarket/api/testing';
+import { AuthContextResponseSchema } from '@personamarket/contracts';
 import {
   createDatabase,
   createTestDatabaseOwner,
@@ -114,6 +115,11 @@ describe('真实邮件与认证 HTTP 闭环', () => {
       await listenHttp(production);
       const browser = new AuthHttp(await production.getUrl(), env.PUBLIC_ORIGIN);
       expect((await browser.context()).data.registrationAvailable).toBe(false);
+      const lightweight = AuthContextResponseSchema.parse(
+        await (await browser.raw('/api/v1/auth/context?registration=configuration')).json(),
+      );
+      expect(lightweight.data.registrationAvailable).toBe(true);
+      expect(lightweight.data.assurance).toBe('anonymous');
       const person = registration();
       expect(
         (await browser.write('/api/v1/auth/register/code', { email: person.email })).status,

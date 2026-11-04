@@ -155,7 +155,11 @@ export class AuthService implements OnApplicationShutdown {
       status: account.status,
     };
   }
-  async context(request: Request, response: Response): Promise<AuthContextResponse> {
+  async context(
+    request: Request,
+    response: Response,
+    checkMailConnection = true,
+  ): Promise<AuthContextResponse> {
     const policy = await readAccountSettings(this.database, this.env);
     let ordinaryAvailable = false;
     try {
@@ -180,7 +184,9 @@ export class AuthService implements OnApplicationShutdown {
         account: identity ? this.account(identity.account) : null,
         assurance: identity ? this.assurance(identity) : 'anonymous',
         registrationAvailable:
-          ordinaryAvailable && policy.data.registrationEnabled && (await this.mailReady()),
+          ordinaryAvailable &&
+          policy.data.registrationEnabled &&
+          (await (checkMailConnection ? this.mailReady() : this.sender.configured())),
         registrationPolicy: {
           verificationEmailTiming: policy.data.verificationEmailTiming,
           settingsRevision: policy.meta.revision,

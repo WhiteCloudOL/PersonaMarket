@@ -41,6 +41,7 @@ function checked<T>(result: Result, schema: z.ZodType<T>): T {
 export async function readAuthContext() {
   return checked(
     await api.getAuthContext({
+      params: { query: { registration: 'configuration' } },
       cache: 'no-store',
       credentials: 'same-origin',
       signal: AbortSignal.timeout(8000),

@@ -7,6 +7,7 @@ import {
   Inject,
   Param,
   Post,
+  Query,
   Req,
   Res,
   SerializeOptions,
@@ -18,6 +19,7 @@ import {
   ApiHeader,
   ApiOkResponse,
   ApiOperation,
+  ApiQuery,
   ApiServiceUnavailableResponse,
   ApiTags,
   ApiTooManyRequestsResponse,
@@ -70,10 +72,20 @@ export class AuthController {
   ) {}
   @Get('context')
   @ApiOperation({ operationId: 'getAuthContext', summary: '读取身份与 CSRF 上下文' })
+  @ApiQuery({
+    name: 'registration',
+    required: false,
+    enum: ['configuration'],
+    description: '只读取注册和邮件配置，发送验证码时另行检查邮件连接',
+  })
   @ApiOkResponse({ standardSchema: AuthContextResponseSchema })
   @SerializeOptions({ schema: AuthContextResponseSchema })
-  context(@Req() request: Request, @Res({ passthrough: true }) response: Response) {
-    return this.auth.context(request, response);
+  context(
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+    @Query('registration') registration?: string,
+  ) {
+    return this.auth.context(request, response, registration !== 'configuration');
   }
 
   @Post('register/code')

@@ -36,7 +36,7 @@
 | `GET /admin/settings/accounts/records?page=1` | `getAccountSettingsRecords` | 读取只读差异记录                                                                     |
 | `GET /auth/context`                           | `getAuthContext`            | 原有身份信息外，返回 `registrationPolicy:{verificationEmailTiming,settingsRevision}` |
 
-公开上下文只返回注册引导所需的时机与修订。原有 `registrationAvailable` 综合注册开关与邮件可用性，不是 SMTP 专用健康接口；为 `false` 不能一律解释成邮件故障。它不公开管理员的限流细节、SMTP 连接或秘密。
+公开上下文只返回注册引导所需的时机与修订。网页请求会话上下文时使用 `registration=configuration`，只读取配置即可显示注册入口。实际申请验证码时会重新检查 SMTP 连接。默认的上下文请求仍会综合检查注册开关和 SMTP 可用性。上下文不公开管理员的限流细节、SMTP 连接或秘密。
 
 旧 flat PATCH 的两个原字段仍必填，省略新字段时由事务保留当前已存策略，不注入默认覆盖。旧客户端可省略幂等键、账号核对头和理由，理由使用“更新注册与账户设置”；新界面使用完整请求。请求兼容不代表旧浏览器 bundle 无缝兼容：旧严格响应契约无法接受新增字段，升级后须刷新页面，并同步部署匹配的 API、Web 与生成客户端。
 
