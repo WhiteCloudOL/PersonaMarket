@@ -30,6 +30,9 @@ test('真实数据库锁超时显示读取失败，释放后重新加载恢复�
     expect((await page.request.get('/api/v1/site/guides')).status()).toBe(503);
     await page.goto('/guides');
     await expect(page.getByText('指南暂时无法读取，可以重新加载', { exact: true })).toBeVisible();
+    await expect(
+      page.getByRole('link', { name: '在 GitHub 查看项目源码', exact: true }),
+    ).toHaveAttribute('href', 'https://github.com/WhiteCloudOL/PersonaMarket');
     await expect(page.locator('[data-guide-body]')).toHaveCount(0);
     await connection.query('COMMIT');
     transaction = false;

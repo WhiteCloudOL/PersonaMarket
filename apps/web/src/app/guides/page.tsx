@@ -97,6 +97,12 @@ export default async function Page() {
             )}
             <Section id="license" title="开源许可">
               <p>清蒸云鸭·人设市场的软件使用 AGPL-3.0 许可</p>
+              <a
+                href="https://github.com/WhiteCloudOL/PersonaMarket"
+                className={buttonVariants({ variant: 'outline', className: 'self-start' })}
+              >
+                在 GitHub 查看项目源码
+              </a>
               <p>
                 用户发布的人设、图片和作品介绍由各自作者维护来源和转载声明，使用作品时以该作品的许可信息为准，软件许可不会自动改变用户作品的授权范围
               </p>
