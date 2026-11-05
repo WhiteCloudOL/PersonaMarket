@@ -234,9 +234,17 @@ test('首次内容绘制到水合完成保持系统深色，延迟脚本不会�
       )
       .toBeGreaterThan(0);
     expect(heldScripts).toBeGreaterThan(0);
+    const themeTrigger = page.getByRole('button', { name: /^主题偏好/ });
+    await page.screenshot({ path: info.outputPath('theme-before-hydration.png') });
+    await expect(themeTrigger).toBeDisabled();
     release();
     await page.waitForLoadState('load');
     await expect(page.getByLabel('用户名或邮箱', { exact: true })).toBeEnabled();
+    await expect(themeTrigger).toBeEnabled();
+    await themeTrigger.click();
+    await expect(page.getByRole('menu', { name: '主题偏好', exact: true })).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(themeTrigger).toBeFocused();
     const samples = z
       .array(z.object({ point: z.string(), scheme: z.string(), background: z.string() }))
       .parse(await page.evaluate((): unknown => Reflect.get(window, '__pmThemePaintSamples')));

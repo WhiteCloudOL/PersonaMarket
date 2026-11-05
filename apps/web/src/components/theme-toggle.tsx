@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@personamarket/ui/components/dropdown-menu';
 import type { ThemePreference } from '@/lib/theme-preference';
+import { useClientReady } from '@/hooks/use-client-ready';
 
 const preferences = [
   { value: 'system', label: '跟随系统', Icon: MonitorIcon },
@@ -19,6 +20,7 @@ const preferences = [
 ] as const;
 
 export function ThemeToggle({ initialTheme }: { initialTheme: ThemePreference }) {
+  const ready = useClientReady();
   const [theme, setTheme] = useState(initialTheme);
   const selected = preferences.find((item) => item.value === theme) ?? preferences[0];
   const CurrentIcon = selected.Icon;
@@ -32,6 +34,7 @@ export function ThemeToggle({ initialTheme }: { initialTheme: ThemePreference })
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
+        disabled={!ready}
         render={<Button variant="ghost" size="icon" />}
         aria-label={'主题偏好：' + selected.label}
         title={'主题偏好：' + selected.label}
