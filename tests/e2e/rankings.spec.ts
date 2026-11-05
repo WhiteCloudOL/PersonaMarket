@@ -263,6 +263,11 @@ test('真实API读取受约束容量夹具，下一页与浏览器返回保留�
     .getByRole('link', { name: '下一页', exact: true });
   const href = await next.getAttribute('href');
   expect(href).toContain('snapshotId=');
+  await expect(
+    page
+      .getByRole('group', { name: '人设平台选项', exact: true })
+      .getByRole('button', { name: '全平台', exact: true }),
+  ).toBeEnabled();
   await next.click();
   await expect(page).toHaveURL(/page=2/);
   const id = new URL(page.url()).searchParams.get('snapshotId');
@@ -270,6 +275,11 @@ test('真实API读取受约束容量夹具，下一页与浏览器返回保留�
   await expect(list.getByRole('listitem')).toHaveCount(3);
   await page.reload();
   expect(new URL(page.url()).searchParams.get('snapshotId')).toBe(id);
+  await expect(
+    page
+      .getByRole('group', { name: '人设平台选项', exact: true })
+      .getByRole('button', { name: '全平台', exact: true }),
+  ).toBeEnabled();
   await page.getByRole('link', { name: '上一页', exact: true }).click();
   await expect(list.getByRole('listitem')).toHaveCount(20);
   expect(new URL(page.url()).searchParams.get('snapshotId')).toBe(id);
