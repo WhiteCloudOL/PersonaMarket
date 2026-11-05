@@ -22,6 +22,7 @@ import {
   defaultRankingSettings,
   defaultModelSuggestions,
   defaultSubmissionPendingHint,
+  defaultSystemSettings,
 } from '@personamarket/contracts';
 import {
   createDatabase,
@@ -369,7 +370,7 @@ describe('真实 PostgreSQL / Redis / API 基座', () => {
         revision: number;
         updated_at: Date;
       }>(
-        "SELECT key,value,revision,updated_at FROM site_settings WHERE key IN ('home','media','modelSuggestions','rankings','transfer') ORDER BY key",
+        "SELECT key,value,revision,updated_at FROM site_settings WHERE key IN ('home','media','modelSuggestions','rankings','system','transfer') ORDER BY key",
       );
       expect(additionalSettings.rows).toEqual([
         {
@@ -397,6 +398,12 @@ describe('真实 PostgreSQL / Redis / API 基座', () => {
           updated_at: expect.any(Date),
         },
         {
+          key: 'system',
+          value: defaultSystemSettings,
+          revision: 1,
+          updated_at: expect.any(Date),
+        },
+        {
           key: 'transfer',
           value: defaultTransferSettings,
           revision: 1,
@@ -409,12 +416,21 @@ describe('真实 PostgreSQL / Redis / API 基座', () => {
       expect(
         (
           await old.pool.query(
-            "SELECT key,value,revision,updated_at FROM site_settings WHERE key<>'community' AND key NOT IN ('home','media','modelSuggestions','rankings','transfer') ORDER BY key",
+            "SELECT key,value,revision,updated_at FROM site_settings WHERE key<>'community' AND key NOT IN ('home','media','modelSuggestions','rankings','system','transfer') ORDER BY key",
           )
         ).rows,
       ).toEqual(
-        untouched.rows.map((row) =>
-          row.key === 'submissions'
+        untouched.rows.map((row) => {
+          if (row.key === 'accounts')
+            return {
+              ...row,
+              value: {
+                ...z.record(z.string(), z.unknown()).parse(row.value),
+                verificationEmailTiming: 'on_registration',
+                registrationRateLimit: { maxAttempts: 10, windowSeconds: 3600 },
+              },
+            };
+          return row.key === 'submissions'
             ? {
                 ...row,
                 value: {
@@ -422,8 +438,8 @@ describe('真实 PostgreSQL / Redis / API 基座', () => {
                   pendingHint: defaultSubmissionPendingHint,
                 },
               }
-            : row,
-        ),
+            : row;
+        }),
       );
       const allSettingsAfterUpgrade = await old.pool.query(
         'SELECT key,value,revision,updated_at FROM site_settings ORDER BY key',

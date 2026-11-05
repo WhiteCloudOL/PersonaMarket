@@ -351,7 +351,7 @@ it('已发布快照的旧ID与分页仍实时过滤隐藏和当前版本变更�
   }
 });
 
-it('计算锁、插入失败和真实任务重试保留上一批，重复投递不追加半份榜单', async () => {
+it('计算锁不可得时不伪造任务终态，解锁后原事件可以完成计算', async () => {
   const author = await verifiedCreator(stack);
   const admin = await stack.admin();
   const persona = await publish(author.http, admin.http);
@@ -371,24 +371,66 @@ it('计算锁、插入失败和真实任务重试保留上一批，重复投递�
       buildRankingGeneration(stack.owner, nextId, eventId, { number: 5, last: true }),
     ).rejects.toThrow('RANKING_REFRESH_BUSY');
     expect(await generationState(nextId)).toMatchObject({
-      status: 'failed',
-      error_code: 'RANKING_REFRESH_BUSY',
+      status: 'pending',
+      error_code: null,
     });
+    expect(
+      (
+        await stack.owner.pool.query(
+          'SELECT state,execution_attempts,terminal_proof FROM ranking_generation_runs WHERE event_id=$1',
+          [eventId],
+        )
+      ).rows,
+    ).toEqual([{ state: 'pending', execution_attempts: 0, terminal_proof: null }]);
+    expect((await ranking()).meta.snapshotId).toBe(firstId);
   } finally {
     await keeper.query('SELECT pg_advisory_unlock(1347244619,1)');
     keeper.release();
   }
+  expect(await buildRankingGeneration(stack.owner, nextId, eventId)).toBe(true);
+  expect((await ranking()).meta.snapshotId).toBe(nextId);
+  expect(await buildRankingGeneration(stack.owner, nextId, eventId)).toBe(false);
+});
+
+it('插入失败时真实队列重试保留上一批，成功和重复投递不追加半份榜单', async () => {
+  const author = await verifiedCreator(stack);
+  const admin = await stack.admin();
+  const persona = await publish(author.http, admin.http);
+  await download(stack.browser(), persona);
+  const firstId = await rebuild();
+  const nextId = await enqueueRankingRefresh(stack.owner, 'manual');
+  if (!nextId) throw new Error('缺少新请求');
+  const eventId = await eventFor(nextId);
   await stack.owner.pool.query(
     "CREATE FUNCTION reject_ranking_fixture() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'synthetic ranking insert failure' USING ERRCODE='23514'; END $$",
   );
   await stack.owner.pool.query(
     'CREATE TRIGGER reject_ranking_fixture BEFORE INSERT ON ranking_entries FOR EACH ROW EXECUTE FUNCTION reject_ranking_fixture()',
   );
+  let stopListening: () => void = () => undefined;
+  const firstFailure = new Promise<void>((resolve) => {
+    const failed = (job: { id?: string | undefined } | undefined) => {
+      if (job?.id === eventId) resolve();
+    };
+    stack.worker.on('failed', failed);
+    stopListening = () => stack.worker.off('failed', failed);
+  });
   try {
     await stack.tick();
+    await firstFailure;
     await expect
       .poll(async () => generationState(nextId), { timeout: 5000, interval: 100 })
-      .toMatchObject({ status: 'failed', error_code: 'RANKING_BUILD_FAILED' });
+      .toMatchObject({ status: 'pending', error_code: null });
+    expect(
+      (
+        await stack.owner.pool.query(
+          'SELECT state,last_error_code,terminal_proof FROM ranking_generation_runs WHERE event_id=$1',
+          [eventId],
+        )
+      ).rows,
+    ).toEqual([
+      { state: 'retrying', last_error_code: 'RANKING_BUILD_FAILED', terminal_proof: null },
+    ]);
     expect((await ranking()).meta.snapshotId).toBe(firstId);
     expect(
       (
@@ -406,6 +448,7 @@ it('计算锁、插入失败和真实任务重试保留上一批，重复投递�
       ).rowCount,
     ).toBe(0);
   } finally {
+    stopListening();
     await stack.owner.pool.query('DROP TRIGGER reject_ranking_fixture ON ranking_entries');
     await stack.owner.pool.query('DROP FUNCTION reject_ranking_fixture()');
   }
@@ -423,6 +466,59 @@ it('计算锁、插入失败和真实任务重试保留上一批，重复投递�
     (await stack.owner.pool.query('SELECT * FROM ranking_boards WHERE generation_id=$1', [nextId]))
       .rowCount,
   ).toBe(36);
+});
+
+it('最后一次计算失败记录可核对的终态，回滚全部新榜单并保留上一批', async () => {
+  const author = await verifiedCreator(stack);
+  const admin = await stack.admin();
+  const persona = await publish(author.http, admin.http);
+  await download(stack.browser(), persona);
+  const firstId = await rebuild();
+  const nextId = await enqueueRankingRefresh(stack.owner, 'manual');
+  if (!nextId) throw new Error('缺少新请求');
+  const eventId = await eventFor(nextId);
+  await stack.owner.pool.query(
+    "CREATE FUNCTION reject_final_ranking_fixture() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'synthetic final ranking failure' USING ERRCODE='23514'; END $$",
+  );
+  await stack.owner.pool.query(
+    'CREATE TRIGGER reject_final_ranking_fixture BEFORE INSERT ON ranking_entries FOR EACH ROW EXECUTE FUNCTION reject_final_ranking_fixture()',
+  );
+  try {
+    await expect(
+      buildRankingGeneration(stack.owner, nextId, eventId, { number: 5, last: true }),
+    ).rejects.toThrow();
+    expect(await generationState(nextId)).toMatchObject({
+      status: 'failed',
+      error_code: 'RANKING_BUILD_FAILED',
+    });
+    expect(
+      (
+        await stack.owner.pool.query(
+          'SELECT state,execution_attempts,terminal_proof FROM ranking_generation_runs WHERE event_id=$1',
+          [eventId],
+        )
+      ).rows,
+    ).toEqual([{ state: 'failed', execution_attempts: 5, terminal_proof: 'worker_final_failure' }]);
+    expect(
+      (
+        await stack.owner.pool.query('SELECT * FROM ranking_boards WHERE generation_id=$1', [
+          nextId,
+        ])
+      ).rowCount,
+    ).toBe(0);
+    expect(
+      (
+        await stack.owner.pool.query(
+          "SELECT * FROM processed_events WHERE consumer='rankings' AND event_id=$1",
+          [eventId],
+        )
+      ).rowCount,
+    ).toBe(0);
+    expect((await ranking()).meta.snapshotId).toBe(firstId);
+  } finally {
+    await stack.owner.pool.query('DROP TRIGGER reject_final_ranking_fixture ON ranking_entries');
+    await stack.owner.pool.query('DROP FUNCTION reject_final_ranking_fixture()');
+  }
 });
 
 it('快照保留和过期查询有明确边界，旧事件重放幂等且数据库拒绝非法分数', async () => {
