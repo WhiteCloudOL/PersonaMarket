@@ -140,7 +140,7 @@ test('公告长内容在重点视口可读，保留历史返回输入，确认�
     const review = confirmation.getByRole('region', { name: '公告操作预览', exact: true });
     await review.focus();
     await page.keyboard.press('End');
-    expect(await review.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+    await expect.poll(() => review.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
     await confirmation.getByRole('button', { name: '返回核对', exact: true }).click();
     await expect(panel.getByLabel('处理理由', { exact: true })).toHaveValue(reason);
     const endpoint = '**/api/v1/admin/announcements/' + row.id + '/archive';

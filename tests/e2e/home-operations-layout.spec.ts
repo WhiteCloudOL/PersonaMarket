@@ -209,7 +209,7 @@ test('首页运营长内容在重点视口可用，五条真实内容、确认�
     const comparison = dialog.getByRole('region', { name: '首页默认设置对照', exact: true });
     await comparison.focus();
     await comparison.press('End');
-    expect(await comparison.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+    await expect.poll(() => comparison.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
     await expect(
       dialog.getByRole('heading', { name: '预览首页默认设置', exact: true }),
     ).toBeInViewport({ ratio: 1 });
@@ -273,6 +273,21 @@ test('首页运营长内容在重点视口可用，五条真实内容、确认�
     ).toBe(true);
     await page.screenshot({ path: join(directory, 'limited-height-input.png') });
     await page.setViewportSize(viewport);
+    const invalidWrites: string[] = [];
+    page.on('request', (request) => {
+      if (
+        request.method() === 'PATCH' &&
+        new URL(request.url()).pathname === '/api/v1/admin/settings/home'
+      )
+        invalidWrites.push(request.url());
+    });
+    await page.getByRole('button', { name: '保存首页设置', exact: true }).click();
+    await expect(reason).toHaveAttribute('aria-invalid', 'true');
+    expect(invalidWrites).toEqual([]);
+    const savedHint = (
+      '确认保存后保留的首页提示' + '保留长提示与有限空间中的输入'.repeat(20)
+    ).slice(0, 200);
+    await reason.fill(savedHint);
     const held = new Promise<void>((resolve) => {
       release = resolve;
     });
@@ -320,7 +335,7 @@ test('首页运营长内容在重点视口可用，五条真实内容、确认�
       await database.close();
     }
     await guest.reload();
-    await expect(guest.getByText('确认保存后保留的首页提示', { exact: true })).toBeVisible();
+    await expect(guest.getByText(savedHint, { exact: true })).toBeVisible();
     await writeFile(
       join(directory, 'measurements.json'),
       JSON.stringify(

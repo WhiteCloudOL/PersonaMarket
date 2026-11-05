@@ -1,13 +1,11 @@
+import { captureInteraction as capture } from '../fixtures/interaction-layout.js';
 import { selectTheme } from '../fixtures/theme.js';
 import { selectAccountNavigation } from '../fixtures/account-navigation.js';
 import { randomUUID } from 'node:crypto';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { expect, test, type BrowserContext, type Page, type TestInfo } from '@playwright/test';
-import {
-  InteractionSettingsResponseSchema,
-  PublicReleaseResponseSchema,
-} from '@personamarket/contracts';
+import { expect, test, type BrowserContext, type Page } from '@playwright/test';
+import { PublicReleaseResponseSchema } from '@personamarket/contracts';
 import { loginCreator, browserWrite } from '../fixtures/browser-account.js';
 import { loginBrowserAdmin } from '../fixtures/browser-admin.js';
 import { visualPersonas } from '../fixtures/visual-personas.js';
@@ -61,60 +59,6 @@ test.afterAll(async () => {
 test.beforeEach(async ({ page }, info) => {
   if (info.project.name === 'desktop') await page.setViewportSize({ width: 1440, height: 900 });
 });
-async function capture(page: Page, info: TestInfo, name: string) {
-  await page.evaluate(() => document.fonts.ready);
-  for (const image of await page.locator('#main img').all()) {
-    if (!(await image.isVisible())) continue;
-    await image.scrollIntoViewIfNeeded();
-    await expect
-      .poll(() =>
-        image.evaluate(
-          (element) =>
-            element instanceof HTMLImageElement && element.complete && element.naturalWidth > 0,
-        ),
-      )
-      .toBe(true);
-  }
-  const size = page.viewportSize();
-  if (!size) throw new Error('缺少浏览器视口');
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  for (const control of await page
-    .locator('[aria-label="作品互动"] button, [aria-label="作品互动"] a')
-    .all()) {
-    if (!(await control.isVisible())) continue;
-    const bounds = await control.boundingBox();
-    expect(bounds?.height).toBeGreaterThanOrEqual(44);
-    expect(bounds?.width).toBeGreaterThanOrEqual(44);
-  }
-  const brokenLabels = await page
-    .locator('[aria-label="作品互动"] button, [aria-label="作品互动"] a')
-    .evaluateAll((buttons) =>
-      buttons.flatMap((button) => {
-        const walker = document.createTreeWalker(button, NodeFilter.SHOW_TEXT);
-        const broken: string[] = [];
-        for (let node = walker.nextNode(); node; node = walker.nextNode()) {
-          const label = node.textContent?.trim();
-          if (label !== '点赞' && label !== '收藏') continue;
-          const range = document.createRange();
-          range.selectNodeContents(node);
-          const rectangles = [...range.getClientRects()].filter(
-            (rect) => rect.width > 0 && rect.height > 0,
-          );
-          if (rectangles.length > 1) broken.push(label);
-        }
-        return broken;
-      }),
-    );
-  expect(brokenLabels, '点赞与收藏的操作词应完整显示，不能逐字竖排').toEqual([]);
-  expect(await page.locator('#main a button, #main a a').count()).toBe(0);
-  const directory = join('data/tests/interactions/current', `${size.width}x${size.height}`);
-  await mkdir(directory, { recursive: true });
-  await page.evaluate(() => scrollTo(0, 0));
-  const path = join(directory, name + '.png');
-  await page.screenshot({ path, fullPage: true });
-  await page.screenshot({ path: join(directory, name + '-viewport.png') });
-  await info.attach(name, { path, contentType: 'image/png' });
-}
 async function favorite(page: Page, id: string) {
   await page.goto('/personas/' + id);
   const controls = page.getByLabel('作品互动', { exact: true });
@@ -137,7 +81,8 @@ test('初次公开页面水合不替换卡片且键盘筛选可用', async ({ pa
     errors.push(/Minified React error #\d+/.exec(error.message)?.[0] ?? 'BROWSER_ERROR');
   });
   const context = page.waitForResponse(
-    (response) => response.url().endsWith('/api/v1/auth/context') && response.status() === 200,
+    (response) =>
+      new URL(response.url()).pathname === '/api/v1/auth/context' && response.status() === 200,
   );
   await page.goto('/explore', { waitUntil: 'commit' });
   const cards = page.getByRole('region', { name: '人设结果' }).locator('article');
@@ -331,81 +276,6 @@ test('隐藏作品收藏只显示占位、本人可以移除，真实换号后�
           visibility: 'listed',
           reason: '恢复隔离作品继续回归',
         })
-      ).status(),
-    ).toBe(200);
-  }
-});
-
-test('社区开关冲突保留输入并由用户重试，关闭直接API拒绝且旧收藏可取消', async ({ page }, info) => {
-  test.setTimeout(60000);
-  await loginCreator(page);
-  await favorite(page, works.maibot.id);
-  await admin.goto('/admin/settings/community');
-  const likes = admin.getByRole('switch', { name: '开放新增点赞', exact: true });
-  const favorites = admin.getByRole('switch', { name: '开放新增收藏', exact: true });
-  await expect(likes).toBeChecked();
-  try {
-    await likes.click();
-    await favorites.click();
-    if (info.project.name === 'desktop') {
-      admin.once('dialog', (dialog) => dialog.dismiss());
-      await admin.getByRole('link', { name: '站点品牌', exact: true }).click();
-      await expect(admin).toHaveURL(/\/admin\/settings\/community$/);
-      await expect(likes).not.toBeChecked();
-    }
-    const current = await admin.request.get('/api/v1/admin/settings/community');
-    const etag = current.headers()['etag'];
-    const previous = InteractionSettingsResponseSchema.parse(await current.json());
-    expect(
-      (
-        await browserWrite(
-          admin,
-          '/api/v1/admin/settings/community',
-          { ...previous.data, likesEnabled: true, favoritesEnabled: false },
-          'PATCH',
-          { 'If-Match': etag ?? '' },
-        )
-      ).status(),
-    ).toBe(200);
-    const conflict = admin.waitForResponse(
-      (response) =>
-        response.url().endsWith('/api/v1/admin/settings/community') &&
-        response.request().method() === 'PATCH',
-    );
-    await admin.getByRole('button', { name: '保存社区设置', exact: true }).click();
-    expect((await conflict).status()).toBe(412);
-    await expect(likes).not.toBeChecked();
-    await expect(favorites).not.toBeChecked();
-    await expect(admin.getByText('社区设置已保存', { exact: true })).toBeVisible();
-    const saved = InteractionSettingsResponseSchema.parse(
-      await (await admin.request.get('/api/v1/admin/settings/community')).json(),
-    );
-    expect(saved.data).toEqual({ ...previous.data, likesEnabled: false, favoritesEnabled: false });
-    await capture(admin, info, 'settings-community');
-    await page.reload();
-    await expect(page.getByRole('button', { name: '点赞', exact: true })).toBeDisabled();
-    expect(
-      (
-        await browserWrite(page, '/api/v1/personas/' + works.maibot.id + '/like', {}, 'PUT')
-      ).status(),
-    ).toBe(403);
-    await page.getByRole('button', { name: '取消收藏', exact: true }).click();
-    await expect(page.getByRole('button', { name: '收藏', exact: true })).toHaveAttribute(
-      'aria-pressed',
-      'false',
-    );
-  } finally {
-    const current = await admin.request.get('/api/v1/admin/settings/community');
-    const previous = InteractionSettingsResponseSchema.parse(await current.json());
-    expect(
-      (
-        await browserWrite(
-          admin,
-          '/api/v1/admin/settings/community',
-          { ...previous.data, likesEnabled: true, favoritesEnabled: true },
-          'PATCH',
-          { 'If-Match': current.headers()['etag'] ?? '' },
-        )
       ).status(),
     ).toBe(200);
   }

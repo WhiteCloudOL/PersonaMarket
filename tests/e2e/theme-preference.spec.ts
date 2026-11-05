@@ -149,6 +149,11 @@ test('主题菜单支持键盘焦点恢复和双端大字触控布局', async ({
         await page.keyboard.press('Enter');
         const menu = page.getByRole('menu', { name: '主题偏好', exact: true });
         await expect(menu).toBeVisible();
+        await menu.evaluate(async (element) => {
+          await Promise.all(
+            element.getAnimations({ subtree: true }).map((animation) => animation.finished),
+          );
+        });
         for (const item of await menu.getByRole('menuitemradio').all()) {
           const box = await item.boundingBox();
           expect(box?.width).toBeGreaterThanOrEqual(44);

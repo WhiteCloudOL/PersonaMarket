@@ -238,7 +238,13 @@ test('维护开启仍可完整管理员MFA登录并关闭，普通登录与账�
     ).toBe(200);
     await openSystem(bound);
     await bound.getByRole('switch', { name: '开启维护模式', exact: true }).uncheck();
+    const saved = bound.waitForResponse(
+      (response) =>
+        new URL(response.url()).pathname === systemEndpoint &&
+        response.request().method() === 'PATCH',
+    );
     await confirmSystemSave(bound);
+    expect((await saved).status()).toBe(200);
     expect((await currentSystem(bound)).data.maintenanceEnabled).toBe(false);
     expect(
       AuthContextResponseSchema.parse(

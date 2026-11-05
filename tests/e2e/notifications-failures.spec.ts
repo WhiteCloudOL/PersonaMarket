@@ -90,19 +90,48 @@ test('业务通知真实调度失败五次后，仅凭运维元数据确认重�
     await database.pool.query('DROP TRIGGER corrupt_notification_envelope ON outbox_events');
     await database.pool.query('DROP FUNCTION corrupt_notification_envelope()');
     await admin.goto('/admin/notifications');
-    const opener = admin.getByRole('button', { name: '查看业务通知失败任务', exact: true });
+    const opener = admin.getByRole('link', { name: '查看业务通知失败任务', exact: true });
     await opener.click();
     await expect(admin).toHaveURL(/\?failuresPage=1$/);
     const panel = admin.getByRole('dialog', { name: '业务通知失败任务', exact: true });
     await expect(panel).toContainText(receiver.username);
     await expect(panel).toContainText('账号安全');
-    await expect(panel).toContainText('已尝试 5 次');
+    await expect(panel).toContainText('本轮失败，详情中核对实际次数');
     await expect(panel).not.toContainText('你的登录密码已更新');
     await expect(panel).not.toContainText(password);
     await admin.reload();
     await expect(panel).toContainText(receiver.username);
+    await panel.getByRole('link', { name: '核对投递', exact: true }).click();
+    const detail = admin.getByRole('dialog', { name: '通知投递详情', exact: true });
+    await detail.getByRole('button', { name: '查看技术详情与口径', exact: true }).click();
+    // 损坏的信封不能被当作已匹配的业务事件，先证明未知状态会阻止重投。
+    await expect(detail.getByText('当前结果无法核验', { exact: true })).toBeVisible();
+    await expect(detail.getByText('分发尝试', { exact: true }).locator('..')).toContainText(
+      '未记录',
+    );
+    await expect(detail.getByRole('button', { name: '重试投递', exact: true })).toHaveCount(0);
+    // 仅修复本轮故障注入的 schemaVersion，保留真实累计的五次失败和业务状态。
+    const repaired = await database.pool.query(
+      "UPDATE outbox_events SET payload=jsonb_set(payload,'{schemaVersion}','1'::jsonb) WHERE id=$1 AND topic='notification.deliver' AND payload->>'notificationId'=$2",
+      [row.event_id, row.id],
+    );
+    expect(repaired.rowCount).toBe(1);
+    await detail.getByRole('button', { name: '核对当前投递状态', exact: true }).click();
+    await expect(detail.getByText('本轮投递失败', { exact: true })).toBeVisible();
+    const technicalDetails = detail.getByRole('button', {
+      name: '查看技术详情与口径',
+      exact: true,
+    });
+    if ((await technicalDetails.getAttribute('aria-expanded')) !== 'true')
+      await technicalDetails.click();
+    await expect(detail.getByText('分发尝试', { exact: true }).locator('..')).toContainText('5 次');
+    await expect(detail.getByText('消费执行尝试', { exact: true }).locator('..')).toContainText(
+      '未记录',
+    );
+    await expect(detail).not.toContainText('你的登录密码已更新');
+    await expect(detail).not.toContainText(password);
     await admin.screenshot({ path: join(directory, 'failed-metadata.png') });
-    const retry = panel.getByRole('button', { name: '重试投递', exact: true });
+    const retry = detail.getByRole('button', { name: '重试投递', exact: true });
     await retry.click();
     const confirmation = admin.getByRole('alertdialog', {
       name: '确认重新投递这条通知',
@@ -113,10 +142,9 @@ test('业务通知真实调度失败五次后，仅凭运维元数据确认重�
     await expect(retry).toBeFocused();
     await retry.click();
     await confirmation.getByRole('button', { name: '确认重投', exact: true }).click();
-    await expect(panel.getByText('没有待重投的业务通知', { exact: true })).toBeVisible();
-    await admin.keyboard.press('Escape');
-    await expect(opener).toBeFocused();
-    await expect(admin).toHaveURL(/\/admin\/notifications$/);
+    await expect(
+      detail.getByRole('button', { name: '核对当前投递状态', exact: true }),
+    ).toBeFocused();
     await expect
       .poll(
         async () =>
@@ -125,6 +153,15 @@ test('业务通知真实调度失败五次后，仅凭运维元数据确认重�
           ).data.length,
       )
       .toBe(1);
+    await detail.getByRole('button', { name: '核对当前投递状态', exact: true }).click();
+    await expect(detail.getByText('已送达站内通知', { exact: true })).toBeVisible();
+    await detail.getByRole('button', { name: '返回失败任务', exact: true }).click();
+    await expect(
+      panel.getByText('没有待重投的业务通知；这不代表其他通知均已送达', { exact: true }),
+    ).toBeVisible();
+    await admin.keyboard.press('Escape');
+    await expect(opener).toBeFocused();
+    await expect(admin).toHaveURL(/\/admin\/notifications$/);
     await page.goto('/dashboard/notifications');
     await expect(page.getByLabel('通知：账号安全提示', { exact: true })).toBeVisible();
     await expect(page.getByText(password, { exact: true })).toHaveCount(0);
