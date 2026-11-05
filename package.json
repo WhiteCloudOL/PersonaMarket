@@ -12,8 +12,8 @@
   "scripts": {
     "build:images": "node scripts/build-images.mjs",
     "dev": "pnpm build:packages && node scripts/dev.mjs",
-    "format:check": "prettier --check .",
-    "format": "prettier --write .",
+    "format:check": "node scripts/format-source.mjs --check",
+    "format": "node scripts/format-source.mjs --write",
     "lint": "eslint . && node scripts/check-boundaries.mjs",
     "typecheck": "node scripts/run-turbo.mjs typecheck && tsc --noEmit -p tsconfig.json",
     "test:unit": "pnpm build:packages && vitest run --config vitest.unit.config.ts",
