@@ -1,4 +1,4 @@
-import { request as httpRequest } from 'node:http';
+import { request as httpRequest, type IncomingMessage } from 'node:http';
 import { afterAll, beforeAll, expect, it } from 'vitest';
 import {
   DraftResponseSchema,
@@ -259,6 +259,12 @@ it('身份与CSRF先于文件解析，非法格式/UTF8/多文件/超限被拒�
 it('未结束的实际上传占用预览租约，客户端取消后可用且不保存原文件', async () => {
   const owner = await verifiedCreator(stack);
   const boundary = 'native-file-held-boundary';
+  let receiving: IncomingMessage | undefined;
+  const observe = (request: IncomingMessage) => {
+    if (request.headers['content-type'] === 'multipart/form-data; boundary=' + boundary)
+      receiving = request;
+  };
+  stack.server.on('request', observe);
   const prefix = Buffer.from(
     `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="held.toml"\r\nContent-Type: application/octet-stream\r\n\r\n# waiting`,
   );
@@ -275,12 +281,9 @@ it('未结束的实际上传占用预览租约，客户端取消后可用且不�
   held.setTimeout(10000, () => held.destroy());
   held.write(prefix);
   try {
-    await expect
-      .poll(async () => (await upload(owner.http, Buffer.from(source))).status, {
-        timeout: 5000,
-        interval: 1000,
-      })
-      .toBe(503);
+    // Multer 开始消费实际流后，前置租约已取得；避免竞争请求先抢走租约。
+    await expect.poll(() => receiving?.readableFlowing, { timeout: 5000 }).toBe(true);
+    expect((await upload(owner.http, Buffer.from(source))).status).toBe(503);
     expect(
       (
         await upload(
@@ -310,6 +313,7 @@ it('未结束的实际上传占用预览租约，客户端取消后可用且不�
       ).rows,
     ).toEqual([{ total: 0 }]);
   } finally {
+    stack.server.off('request', observe);
     held.destroy();
   }
 });

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { createHash, randomUUID } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { chmod, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { setTimeout } from 'node:timers/promises';
@@ -12,7 +12,6 @@ import {
   DraftResponseSchema,
 } from '@personamarket/contracts';
 import { createAuthStack } from '../tests/fixtures/auth-stack.js';
-import { mailToken } from '../tests/fixtures/mailpit.js';
 import { fixturePng } from '../tests/fixtures/image.js';
 import { marketPersona } from '../tests/fixtures/market-personas.js';
 const root = fileURLToPath(new URL('../', import.meta.url));
@@ -24,6 +23,8 @@ await mkdir(join(directory, 'caddy'), { recursive: true, mode: 0o700 });
 await mkdir(join(directory, 'config'), { recursive: true, mode: 0o700 });
 await writeFile(join(directory, 'image.png'), fixturePng);
 await writeFile(join(directory, 'oversized.png'), Buffer.alloc(5242881));
+// 此目录只放公开测试输入；TLS 私钥目录仍由容器 UID 1000 私有持有。
+await chmod(directory, 0o755);
 await writeFile(
   join(directory, 'Caddyfile'),
   `{
@@ -69,27 +70,17 @@ let network = false;
 let fixture = false;
 let runner = false;
 try {
-  stack = await createAuthStack();
+  stack = await createAuthStack({ isolatedStorage: true });
   const http = stack.browser();
   const username = 'remote_' + id.slice(0, 12);
   const email = username + '@fixture.invalid';
   const password = (randomUUID() + randomUUID()).replaceAll('-', '');
-  assert.equal(
-    (await http.write('/api/v1/auth/register', { username, email, password })).status,
-    200,
-  );
-  assert.equal(
-    (
-      await http.write('/api/v1/auth/verify-email', {
-        token: await mailToken(email, 'verify-email', stack.tick),
-      })
-    ).status,
-    200,
-  );
+  assert.equal((await http.register({ username, email, password }, stack.tick)).status, 200);
   assert.equal(
     (await http.write('/api/v1/auth/login', { identifier: username, password })).status,
     200,
   );
+  assert.equal((await http.context()).data.account?.emailVerified, true);
   const postgres = docker([
     'compose',
     '-f',
@@ -106,6 +97,32 @@ try {
   if (!inspect || typeof inspect !== 'object') throw new Error('找不到共享依赖网络');
   const dependencyNetwork = Object.keys(inspect)[0];
   if (!dependencyNetwork) throw new Error('找不到共享依赖网络');
+  docker([
+    'run',
+    '--rm',
+    '--network',
+    'none',
+    '--user',
+    '0:0',
+    '--read-only',
+    '--cap-drop',
+    'ALL',
+    '--cap-add',
+    'CHOWN',
+    '--cap-add',
+    'FOWNER',
+    '--cap-add',
+    'DAC_OVERRIDE',
+    '--security-opt',
+    'no-new-privileges:true',
+    '--mount',
+    'type=bind,src=' + directory + ',dst=/fixture',
+    '--entrypoint',
+    'sh',
+    'personamarket-redis:8.2.7-pm.1',
+    '-c',
+    'chown 1000:1000 /fixture/caddy /fixture/config && chmod 0700 /fixture/caddy /fixture/config',
+  ]);
   // 全球地址分类只用于完全隔离的 Docker 网络，不向公网路由或开放监听端口
   docker(['network', 'create', '--internal', '--subnet', '93.184.216.0/24', name]);
   network = true;
@@ -141,11 +158,13 @@ try {
     'caddyfile',
   ]);
   fixture = true;
-  const caPath = join(directory, 'caddy/caddy/pki/authorities/local/root.crt');
+  const caPath = join(directory, 'root-ca.crt');
   const deadline = Date.now() + 15000;
   let ca: Buffer | undefined;
   while (!ca && Date.now() < deadline) {
     try {
+      // 只导出公开根证书，不让宿主机绕过私钥目录权限。
+      docker(['cp', name + ':/data/caddy/pki/authorities/local/root.crt', caPath]);
       ca = await readFile(caPath);
     } catch {
       await setTimeout(100);
@@ -264,6 +283,8 @@ try {
       'create',
       '--name',
       name + '-worker',
+      '--user',
+      `${process.getuid?.() ?? 1000}:${process.getgid?.() ?? 1000}`,
       '--network',
       dependencyNetwork,
       '--add-host',
@@ -288,7 +309,7 @@ try {
       '-e',
       'REDIS_URL',
       '-e',
-      'NODE_EXTRA_CA_CERTS=/fixture/caddy/caddy/pki/authorities/local/root.crt',
+      'NODE_EXTRA_CA_CERTS=/fixture/root-ca.crt',
       image,
       'node',
       '--input-type=module',

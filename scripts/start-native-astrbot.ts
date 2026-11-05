@@ -2,10 +2,42 @@
 import { randomBytes, randomUUID } from 'node:crypto';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { docker, lock } from './native-runtime.js';
+import { docker, lock, toolsImage } from './native-runtime.js';
 
 export function startAstrBot(directory: string) {
   mkdirSync(join(directory, 'astrbot'), { recursive: true, mode: 0o700 });
+  // 保持官方镜像用户不变，只准备本轮私有数据目录的实际所有者。
+  docker(['pull', lock.astrbot.image]);
+  const owner = docker([
+    'run',
+    '--rm',
+    '--network',
+    'none',
+    '--cap-drop',
+    'ALL',
+    '--security-opt',
+    'no-new-privileges:true',
+    '--entrypoint',
+    'python',
+    lock.astrbot.image,
+    '-c',
+    'import os; print(str(os.getuid())+":"+str(os.getgid()))',
+  ]);
+  if (!/^\d+:\d+$/.test(owner)) throw new Error('无法确认官方原生镜像的数据目录用户');
+  docker([
+    'run',
+    '--rm',
+    '--network',
+    'none',
+    '--user',
+    '0:0',
+    '--mount',
+    `type=bind,src=${join(directory, 'astrbot')},dst=/work`,
+    toolsImage,
+    'sh',
+    '-c',
+    `chown ${owner} /work && chmod 0700 /work`,
+  ]);
   const password = randomBytes(32).toString('base64url') + 'aA1!';
   const secret = join(directory, 'astrbot.env');
   writeFileSync(secret, `ASTRBOT_DASHBOARD_INITIAL_PASSWORD=${password}\n`, { mode: 0o600 });

@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { Server } from 'node:http';
 import { createApplication } from '@personamarket/api/testing';
 import { createDatabase, createTestDatabaseOwner, migrateDatabase } from '@personamarket/database';
 import { createTestDatabase, dropTestDatabase } from '../../scripts/test-database.js';
@@ -78,6 +79,8 @@ export async function createAuthStack(options: { isolatedStorage?: boolean } = {
     const app = await createApplication(env);
     cleanup.push(() => app.close());
     const base = await listenHttp(app);
+    const server: unknown = app.getHttpServer();
+    if (!(server instanceof Server)) throw new Error('测试应用必须使用真实 HTTP 服务');
     const workerDatabase = createDatabase(appUrl.href);
     cleanup.push(() => workerDatabase.close());
     const mail = new MailConfigurationStore(workerDatabase, env);
@@ -127,6 +130,7 @@ export async function createAuthStack(options: { isolatedStorage?: boolean } = {
     };
     return {
       owner,
+      server,
       env,
       worker,
       browser,

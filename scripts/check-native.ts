@@ -15,6 +15,7 @@ import { startAstrBot } from './start-native-astrbot.js';
 
 const directory = join(root, 'data/tests/native', randomUUID());
 mkdirSync(directory, { recursive: true, mode: 0o700 });
+const fixtureUser = `${process.getuid?.() || 1000}:${process.getgid?.() || 1000}`;
 const maiSource = await source('maibot');
 const astrSource = await source('astrbot');
 writeFileSync(join(directory, 'maibot.toml'), serializeMaiBot(maiBotPersona));
@@ -42,10 +43,9 @@ docker([
   '--mount',
   `type=bind,src=${directory},dst=/work`,
   toolsImage,
-  'chown',
-  '-R',
-  '1000:1000',
-  '/work',
+  'sh',
+  '-c',
+  `chown -R ${fixtureUser} /work && chmod 0700 /work`,
 ]);
 console.log('MaiBot：官方 PersonalityConfig 消费与 TOML 往返');
 docker([
@@ -53,6 +53,8 @@ docker([
   '--rm',
   '--network',
   'none',
+  '--user',
+  fixtureUser,
   '--read-only',
   '--tmpfs',
   '/tmp',

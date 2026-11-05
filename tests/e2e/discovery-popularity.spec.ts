@@ -74,6 +74,7 @@ test.beforeEach(async ({ page }, info) => {
 
 async function chooseSort(page: Page, label: string, value: string, keyboard = false) {
   const trigger = page.getByRole('combobox', { name: '结果排序', exact: true });
+  await expect(trigger).toBeEnabled();
   expect((await trigger.boundingBox())?.height).toBeGreaterThanOrEqual(44);
   if (keyboard) {
     await trigger.focus();
