@@ -789,10 +789,17 @@ test('逐页真实截图与布局', async ({ browser }, info) => {
         }
         await guest.goto('/');
         await selectTheme(guest, 'light');
+        // 等待本次页面的客户端边界完成，避免 SSR 已可见但 Query 尚未订阅重连事件。
+        await guest.waitForLoadState('networkidle');
         await guest.route('**/api/v1/public/config', (route) => route.abort('failed'));
         await guest.clock.fastForward(31_000);
+        const failedBrandRefresh = guest.waitForEvent('requestfailed', {
+          predicate: (request) => request.url().endsWith('/api/v1/public/config'),
+        });
         await guest.evaluate(() => window.dispatchEvent(new Event('offline')));
         await guest.evaluate(() => window.dispatchEvent(new Event('online')));
+        await failedBrandRefresh;
+        await guest.clock.runFor(1_100);
         const brandAlert = guest.getByRole('region', { name: '站点介绍' }).getByRole('alert');
         await expect(brandAlert).toContainText('站点介绍暂时无法更新');
         await captureCurrent(guest, 'home-network-error', viewport);

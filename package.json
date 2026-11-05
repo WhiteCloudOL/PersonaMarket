@@ -17,7 +17,7 @@
     "lint": "eslint . && node scripts/check-boundaries.mjs",
     "typecheck": "node scripts/run-turbo.mjs typecheck && tsc --noEmit -p tsconfig.json",
     "test:unit": "pnpm build:packages && vitest run --config vitest.unit.config.ts",
-    "test:integration": "node scripts/run-turbo.mjs build --filter=@personamarket/api --filter=@personamarket/worker && node scripts/run-with-env.mjs integration",
+    "test:integration": "node scripts/run-turbo.mjs build --filter=@personamarket/api --filter=@personamarket/worker --filter=@personamarket/api-client && node scripts/run-with-env.mjs integration",
     "test:e2e": "pnpm build && node scripts/run-with-env.mjs e2e",
     "test:visual": "pnpm build && node scripts/run-with-env.mjs visual",
     "build": "node scripts/run-turbo.mjs build",

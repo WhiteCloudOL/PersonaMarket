@@ -3,7 +3,7 @@ ENV GOTOOLCHAIN=local
 ENV CGO_ENABLED=0
 ENV GOMAXPROCS=2
 WORKDIR /source
-RUN apk add --no-cache patch=2.8-r0
+RUN apk add --no-cache patch=2.8.1-r0
 COPY infra/caddy-build/go.mod infra/caddy-build/go.sum ./
 RUN go mod download
 COPY infra/caddy-build/ ./

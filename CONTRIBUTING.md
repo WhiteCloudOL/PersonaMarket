@@ -60,7 +60,7 @@ GitHub 工程门禁分别运行源码、真实集成、三种浏览器视口、�
 | `pnpm lint`                                    | ESLint 与包边界检查                                 |
 | `pnpm typecheck`                               | 全工作区与根工程 TypeScript strict 检查             |
 | `pnpm test:unit`                               | 契约、环境、解析与存储单元测试                      |
-| `pnpm test:integration`                        | 真实 PostgreSQL / Redis / API 与队列集成            |
+| `pnpm test:integration`                        | 构建 API、Worker 和客户端后执行真实数据库与队列集成 |
 | `pnpm test:e2e`                                | 生产构建与 Playwright 浏览器流程                    |
 | `pnpm build` / `pnpm build:packages`           | 全部应用与共享包 / 仅共享包构建                     |
 | `pnpm db:generate` / `pnpm db:migrate`         | 生成可审查 SQL / 版本化迁移                         |
