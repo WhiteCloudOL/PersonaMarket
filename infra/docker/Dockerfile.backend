@@ -16,6 +16,7 @@ RUN libatomic="$(ldd /usr/local/bin/node | awk '$1 == "libatomic.so.1" { print $
     && install -D -m 0644 "$libatomic" /runtime-libs/libatomic.so.1
 
 FROM gcr.io/distroless/cc-debian13:nonroot@sha256:3ee00291cf386ec52a552e6a858d555debd74776eb4bfa53fa3df2cd6677515e AS runtime
+USER 0:0
 ENV NODE_ENV=production
 ENV PATH=/usr/local/bin:/usr/bin:/bin
 WORKDIR /app
@@ -29,6 +30,7 @@ COPY --from=build --chown=1000:1000 /workspace/LICENSE ./LICENSE
 COPY --from=build --chown=1000:1000 /workspace/docs/THIRD_PARTY_NOTICES.md ./docs/THIRD_PARTY_NOTICES.md
 COPY --from=build --chown=1000:1000 /workspace/docs/third-party ./docs/third-party
 COPY --from=build --chown=1000:1000 /workspace/scripts/create-admin.mjs /workspace/scripts/runtime.mjs ./scripts/
+RUN --mount=type=bind,source=infra/docker,target=/runtime-hardening,readonly ["/usr/local/bin/node", "/runtime-hardening/prune-runtime.mjs"]
 USER 1000:1000
 ENTRYPOINT []
 EXPOSE 3001

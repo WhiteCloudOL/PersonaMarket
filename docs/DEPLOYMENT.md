@@ -131,6 +131,8 @@ Compose 使用 Caddy 作为 Web 与 API 的统一外部入口，两者的 `TRUST
 
 当前配置用于本地运行。对公网发布前须完成依赖与镜像安全处置、业务权限验收和恢复演练，并提供 AGPL 对应版本源码获取方式；运行镜像采用固定摘要的精简系统和可审查补丁构建，构建时需访问官方镜像源、Go 模块源及 Alpine 软件源。
 
+应用镜像沿用固定摘要的 Distroless 基础系统，构建时校验包清单并移除未使用的系统 zlib 动态库，保留许可文件。Node 使用内置压缩库，构建同时实际校验压缩往返、图片解码和 WebP 编码，以及 API 和 Worker 的 Argon2 原生模块；应用仍以 UID 1000 运行。
+
 Caddy 按入口限制请求体。通用文件预览的 POST 请求为 129 MiB，原生文件与文本源预览的 POST 请求为 5 MiB，普通图片上传为 6 MiB，人设头像上传 `/api/v1/me/assets/upload-persona-avatar` 为 11 MiB，其他入口为 4 MiB。额外空间用于 multipart 边界和文件名。API 继续执行通用 JSON、原生文本、TXT、Markdown 4 MiB，ZIP 128 MiB，普通单图 5 MiB，以及人设头像小于 10 MiB 的文件硬限。前置其他代理时需同步这些入口限制。更新 `infra/caddy/Caddyfile` 后执行 `docker compose -f compose.yaml restart caddy` 加载配置。
 
 升级前按 [OPERATIONS.md](OPERATIONS.md) 备份数据库与私有文件，构建新镜像后先停止旧版 API、Worker 和 Web 写入进程，再运行单一迁移进程，迁移成功后启动新应用。包含 `0019_public_search_projection` 的升级会启用 PostgreSQL 自带的 `pg_trgm` 扩展，并在迁移锁内分批重建公开搜索字段与首次发布时间；迁移账号需具有创建该受信扩展的权限。重跑迁移可继续未完成批次，原始已审核正文和来源声明保持不变。升级失败时保持停写并排查，勿启动旧版写入进程覆盖新搜索投影；回退应用和数据库应使用同一份已验证备份。
