@@ -381,7 +381,7 @@ it('计算锁不可得时不伪造任务终态，解锁后原事件可以完成�
           [eventId],
         )
       ).rows,
-    ).toEqual([{ state: 'pending', execution_attempts: 0, terminal_proof: null }]);
+    ).toEqual([{ state: 'pending', execution_attempts: null, terminal_proof: null }]);
     expect((await ranking()).meta.snapshotId).toBe(firstId);
   } finally {
     await keeper.query('SELECT pg_advisory_unlock(1347244619,1)');

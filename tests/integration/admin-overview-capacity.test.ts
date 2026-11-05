@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, expect, it } from 'vitest';
 import { mkdir, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import { AdminOverviewResponseSchema } from '@personamarket/contracts';
 import { createAuthStack } from '../fixtures/auth-stack.js';
 import { interactionRankingScenario } from '../fixtures/interaction-ranking-scenario.js';
@@ -8,7 +9,11 @@ import { seedSearchLoad } from '../fixtures/search-load.js';
 let stack: Awaited<ReturnType<typeof createAuthStack>>;
 let admin: Awaited<ReturnType<typeof interactionRankingScenario>>['admin'];
 beforeAll(async () => {
-  stack = await createAuthStack();
+  stack = await createAuthStack({ isolatedStorage: true });
+  // 容量预算使用固定文件样本，不让其他用例累积的素材改变冷请求工作量。
+  await mkdir(stack.env.STORAGE_ROOT, { recursive: true, mode: 0o700 });
+  await writeFile(join(stack.env.STORAGE_ROOT, 'capacity-a.bin'), Buffer.alloc(256));
+  await writeFile(join(stack.env.STORAGE_ROOT, 'capacity-b.bin'), Buffer.alloc(128));
   const fixture = await interactionRankingScenario(stack);
   admin = fixture.admin;
   const client = await stack.owner.pool.connect();
@@ -35,6 +40,7 @@ it('万条公开作品的管理员聚合保持准确并在受限API预算内返�
     expect(data.catalog.publicPersonas).toBe(10_004);
     expect(data.catalog.publishedReleases7d).toBe(10_004);
     expect(data.interactions).toEqual({ likes7d: 4, favorites7d: 1, comments7d: 0 });
+    expect(data.observations.storage).toMatchObject({ status: 'ready', files: 2, bytes: 384 });
   }
   await mkdir('data/tests/admin-overview', { recursive: true });
   await writeFile(
