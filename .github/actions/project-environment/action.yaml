@@ -1,0 +1,37 @@
+name: 项目检查环境
+description: 安装锁定工具链，并按需启动本机隔离依赖和浏览器
+inputs:
+  infrastructure:
+    description: 启动 PostgreSQL、Redis 和 Mailpit
+    default: 'false'
+  browsers:
+    description: 安装 Chromium 和系统依赖
+    default: 'false'
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      with:
+        node-version-file: .node-version
+    - name: 固定 pnpm
+      shell: bash
+      run: npm install --global pnpm@10.34.8
+    - name: 安装锁定依赖
+      shell: bash
+      run: pnpm install --frozen-lockfile
+    - name: 生成隔离开发配置
+      shell: bash
+      run: pnpm env:init
+    - name: 启动隔离依赖
+      id: infra
+      if: inputs.infrastructure == 'true'
+      shell: bash
+      run: pnpm infra:up && pnpm data:check
+    - name: 依赖启动失败时保留脱敏诊断
+      if: failure() && steps.infra.outcome == 'failure'
+      shell: bash
+      run: node scripts/infra-diagnostics.mjs
+    - name: 安装浏览器
+      if: inputs.browsers == 'true'
+      shell: bash
+      run: pnpm exec playwright install --with-deps chromium
