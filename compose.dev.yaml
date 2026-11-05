@@ -38,7 +38,7 @@ services:
   data-init:
     command:
       !override [
-        'chown redis:redis /data; chown 1000:1000 /storage; chown -R 1000:1000 /caddy-data /caddy-config; chown 1000:1000 /mailpit; chmod 0700 /data /storage /caddy-data /caddy-config /mailpit',
+        'chown 70:70 /postgres; chown redis:redis /data; chown 1000:1000 /storage; chown -R 1000:1000 /caddy-data /caddy-config; chown 1000:1000 /mailpit; chmod 0700 /postgres /data /storage /caddy-data /caddy-config /mailpit',
       ]
     volumes:
       - ./data/mailpit:/mailpit

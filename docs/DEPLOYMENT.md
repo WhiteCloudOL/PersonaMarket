@@ -35,7 +35,7 @@ services:
       - ./data/caddy/config:/config
 ```
 
-PostgreSQL 18 的版本数据位于 data/postgres/18/docker。API / Worker 共用 data/storage。data-init 在启动时设置 Redis、私有目录及 Caddy 状态目录的属主和权限，服务进程保持非 root。首次配置或 `pnpm data:prepare` 会准备目录，`pnpm data:check` 可核验开发与生产组合的全部绑定。
+PostgreSQL 18 的版本数据位于 data/postgres/18/docker。API / Worker 共用 data/storage。data-init 在启动时设置 PostgreSQL 父目录、Redis、私有目录及 Caddy 状态目录的属主和权限，服务进程保持非 root。PostgreSQL 父目录使用固定 Alpine 镜像的 UID/GID 70，并保持 0700，初始化按依赖顺序完成后才启动数据库。首次配置或 `pnpm data:prepare` 会准备目录，`pnpm data:check` 可核验开发与生产组合的全部绑定。
 
 | 宿主机目录                           | 用途                   |
 | ------------------------------------ | ---------------------- |

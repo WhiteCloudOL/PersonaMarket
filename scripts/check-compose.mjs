@@ -26,6 +26,7 @@ writeFileSync(
 const overrides = {
   'data-init': {
     volumes: [
+      bind('postgres', '/postgres'),
       bind('redis', '/data'),
       bind('storage', '/storage'),
       bind('caddy/data', '/caddy-data'),

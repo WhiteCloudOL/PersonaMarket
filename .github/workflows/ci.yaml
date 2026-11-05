@@ -21,7 +21,11 @@ jobs:
       - name: 安装锁定依赖
         run: pnpm install --frozen-lockfile
       - name: 生成隔离开发配置并启动依赖
+        id: infra
         run: pnpm env:init && pnpm infra:up
+      - name: 依赖启动失败时保留脱敏诊断
+        if: failure() && steps.infra.outcome == 'failure'
+        run: node scripts/infra-diagnostics.mjs
       - name: 数据目录约束
         run: pnpm data:check
       - name: 安装浏览器

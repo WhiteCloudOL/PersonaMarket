@@ -34,7 +34,7 @@ for (const files of [['compose.yaml'], ['compose.yaml', 'compose.dev.yaml']]) {
   }
   assert.equal(
     count,
-    files.length === 1 ? 10 : 12,
+    files.length === 1 ? 11 : 13,
     '持久数据挂载数量发生变化，请审查目录与检查规则。',
   );
 }

@@ -40,9 +40,11 @@ services:
     entrypoint: [sh, -ec]
     command:
       [
-        'chown redis:redis /data; chown 1000:1000 /storage; chown -R 1000:1000 /caddy-data /caddy-config; chmod 0700 /data /storage /caddy-data /caddy-config',
+        'chown 70:70 /postgres; chown redis:redis /data; chown 1000:1000 /storage; chown -R 1000:1000 /caddy-data /caddy-config; chmod 0700 /postgres /data /storage /caddy-data /caddy-config',
       ]
     volumes:
+      # 固定 PostgreSQL Alpine 镜像的 postgres UID/GID 为 70，18/docker 的父目录也须可进入
+      - ./data/postgres:/postgres
       - ./data/redis:/data
       - ./data/storage:/storage
       - ./data/caddy/data:/caddy-data
@@ -67,6 +69,8 @@ services:
     volumes:
       - ./data/postgres:/var/lib/postgresql
       - ./infra/postgres/init-app.sh:/docker-entrypoint-initdb.d/10-app.sh:ro
+    depends_on:
+      data-init: { condition: service_completed_successfully }
     healthcheck:
       test: [CMD-SHELL, 'pg_isready -h 127.0.0.1 -U personamarket_owner -d personamarket']
       interval: 5s
