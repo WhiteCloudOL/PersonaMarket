@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import type { PublicGuide } from '@personamarket/contracts';
 import Link from 'next/link';
 import { buttonVariants } from '@personamarket/ui/components/button';
+import { cn } from '@personamarket/ui/lib/utils';
 import { GuideBody } from '@/components/guides/guide-body';
 import { guideSections } from '@/components/guides/guide-sections';
 import { readPublicGuides } from '@/lib/public-guides';
@@ -87,7 +88,10 @@ export default async function Page() {
                       href={'/guides/' + item.slug}
                       prefetch={false}
                       aria-label={'单独阅读本章：' + item.title}
-                      className={buttonVariants({ variant: 'outline', className: 'self-start' })}
+                      className={cn(
+                        buttonVariants({ variant: 'outline' }),
+                        'h-auto min-h-11 max-w-full self-start py-2 whitespace-normal',
+                      )}
                     >
                       单独阅读本章
                     </Link>
@@ -99,7 +103,10 @@ export default async function Page() {
               <p>清蒸云鸭·人设市场的软件使用 AGPL-3.0 许可</p>
               <a
                 href="https://github.com/WhiteCloudOL/PersonaMarket"
-                className={buttonVariants({ variant: 'outline', className: 'self-start' })}
+                className={cn(
+                  buttonVariants({ variant: 'outline' }),
+                  'h-auto min-h-11 max-w-full self-start py-2 whitespace-normal',
+                )}
               >
                 在 GitHub 查看项目源码
               </a>

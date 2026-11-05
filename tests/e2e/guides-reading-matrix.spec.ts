@@ -26,10 +26,41 @@ for (const viewport of viewports)
     await mkdir(evidence, { recursive: true });
     const metrics: unknown[] = [];
     async function measure(label: string) {
+      await page.evaluate(async () => {
+        await document.fonts.ready;
+        await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+        await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+      });
       const value = await page.evaluate(() => ({
         width: innerWidth,
         scrollWidth: document.documentElement.scrollWidth,
       }));
+      if (value.scrollWidth > value.width) {
+        await page.screenshot({ path: join(evidence, label + '-overflow.png'), fullPage: true });
+        await writeFile(
+          join(evidence, label + '-overflow.json'),
+          JSON.stringify(
+            await page.locator('body *').evaluateAll((elements) =>
+              elements.flatMap((element) => {
+                const box = element.getBoundingClientRect();
+                return box.width > 0 && (box.right > innerWidth || box.left < 0)
+                  ? [
+                      {
+                        tag: element.tagName,
+                        className: element.className,
+                        text: element.textContent?.slice(0, 160),
+                        left: box.left,
+                        right: box.right,
+                      },
+                    ]
+                  : [];
+              }),
+            ),
+            null,
+            2,
+          ),
+        );
+      }
       expect(value.scrollWidth).toBeLessThanOrEqual(value.width);
       metrics.push({ label, ...value });
     }
@@ -76,6 +107,21 @@ for (const viewport of viewports)
       });
       await measure('guide-200-percent');
       await page.screenshot({ path: join(evidence, 'large-type.png') });
+      const sourceLink = page.getByRole('link', { name: '在 GitHub 查看项目源码', exact: true });
+      await sourceLink.scrollIntoViewIfNeeded();
+      await sourceLink.focus();
+      await expect(sourceLink).toBeInViewport({ ratio: 1 });
+      await expect(sourceLink).toHaveAttribute(
+        'href',
+        'https://github.com/WhiteCloudOL/PersonaMarket',
+      );
+      const sourceSize = await sourceLink.evaluate((element) => ({
+        height: element.getBoundingClientRect().height,
+        clipped: element.scrollWidth > element.clientWidth,
+      }));
+      expect(sourceSize.height).toBeGreaterThanOrEqual(44);
+      expect(sourceSize.clipped).toBe(false);
+      await page.screenshot({ path: join(evidence, 'source-large-type.png') });
     }
     await page.goto('/dashboard/personas/new');
     await expect(page.getByLabel('作者使用说明', { exact: true })).toBeVisible();
