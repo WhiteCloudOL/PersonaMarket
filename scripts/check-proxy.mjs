@@ -8,10 +8,12 @@ import { setTimeout } from 'node:timers/promises';
 import { root } from './runtime.mjs';
 
 const directory = join(root, 'data/tests/proxy', randomUUID());
+const runtimeDirectory = join(directory, 'runtime');
 const name = 'pm-tls-' + randomUUID();
 mkdirSync(directory, { recursive: true, mode: 0o700 });
+mkdirSync(runtimeDirectory, { mode: 0o700 });
 writeFileSync(
-  join(directory, 'Caddyfile'),
+  join(runtimeDirectory, 'Caddyfile'),
   '{\n auto_https disable_redirects\n}\nhttps://localhost:8443 {\n tls internal\n respond "tls-check"\n}\n',
 );
 function docker(args) {
@@ -31,7 +33,7 @@ docker([
   '--network',
   'none',
   '--mount',
-  `type=bind,src=${directory},dst=/work`,
+  `type=bind,src=${runtimeDirectory},dst=/work`,
   'alpine:3.24.3@sha256:be2656061b536c1883c4034790e21d0a09c5aaaf51968b89368a3c0371ea2c9a',
   'chown',
   '-R',
@@ -45,7 +47,7 @@ try {
     '--name',
     name,
     '--mount',
-    `type=bind,src=${directory},dst=/work`,
+    `type=bind,src=${runtimeDirectory},dst=/work`,
     '--read-only',
     '--tmpfs',
     '/tmp',

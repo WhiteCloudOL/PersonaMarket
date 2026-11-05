@@ -65,6 +65,32 @@ const storageCode = `import { LocalStorage } from '@personamarket/server'; const
 const redisCode = `import { createClient } from 'redis'; const client = createClient({url:process.env.REDIS_URL}); client.on('error',()=>{}); await client.connect();`;
 let createdDatabase = false;
 let paused = false;
+let restoreContainerOwned = false;
+function restoreOwner(owner) {
+  docker([
+    'run',
+    '--rm',
+    '--network',
+    'none',
+    '--user',
+    '0:0',
+    '--cap-drop',
+    'ALL',
+    '--cap-add',
+    'CHOWN',
+    '--cap-add',
+    'DAC_OVERRIDE',
+    '--security-opt',
+    'no-new-privileges:true',
+    '--mount',
+    `type=bind,src=${restoreDirectory},dst=/restore`,
+    toolsImage,
+    'chown',
+    '-R',
+    owner,
+    '/restore',
+  ]);
+}
 try {
   const before = sql(
     'personamarket',
@@ -179,6 +205,9 @@ try {
     ],
     archive,
   );
+  // Linux runner 与应用 UID 不同；保持 0700，并让真实非 root 应用读取恢复探针。
+  restoreContainerOwned = true;
+  restoreOwner('1000:1000');
   const restored = docker([
     'run',
     '--rm',
@@ -258,6 +287,8 @@ try {
     '本地恢复检查通过：隔离库恢复、迁移记录、私有文件恢复与 PostgreSQL / Redis / 文件重启持久化。',
   );
 } finally {
+  if (restoreContainerOwned)
+    restoreOwner(`${process.getuid?.() ?? 1000}:${process.getgid?.() ?? 1000}`);
   if (paused) compose(['up', '-d', '--wait']);
   if (createdDatabase) sql('postgres', `DROP DATABASE "${database}"`);
   rmSync(restoreDirectory, { recursive: true, force: true });
