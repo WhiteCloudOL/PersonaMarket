@@ -5,7 +5,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.ref }}-${{ github.ref == 'refs/heads/main' && github.sha || 'latest' }}
   cancel-in-progress: true
 jobs:
   source:
@@ -85,7 +85,10 @@ jobs:
           infrastructure: 'true'
           browsers: 'true'
       - name: 构建并扫描运行镜像
-        run: pnpm build:images && pnpm security:images
+        run: |
+          pnpm build:images
+          docker pull alpine:3.24.3@sha256:be2656061b536c1883c4034790e21d0a09c5aaaf51968b89368a3c0371ea2c9a
+          pnpm security:images
       - name: 启动真实应用
         run: |
           docker compose --parallel 1 -f compose.yaml -f compose.dev.yaml up -d --wait
