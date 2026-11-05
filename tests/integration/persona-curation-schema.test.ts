@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { createDatabase, createTestDatabaseOwner, type Database } from '@personamarket/database';
-import { createAdministrator } from '@personamarket/server';
+import { seedUpgradeAdministrator } from '../fixtures/upgrade-administrator.js';
 import { createTestDatabase, dropTestDatabase } from '../../scripts/test-database.js';
 import { publicSnapshot } from '../fixtures/persona.js';
 import { buildPublicSearchProjection } from '@personamarket/persona-adapters';
@@ -56,7 +56,7 @@ it('新增策展迁移保留全部旧表与冻结版本，重跑不清除策展�
       );
     await migrate(drizzle(database.pool), { migrationsFolder: fixture });
     const username = 'curation_' + randomUUID().replaceAll('-', '').slice(0, 10);
-    await createAdministrator(database, {
+    await seedUpgradeAdministrator(database, {
       username,
       email: username + '@fixture.invalid',
       password: 'Curation migration fixture passphrase 2026',

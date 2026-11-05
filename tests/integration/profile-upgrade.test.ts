@@ -13,7 +13,8 @@ import {
   personaPublicProjection,
   type Database,
 } from '@personamarket/database';
-import { createAdministrator, contentHash } from '@personamarket/server';
+import { contentHash } from '@personamarket/server';
+import { seedUpgradeAdministrator } from '../fixtures/upgrade-administrator.js';
 import { buildPublicSearchProjection } from '@personamarket/persona-adapters';
 import {
   PublicSnapshotSchema,
@@ -70,13 +71,13 @@ it('0037至0039从真实旧举报升级保留全部旧字段和证据哈希，�
       (await database.pool.query('SELECT id FROM drizzle.__drizzle_migrations')).rowCount,
     ).toBe(37);
     const username = 'legacy_' + randomUUID().replaceAll('-', '').slice(0, 12);
-    const author = await createAdministrator(database, {
+    const author = await seedUpgradeAdministrator(database, {
       username,
       email: username + '@fixture.invalid',
       password: 'Profile upgrade fixture passphrase 2026',
     });
     const reporterName = 'reporter_' + randomUUID().replaceAll('-', '').slice(0, 12);
-    const reporter = await createAdministrator(database, {
+    const reporter = await seedUpgradeAdministrator(database, {
       username: reporterName,
       email: reporterName + '@fixture.invalid',
       password: 'Legacy report fixture passphrase 2026',

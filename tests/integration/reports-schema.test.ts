@@ -13,7 +13,8 @@ import {
   personaPublicProjection,
   type Database,
 } from '@personamarket/database';
-import { createAdministrator, contentHash } from '@personamarket/server';
+import { contentHash } from '@personamarket/server';
+import { seedUpgradeAdministrator } from '../fixtures/upgrade-administrator.js';
 import { buildPublicSearchProjection } from '@personamarket/persona-adapters';
 import {
   emptyPersonaDraft,
@@ -67,7 +68,7 @@ it('举报迁移保留旧表与指南全部数据，新表为空，应用无删�
       );
     await migrate(drizzle(database.pool), { migrationsFolder: fixture });
     const username = 'report_' + randomUUID().replaceAll('-', '').slice(0, 10);
-    await createAdministrator(database, {
+    await seedUpgradeAdministrator(database, {
       username,
       email: username + '@fixture.invalid',
       password: 'Report migration fixture passphrase 2026',

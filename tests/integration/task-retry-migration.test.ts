@@ -7,7 +7,8 @@ import { z } from 'zod';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { createDatabase, createTestDatabaseOwner, type Database } from '@personamarket/database';
-import { createAdministrator, enqueueMail } from '@personamarket/server';
+import { enqueueMail } from '@personamarket/server';
+import { seedUpgradeAdministrator } from '../fixtures/upgrade-administrator.js';
 import { createTestDatabase, dropTestDatabase } from '../../scripts/test-database.js';
 import { prepareScopedMigrations } from '../fixtures/scoped-migrations.js';
 
@@ -46,7 +47,7 @@ beforeAll(async () => {
   for (const entry of entries)
     await copyFile(join(folder, entry.tag + '.sql'), join(fixture, entry.tag + '.sql'));
   await migrate(drizzle(database.pool), { migrationsFolder: fixture });
-  const owner = await createAdministrator(database, {
+  const owner = await seedUpgradeAdministrator(database, {
     username: 'upgrade_owner',
     email: 'upgrade_owner@fixture.invalid',
     password: 'Owned upgrade fixture passphrase 2026',

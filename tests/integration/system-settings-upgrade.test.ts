@@ -8,7 +8,7 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { createDatabase, createTestDatabaseOwner, type Database } from '@personamarket/database';
 import { defaultSystemSettings } from '@personamarket/contracts';
-import { createAdministrator } from '@personamarket/server';
+import { seedUpgradeAdministrator } from '../fixtures/upgrade-administrator.js';
 import { createTestDatabase, dropTestDatabase } from '../../scripts/test-database.js';
 import { captureTableShape, tableFingerprints } from '../fixtures/table-fingerprints.js';
 
@@ -117,7 +117,7 @@ it.each([
       "INSERT INTO site_settings(key,value,revision) VALUES('system-upgrade-sentinel',$1,9)",
       [{ retained: '全部原设置保持' }],
     );
-    await createAdministrator(database, {
+    await seedUpgradeAdministrator(database, {
       username: 'system_upgrade',
       email: 'system_upgrade@fixture.invalid',
       password: 'A controlled upgrade fixture passphrase 2026',

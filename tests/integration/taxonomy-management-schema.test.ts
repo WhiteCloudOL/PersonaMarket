@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { createDatabase, createTestDatabaseOwner, type Database } from '@personamarket/database';
-import { createAdministrator } from '@personamarket/server';
+import { seedUpgradeAdministrator } from '../fixtures/upgrade-administrator.js';
 import { emptyPersonaDraft } from '@personamarket/contracts';
 import { createTestDatabase, dropTestDatabase } from '../../scripts/test-database.js';
 import { captureTableShape, tableFingerprints } from '../fixtures/table-fingerprints.js';
@@ -68,7 +68,7 @@ async function baseline(
 it('目录迁移保留每个既有字段和草稿，新增列默认值明确，重跑不覆盖运营配置', async () => {
   await baseline(async (database, url, total) => {
     const username = 'taxonomy_' + randomUUID().replaceAll('-', '').slice(0, 10);
-    await createAdministrator(database, {
+    await seedUpgradeAdministrator(database, {
       username,
       email: username + '@fixture.invalid',
       password: 'Taxonomy migration fixture passphrase 2026',

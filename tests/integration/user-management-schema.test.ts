@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { createDatabase, createTestDatabaseOwner, type Database } from '@personamarket/database';
-import { createAdministrator } from '@personamarket/server';
+import { seedUpgradeAdministrator } from '../fixtures/upgrade-administrator.js';
 import { createTestDatabase, dropTestDatabase } from '../../scripts/test-database.js';
 import { captureTableShape, tableFingerprints } from '../fixtures/table-fingerprints.js';
 import { prepareScopedMigrations } from '../fixtures/scoped-migrations.js';
@@ -58,7 +58,7 @@ it.each([25, 26])(
         );
       await migrate(drizzle(database.pool), { migrationsFolder: fixture });
       const username = 'schema_' + randomUUID().replaceAll('-', '').slice(0, 10);
-      await createAdministrator(database, {
+      await seedUpgradeAdministrator(database, {
         username,
         email: username + '@fixture.invalid',
         password: 'Schema fixture passphrase 2026',

@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { createDatabase, createTestDatabaseOwner } from '@personamarket/database';
-import { createAdministrator } from '@personamarket/server';
+import { seedUpgradeAdministrator } from '../fixtures/upgrade-administrator.js';
 import { createTestDatabase, dropTestDatabase } from '../../scripts/test-database.js';
 import { captureTableShape, tableFingerprints } from '../fixtures/table-fingerprints.js';
 
@@ -93,7 +93,7 @@ it('0050正常50→51升级保留全部旧字段/设置/前缀，不猜旧failed
   const database = createDatabase(url.href);
   try {
     await migrate(drizzle(database.pool), { migrationsFolder: previousFolder });
-    await createAdministrator(database, {
+    await seedUpgradeAdministrator(database, {
       username: 'ranking_upgrade',
       email: 'ranking_upgrade@fixture.invalid',
       password: 'A ranking upgrade fixture passphrase 2026',
